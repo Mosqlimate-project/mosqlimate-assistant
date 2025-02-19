@@ -52,6 +52,7 @@ class InfodengueFilters(BaseModel):
     geocode: Optional[int] = Field(
         None, description="Código do município segundo o IBGE"
     )
+    table = "infodengue"
 
     class Config:
         extra = "ignore"
@@ -72,12 +73,14 @@ class ClimateFilters(BaseModel):
     geocode: Optional[int] = Field(
         None, description="Código do município segundo o IBGE"
     )
+    table = "climate"
 
     class Config:
         extra = "ignore"
 
 class MosquitoFilters(BaseModel):
     key: str = Field(..., description="ContaOvos API key")
+    table = "mosquito"
 
     class Config:
         extra = "ignore"
@@ -93,6 +96,7 @@ class EpiscannerFilters(BaseModel):
         ..., description="Sigla do estado brasileiro (duas letras), ex: SP"
     )
     year: Optional[int] = Field(None, description="Ano específico")
+    table = "episcanner"
 
     class Config:
         extra = "ignore"

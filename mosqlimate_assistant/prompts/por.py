@@ -116,7 +116,7 @@ Exemplo de resposta para dados da dengue em São Paulo de 2022-12-30 a 2023-12-3
     "start": "2022-12-30",
     "end": "2023-12-30",
     "uf": "SP",
-    "geocode": null,
+    "geocode": None,
 }}
 
 ATENÇÃO: EXTRAIA OS PARÂMETROS E RESPONDA SOMENTE COM UM JSON (SEM COMENTÁRIOS) CONTENDO AS CHAVES REQUERIDAS.
