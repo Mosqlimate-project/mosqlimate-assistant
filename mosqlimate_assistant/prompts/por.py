@@ -1,6 +1,9 @@
 BASE_PROMPT = """
 Seu dever é, a partir da pergunta acima, extrair os seguintes parâmetros e responder com um JSON contendo as chaves:
 
+Primeiramente, você deve informar a tabela que deseja consultar:
+- table: string ('infodengue', 'climate', 'mosquito', 'episcanner')
+
 Para caso a pergunta seja sobre a tabela Infodengue:
 - disease: string ('dengue', 'zika', 'chik', 'chikungunya')
 - start: string (formato YYYY-mm-dd)
@@ -115,6 +118,8 @@ Exemplo de resposta para dados da dengue em São Paulo de 2022-12-30 a 2023-12-3
     "uf": "SP",
     "geocode": null,
 }}
+
+ATENÇÃO: EXTRAIA OS PARÂMETROS E RESPONDA SOMENTE COM UM JSON (SEM COMENTÁRIOS) CONTENDO AS CHAVES REQUERIDAS.
 
 """
 
