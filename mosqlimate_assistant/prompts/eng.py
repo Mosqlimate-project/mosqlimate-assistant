@@ -1,1 +1,0 @@
-BASE_PROMTS = "teste 1"

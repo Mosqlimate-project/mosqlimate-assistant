@@ -19,7 +19,6 @@ On mosqlimate api documentation, we have the following [description](https://api
 | uf           | no       | str *(UF)*          | Two letters Brazilian state abbreviation. E.g: SP |
 | geocode      | no       | int                 | [IBGE's](https://www.ibge.gov.br/explica/codigos-dos-municipios.php) municipality code |
 
-
 ---
 
 ## Climate
@@ -33,7 +32,6 @@ On mosqlimate api documentation, we have the following [description](https://api
 | geocode      | no       | int                | [IBGE's](https://www.ibge.gov.br/explica/codigos-dos-municipios.php) municipality code |
 | uf           | no       | str *(UF)*         | Two-letter Brazilian state abbreviation. E.g.: SP |
 
-
 ---
 
 ## Mosquito
@@ -42,7 +40,6 @@ On mosqlimate api documentation, we have the following [description](https://api
 |---------------|----------|------|-----------------------|
 | key          | yes      | str  | ContaOvos API key    |
 | page         | yes      | int  | Page to be displayed |
-
 
 ---
 
