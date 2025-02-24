@@ -9,10 +9,10 @@ class TableFilters(BaseModel):
         None, description="Doença: 'dengue', 'zika', 'chik' ou 'chikungunya'"
     )
     start: Optional[str] = Field(
-        None, regex=r'^\d{4}-\d{2}-\d{2}$', description="Data de início (YYYY-mm-dd)"
+        None, pattern=r'^\d{4}-\d{2}-\d{2}$', description="Data de início (YYYY-mm-dd)"
     )
     end: Optional[str] = Field(
-        None, regex=r'^\d{4}-\d{2}-\d{2}$', description="Data de término (YYYY-mm-dd)"
+        None, pattern=r'^\d{4}-\d{2}-\d{2}$', description="Data de término (YYYY-mm-dd)"
     )
     uf: Optional[Literal[
         "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
@@ -33,15 +33,17 @@ class TableFilters(BaseModel):
     class Config:
         extra = "ignore"
 
+
 class InfodengueFilters(BaseModel):
+    table: Literal["infodengue"] = Field("infodengue", Literal=True)
     disease: Literal['dengue', 'zika', 'chik', 'chikungunya'] = Field(
         ..., description="Doença: 'dengue', 'zika', 'chik' ou 'chikungunya'"
     )
     start: str = Field(
-        ..., regex=r'^\d{4}-\d{2}-\d{2}$', description="Data de início (YYYY-mm-dd)"
+        ..., pattern=r'^\d{4}-\d{2}-\d{2}$', description="Data de início (YYYY-mm-dd)"
     )
     end: str = Field(
-        ..., regex=r'^\d{4}-\d{2}-\d{2}$', description="Data de término (YYYY-mm-dd)"
+        ..., pattern=r'^\d{4}-\d{2}-\d{2}$', description="Data de término (YYYY-mm-dd)"
     )
     uf: Optional[Literal[
         "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
@@ -52,17 +54,18 @@ class InfodengueFilters(BaseModel):
     geocode: Optional[int] = Field(
         None, description="Código do município segundo o IBGE"
     )
-    table = "infodengue"
 
     class Config:
         extra = "ignore"
+
 
 class ClimateFilters(BaseModel):
+    table: Literal["climate"] = Field("climate", Literal=True)
     start: str = Field(
-        ..., regex=r'^\d{4}-\d{2}-\d{2}$', description="Data de início (YYYY-mm-dd)"
+        ..., pattern=r'^\d{4}-\d{2}-\d{2}$', description="Data de início (YYYY-mm-dd)"
     )
     end: str = Field(
-        ..., regex=r'^\d{4}-\d{2}-\d{2}$', description="Data de término (YYYY-mm-dd)"
+        ..., pattern=r'^\d{4}-\d{2}-\d{2}$', description="Data de término (YYYY-mm-dd)"
     )
     uf: Optional[Literal[
         "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
@@ -73,19 +76,21 @@ class ClimateFilters(BaseModel):
     geocode: Optional[int] = Field(
         None, description="Código do município segundo o IBGE"
     )
-    table = "climate"
 
     class Config:
         extra = "ignore"
+
 
 class MosquitoFilters(BaseModel):
+    table: Literal["mosquito"] = Field("mosquito", Literal=True)
     key: str = Field(..., description="ContaOvos API key")
-    table = "mosquito"
 
     class Config:
         extra = "ignore"
 
+
 class EpiscannerFilters(BaseModel):
+    table: Literal["episcanner"] = Field("episcanner", Literal=True)
     disease: Literal['dengue', 'zika', 'chik', 'chikungunya'] = Field(
         ..., description="Doença: 'dengue', 'zika', 'chik' ou 'chikungunya'"
     )
@@ -96,7 +101,6 @@ class EpiscannerFilters(BaseModel):
         ..., description="Sigla do estado brasileiro (duas letras), ex: SP"
     )
     year: Optional[int] = Field(None, description="Ano específico")
-    table = "episcanner"
 
     class Config:
         extra = "ignore"
