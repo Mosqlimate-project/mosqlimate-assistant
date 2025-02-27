@@ -9,12 +9,12 @@ Para caso a pergunta seja sobre a tabela Infodengue:
 - start: string (formato YYYY-mm-dd)
 - end: string (formato YYYY-mm-dd)
 - uf: string (opcional, ex: SP)
-- geocode: inteiro (opcional)
+- city: string (opcional, a cidade que deseja consultar)
 
 Para caso a pergunta seja sobre a tabela Climate:
 - start: string (formato YYYY-mm-dd)
 - end: string (formato YYYY-mm-dd)
-- geocode: inteiro (opcional)
+- city: string (opcional, a cidade que deseja consultar)
 - uf: string (opcional, ex: SP)
 
 Para caso a pergunta seja sobre a tabela Mosquito:
@@ -30,49 +30,51 @@ Para caso a pergunta seja sobre a tabela Episcanner:
 
 TABLE_PROMPT = """
 ## Infodengue:
-Esta tabela contém informações sobre casos de dengue, zika e chikungunya de diversos municípios do Brasil.
+Esta tabela reúne informações sobre casos de dengue, zika e chikungunya registrados em diversos municípios do Brasil.
 
-| Parameter name | Required | Type                | Description |
-|---------------|----------|---------------------|-------------|
-| disease      | yes      | str                 | Dengue, Zika or Chik[ungunya] |
-| start        | yes      | str *(YYYY-mm-dd)*  | Start date (epidemiological week) |
-| end          | yes      | str *(YYYY-mm-dd)*  | End date (epidemiological week) |
-| uf           | no       | str *(UF)*          | Two letters Brazilian state abbreviation. E.g: SP |
-| geocode      | no       | int                 | [IBGE's](https://www.ibge.gov.br/explica/codigos-dos-municipios.php) municipality code |
-
----
-
-## Climate
-Esta tabela contém informações sobre séries temporais de clima de todos os municípios do Brasil.
-
-| Parameter name | Required | Type               | Description |
-|---------------|----------|--------------------|-------------|
-| start        | yes      | str *(YYYY-mm-dd)* | Start date |
-| end          | yes      | str *(YYYY-mm-dd)* | End date |
-| geocode      | no       | int                | [IBGE's](https://www.ibge.gov.br/explica/codigos-dos-municipios.php) municipality code |
-| uf           | no       | str *(UF)*         | Two-letter Brazilian state abbreviation. E.g.: SP |
+| Nome do Parâmetro | Obrigatório | Tipo                | Descrição                                                  |
+|-------------------|-------------|---------------------|------------------------------------------------------------|
+| disease           | Sim         | str                 | Doença: 'dengue', 'zika', 'chik' ou 'chikungunya'          |
+| start             | Sim         | str *(YYYY-MM-DD)*  | Data de início (em formato YYYY-MM-DD)                     |
+| end               | Sim         | str *(YYYY-MM-DD)*  | Data de término (em formato YYYY-MM-DD)                    |
+| uf                | Não         | str *(UF)*          | Sigla do estado (ex.: SP)                                  |
+| city              | Não         | str                 | Nome do município                                          |
 
 ---
 
-## Mosquito
-Esta tabela contém informações sobre armadilhas para capturar ovos de mosquitos em diversos municípios do Brasil.
+## Climate:
+Esta tabela contém séries temporais de dados climáticos para os municípios do Brasil.
 
-| Parameter name | Required | Type | Description           |
-|---------------|----------|------|-----------------------|
-| key          | yes      | str  | ContaOvos API key    |
+| Nome do Parâmetro | Obrigatório | Tipo                | Descrição                                                  |
+|-------------------|-------------|---------------------|------------------------------------------------------------|
+| start             | Sim         | str *(YYYY-MM-DD)*  | Data de início                                             |
+| end               | Sim         | str *(YYYY-MM-DD)*  | Data de término                                            |
+| city              | Não         | str                 | Nome do município                                          |
+| uf                | Não         | str *(UF)*          | Sigla do estado (ex.: SP)                                  |
+
 
 ---
 
-## Episcanner
-Esta tabela contém informações sobre a expansão de epidemias de dengue, zika e chikungunya em diversos municípios do Brasil.
+## Episcanner:
+Esta tabela apresenta dados sobre a expansão de epidemias de dengue, zika e chikungunya nos municípios do Brasil.
 
-| Parameter name | Required | Type       | Description |
-|---------------|----------|------------|-------------|
-| disease      | yes      | str        | Specific disease. Options: dengue, zika, chik |
-| uf          | yes      | str *(UF)* | Two-letter Brazilian state abbreviation. E.g.: SP |
-| year        | no       | int        | Specific year. Default: current year |
+| Nome do Parâmetro | Obrigatório | Tipo       | Descrição                                                   |
+|-------------------|-------------|------------|-------------------------------------------------------------|
+| disease           | Sim         | str        | Doença específica: 'dengue', 'zika' ou 'chik'               |
+| uf                | Sim         | str *(UF)* | Sigla do estado (ex.: SP)                                   |
+| year              | Não         | int        | Ano específico (padrão: ano corrente)                       |
+
+---
+
+## Mosquito:
+Esta tabela reúne informações sobre armadilhas utilizadas para a captura de ovos de mosquitos em diferentes municípios do Brasil.
+
+| Nome do Parâmetro | Obrigatório | Tipo | Descrição               |
+|-------------------|-------------|------|-------------------------|
+| key               | Sim         | str  | Chave de API do ContaOvos |
 
 """
+
 
 
 UF_PROMPT = """
@@ -104,7 +106,6 @@ Entre os uf válidos estão:
     "São Paulo": "SP",
     "Sergipe": "SE",
     "Tocantins": "TO"
-
 """
 
 EXAMPLE_PROMPT = """
@@ -116,10 +117,10 @@ Exemplo de resposta para dados da dengue em São Paulo de 2022-12-30 a 2023-12-3
     "start": "2022-12-30",
     "end": "2023-12-30",
     "uf": "SP",
-    "geocode": None,
+    "city": "São Paulo",
 }}
 
-ATENÇÃO: EXTRAIA OS PARÂMETROS E RESPONDA SOMENTE COM UM JSON (SEM COMENTÁRIOS) CONTENDO AS CHAVES REQUERIDAS.
+ATENÇÃO: EXTRAIA OS PARÂMETROS E RESPONDA SOMENTE COM UM ÚNICO JSON (SEM COMENTÁRIOS) CONTENDO AS CHAVES REQUERIDAS.
 
 """
 
