@@ -20,8 +20,8 @@ class TableFilters(BaseModel):
     ]] = Field(
         None, description="Sigla do estado brasileiro (duas letras), ex: SP"
     )
-    geocode: Optional[int] = Field(
-        None, description="Código do município segundo o IBGE"
+    city: Optional[str] = Field(
+        None, description="Nome do município"
     )
     key: Optional[str] = Field(
         None, description="ContaOvos API key"
@@ -51,8 +51,8 @@ class InfodengueFilters(BaseModel):
     ]] = Field(
         None, description="Sigla do estado brasileiro (duas letras), ex: SP"
     )
-    geocode: Optional[int] = Field(
-        None, description="Código do município segundo o IBGE"
+    city: Optional[str] = Field(
+        None, description="Nome do município"
     )
 
     class Config:
@@ -73,8 +73,8 @@ class ClimateFilters(BaseModel):
     ]] = Field(
         None, description="Sigla do estado brasileiro (duas letras), ex: SP"
     )
-    geocode: Optional[int] = Field(
-        None, description="Código do município segundo o IBGE"
+    city: Optional[str] = Field(
+        None, description="Nome do município"
     )
 
     class Config:
