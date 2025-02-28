@@ -1,5 +1,4 @@
-BASE_PROMPT =  """
-Você é um assistente de pesquisa de dados da api do Mosqlimate.
+BASE_PROMPT =  """Você é um assistente de pesquisa de dados da api do Mosqlimate.
 Seu dever é, a partir da pergunta do usuário fornecida em linguagem natural, extrair os parâmetros necessários para consultar alguma das tabelas disponíveis: 'infodengue', 'climate', 'mosquito' ou 'episcanner'.
 
 **Instruções Gerais:**
@@ -7,7 +6,7 @@ Seu dever é, a partir da pergunta do usuário fornecida em linguagem natural, e
 - Você deve retornar um JSON válido com pelo menos todos os parâmetros obrigatórios da tabela selecionada.
 - Se o usuário fornecer o nome completo de um estado (ex.: "São Paulo"), converta para a sigla correspondente (ex.: "SP").
 - As datas devem ser retornadas no formato YYYY-MM-DD.
-- Se o usuário mencionar uma cidade, adicione também a sigla do estado (UF).
+- SE O USUÁRIO MENCIONAR UMA CIDADE, ADICIONE O ESTADO (UF).
 - Responda SOMENTE com um JSON válido contendo as chaves específicas para a tabela selecionada, sem comentários ou texto adicional.
 """
 
@@ -29,14 +28,12 @@ Esta tabela reúne informações sobre casos de dengue, zika e chikungunya regis
 
 ## Climate:
 Esta tabela contém séries temporais de dados climáticos para os municípios do Brasil.
-
 | Nome do Parâmetro | Obrigatório | Tipo                | Descrição                                                  |
 |-------------------|-------------|---------------------|------------------------------------------------------------|
 | start             | Sim         | str *(YYYY-MM-DD)*  | Data de início                                             |
 | end               | Sim         | str *(YYYY-MM-DD)*  | Data de término                                            |
 | city              | Não         | str                 | Nome do município                                          |
 | uf                | Não         | str *(UF)*          | Sigla do estado (ex.: SP)                                  |
-
 
 ---
 
@@ -59,6 +56,7 @@ Esta tabela reúne informações sobre armadilhas utilizadas para a captura de o
 |-------------------|-------------|------|-------------------------|
 | key               | Sim         | str  | Chave de API do ContaOvos |
 """
+
 
 UF_PROMPT = """
 **Unidades Federativas (UF) Válidas:**
@@ -90,6 +88,7 @@ UF_PROMPT = """
 - "Sergipe": "SE",
 - "Tocantins": "TO"
 """
+
 
 EXAMPLE_PROMPT = """
 **Exemplos:**
@@ -128,36 +127,43 @@ Exemplo de resposta para "Quero dados sobre a expansão da dengue no Rio de Jane
 ```
 """
 
+
 EXAMPLES_LIST = [
     {
         "question": "Quero casos de dengue na cidade de São Paulo no ano de 2023",
-        "answer": """{
+        "answer": """```json
+{{
     "table": "infodengue",
     "disease": "dengue",
     "start": "2023-01-01",
     "end": "2023-12-31",
     "uf": "SP",
     "city": "São Paulo"
-}"""
+}}
+```"""
     },
     {
         "question": "Dados climáticos de Porto Alegre em 2022",
-        "answer": """{
+        "answer": """```json
+{{
     "table": "climate",
     "start": "2022-01-01",
     "end": "2022-12-31",
     "city": "Porto Alegre",
     "uf": "RS"
-}"""
+}}
+```"""
     },
     {
         "question": "Quero dados sobre a expansão da dengue no Rio de Janeiro em 2021",
-        "answer": """{
+        "answer": """```json
+{{
     "table": "episcanner",
     "disease": "dengue",
     "uf": "RJ",
     "year": 2021
-}"""
+}}
+```"""
     }
 ]
 

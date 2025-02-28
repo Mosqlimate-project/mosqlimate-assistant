@@ -1,5 +1,5 @@
 from langchain_ollama import OllamaLLM
-from langchain.prompts import PromptTemplate
+from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 from mosqlimate_assistant.prompts import por
 from mosqlimate_assistant import filters
 import requests
@@ -11,24 +11,30 @@ modelo = OllamaLLM(model="llama3.1:latest", device='cuda')
 BASE_URL_API = "https://api.mosqlimate.org/api/datastore/"
 
 def make_query(user_input:str) -> str:
-    template = """{base_prompt}
-{table_prompt}
-{uf_prompt}
-{example_prompt}
-Agora, responda à seguinte pergunta: {user_question}
+    example_template = """Exemplo:
+Pergunta: {question}
+Resposta: {answer}"""
+
+    prefix = f"""{por.BASE_PROMPT}
+{por.TABLE_PROMPT}
+{por.UF_PROMPT}"""
+
+    suffix = """Agora, responda à seguinte pergunta: {user_question}
 """
-    prompt = PromptTemplate(
-        input_variables=["base_prompt", "table_prompt", "uf_prompt", "example_prompt", "user_question"],
-        template=template
+
+    few_shot_prompt = FewShotPromptTemplate(
+        examples=por.EXAMPLES_LIST,
+        example_prompt=PromptTemplate(
+            input_variables=["question", "answer"],
+            template=example_template
+        ),
+        prefix=prefix,
+        suffix=suffix,
+        input_variables=["user_question"]
     )
 
-    full_query = prompt.format(
-        base_prompt=por.BASE_PROMPT,
-        table_prompt=por.TABLE_PROMPT,
-        uf_prompt=por.UF_PROMPT,
-        example_prompt=por.EXAMPLE_PROMPT,
-        user_question=user_input
-    )
+    full_query = few_shot_prompt.format(user_question=user_input)
+
     print(full_query)
     return full_query
 
@@ -42,6 +48,7 @@ def clean_output(output:str) -> dict:
     output = output[output.rfind("{"):output.rfind("}")+1]
     output = output.replace("None", "null").strip()
     output = output.replace("{{", "{").replace("}}", "}")
+    
     try:
         return json.loads(output)
     except Exception as e:
