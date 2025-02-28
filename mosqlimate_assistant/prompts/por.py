@@ -9,7 +9,6 @@ Seu dever é, a partir da pergunta do usuário fornecida em linguagem natural, e
 - As datas devem ser retornadas no formato YYYY-MM-DD.
 - Se o usuário mencionar uma cidade, adicione também a sigla do estado (UF).
 - Responda SOMENTE com um JSON válido contendo as chaves específicas para a tabela selecionada, sem comentários ou texto adicional.
-
 """
 
 
@@ -59,7 +58,6 @@ Esta tabela reúne informações sobre armadilhas utilizadas para a captura de o
 | Nome do Parâmetro | Obrigatório | Tipo | Descrição               |
 |-------------------|-------------|------|-------------------------|
 | key               | Sim         | str  | Chave de API do ContaOvos |
-
 """
 
 UF_PROMPT = """
@@ -97,30 +95,70 @@ EXAMPLE_PROMPT = """
 **Exemplos:**
 
 Exemplo de resposta para "Quero casos de dengue na cidade de São Paulo no ano de 2023":
-{{
+```json
+{
     "table": "infodengue",
     "disease": "dengue",
     "start": "2023-01-01",
     "end": "2023-12-31",
     "uf": "SP",
     "city": "São Paulo"
-}}
+}
+```
 
 Exemplo de resposta para "Dados climáticos de Porto Alegre em 2022":
-{{
+```json
+{
     "table": "climate",
     "start": "2022-01-01",
     "end": "2022-12-31",
     "city": "Porto Alegre",
     "uf": "RS"
-}}
+}
+```
 
 Exemplo de resposta para "Quero dados sobre a expansão da dengue no Rio de Janeiro em 2021":
-{{
+```json
+{
     "table": "episcanner",
     "disease": "dengue",
     "uf": "RJ",
     "year": 2021
-}}
+}
+```
 """
+
+EXAMPLES_LIST = [
+    {
+        "question": "Quero casos de dengue na cidade de São Paulo no ano de 2023",
+        "answer": """{
+    "table": "infodengue",
+    "disease": "dengue",
+    "start": "2023-01-01",
+    "end": "2023-12-31",
+    "uf": "SP",
+    "city": "São Paulo"
+}"""
+    },
+    {
+        "question": "Dados climáticos de Porto Alegre em 2022",
+        "answer": """{
+    "table": "climate",
+    "start": "2022-01-01",
+    "end": "2022-12-31",
+    "city": "Porto Alegre",
+    "uf": "RS"
+}"""
+    },
+    {
+        "question": "Quero dados sobre a expansão da dengue no Rio de Janeiro em 2021",
+        "answer": """{
+    "table": "episcanner",
+    "disease": "dengue",
+    "uf": "RJ",
+    "year": 2021
+}"""
+    }
+]
+
 

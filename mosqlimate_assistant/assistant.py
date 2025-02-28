@@ -1,30 +1,47 @@
 from langchain_ollama import OllamaLLM
+from langchain.prompts import PromptTemplate
 from mosqlimate_assistant.prompts import por
 from mosqlimate_assistant import filters
 import requests
 import json
 
 # A ser substituido no futuro
-modelo = OllamaLLM(model="deepseek-r1:8b", device='cuda')
+modelo = OllamaLLM(model="llama3.1:latest", device='cuda')
 
 BASE_URL_API = "https://api.mosqlimate.org/api/datastore/"
 
 def make_query(user_input:str) -> str:
-    full_query = f"""
-Você é um assistente de pesquisa de dados do Mosqlimate. Seu dever é, a partir da pergunta abaixo fazer o que se pede:
+    template = """{base_prompt}
+{table_prompt}
+{uf_prompt}
+{example_prompt}
+Agora, responda à seguinte pergunta: {user_question}
+"""
+    prompt = PromptTemplate(
+        input_variables=["base_prompt", "table_prompt", "uf_prompt", "example_prompt", "user_question"],
+        template=template
+    )
 
-{user_input}
-
-""" + por.BASE_PROMPT + por.TABLE_PROMPT + por.UF_PROMPT + por.EXAMPLE_PROMPT
-
+    full_query = prompt.format(
+        base_prompt=por.BASE_PROMPT,
+        table_prompt=por.TABLE_PROMPT,
+        uf_prompt=por.UF_PROMPT,
+        example_prompt=por.EXAMPLE_PROMPT,
+        user_question=user_input
+    )
+    print(full_query)
     return full_query
 
 def clean_output(output:str) -> dict:
-    if "</think>" in output:
+    if "```json" in output:
+        output = output[output.find("```json")+7:]
+    elif "</think>" in output:
         output = output[output.find("</think>")+10:]
+    
     output = output.replace("```", "")
-    output = output.replace("json", "").strip()
-    # print(output)
+    output = output[output.rfind("{"):output.rfind("}")+1]
+    output = output.replace("None", "null").strip()
+    output = output.replace("{{", "{").replace("}}", "}")
     try:
         return json.loads(output)
     except Exception as e:
@@ -56,16 +73,16 @@ def generate_api_infodengue_url(filters:filters.InfodengueFilters) -> str:
     url = f"{BASE_URL_API}infodengue?page=1&per_page=100&disease={filters.disease}&start={filters.start}&end={filters.end}"
     if filters.uf:
         url += f"&uf={filters.uf}"
-    if filters.geocode:
-        url += f"&geocode={filters.geocode}"
+    # if filters.geocode:
+    #     url += f"&geocode={filters.geocode}"
     return url
 
 def generate_api_climate_url(filters:filters.ClimateFilters) -> str:
     url = f"{BASE_URL_API}climate?page=1&per_page=100&start={filters.start}&end={filters.end}"
     if filters.uf:
         url += f"&uf={filters.uf}"
-    if filters.geocode:
-        url += f"&geocode={filters.geocode}"
+    # if filters.geocode:
+    #     url += f"&geocode={filters.geocode}"
     return url
 
 def generate_api_mosquito_url(filters:filters.MosquitoFilters) -> str:
