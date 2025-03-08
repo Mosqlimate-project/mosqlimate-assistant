@@ -1,7 +1,10 @@
 from langchain_ollama import OllamaLLM
 from langchain.prompts import PromptTemplate, FewShotPromptTemplate
+
 from mosqlimate_assistant.prompts import por
 from mosqlimate_assistant import filters
+from mosqlimate_assistant import utils
+
 import requests
 import json
 
@@ -11,16 +14,11 @@ modelo = OllamaLLM(model="llama3.1:latest", device='cuda')
 BASE_URL_API = "https://api.mosqlimate.org/api/datastore/"
 
 def make_query(user_input:str) -> str:
-    example_template = """Exemplo:
-Pergunta: {question}
-Resposta: {answer}"""
+    example_template = """Exemplo:\nPergunta: {question}\nResposta: {answer}"""
 
-    prefix = f"""{por.BASE_PROMPT}
-{por.TABLE_PROMPT}
-{por.UF_PROMPT}"""
+    prefix = f"""{por.BASE_PROMPT}\n{por.TABLE_PROMPT}\n{por.UF_PROMPT}"""
 
-    suffix = """Agora, responda à seguinte pergunta: {user_question}
-"""
+    suffix = """Agora, responda à seguinte pergunta: {user_question}\n"""
 
     few_shot_prompt = FewShotPromptTemplate(
         examples=por.EXAMPLES_LIST,
@@ -35,7 +33,6 @@ Resposta: {answer}"""
 
     full_query = few_shot_prompt.format(user_question=user_input)
 
-    print(full_query)
     return full_query
 
 def clean_output(output:str) -> dict:
@@ -61,10 +58,18 @@ def query_llm(prompt:str) -> dict:
         return clean_output(output)
     except Exception as e:
         raise RuntimeError(f"Erro ao chamar o Ollama: {e}")
+    
+def get_municipality_code(municipality:str, uf:str) -> str:
+    try:
+        municipality_code = utils.get_municipality(municipality, uf)
+        return municipality_code["Code"]
+    except Exception as e:
+        raise RuntimeError(f"Erro ao obter o código do município: {e}")
 
 def get_table_filters(output_json:dict) -> filters.TableFilters:
-    output_data = filters.TableFilters(**output_json)
     try:
+        output_data = filters.TableFilters(**output_json)
+
         if output_data.table == "infodengue":
             return filters.InfodengueFilters(**output_json)
         elif output_data.table == "climate":
@@ -73,6 +78,7 @@ def get_table_filters(output_json:dict) -> filters.TableFilters:
             return filters.MosquitoFilters(**output_json)
         elif output_data.table == "episcanner":
             return filters.EpiscannerFilters(**output_json)
+        
     except Exception as e:
         raise RuntimeError(f"Erro ao converter o output em json: {e}")
 
@@ -80,16 +86,18 @@ def generate_api_infodengue_url(filters:filters.InfodengueFilters) -> str:
     url = f"{BASE_URL_API}infodengue?page=1&per_page=100&disease={filters.disease}&start={filters.start}&end={filters.end}"
     if filters.uf:
         url += f"&uf={filters.uf}"
-    # if filters.geocode:
-    #     url += f"&geocode={filters.geocode}"
+    if filters.city:
+        geocode = get_municipality_code(filters.city, filters.uf)
+        url += f"&geocode={geocode}"
     return url
 
 def generate_api_climate_url(filters:filters.ClimateFilters) -> str:
     url = f"{BASE_URL_API}climate?page=1&per_page=100&start={filters.start}&end={filters.end}"
     if filters.uf:
         url += f"&uf={filters.uf}"
-    # if filters.geocode:
-    #     url += f"&geocode={filters.geocode}"
+    if filters.city:
+        geocode = get_municipality_code(filters.city, filters.uf)
+        url += f"&geocode={geocode}"
     return url
 
 def generate_api_mosquito_url(filters:filters.MosquitoFilters) -> str:

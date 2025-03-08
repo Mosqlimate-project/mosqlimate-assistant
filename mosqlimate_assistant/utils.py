@@ -1,6 +1,6 @@
-import json
 import Levenshtein
 import unidecode
+import json
 
 MUNICIPALITIES_PATH = "../data/municipios.json"
 
@@ -34,6 +34,27 @@ def read_municipalities() -> list[dict]:
     return municipalities
 
 def filter_by_uf(municipalities:list[dict], uf:str) -> list[dict]:
+    if uf.upper() not in VALID_UFS:
+        raise ValueError(f"UF inválida: {uf}")
+
     filtered = [m for m in municipalities if m["UF"] == uf.upper()]
     return filtered
 
+def get_municipality(name:str, uf:str|None = None) -> dict:
+    name = process_input(name)
+
+    municipalities = read_municipalities()
+    closest_match, closest_distance = get_closest_match(name, municipalities)
+    
+    if uf:
+        municipalities_filter = filter_by_uf(municipalities, uf)
+        closest_match_filter, closest_distance_filter = get_closest_match(name, municipalities_filter)
+    
+        if closest_match_filter["Code"] != closest_match["Code"] & closest_distance_filter <= closest_distance:
+            closest_match = closest_match_filter
+            closest_distance = closest_distance_filter
+            
+    if closest_distance > 3:
+        raise ValueError(f"Município não encontrado: {name}")
+    
+    return closest_match
