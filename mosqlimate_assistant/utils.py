@@ -1,8 +1,10 @@
 import Levenshtein
-import unidecode
 import json
+import os
 
+CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 MUNICIPALITIES_PATH = "../data/municipios.json"
+MUNICIPALITIES_PATH = os.path.join(CURRENT_PATH, MUNICIPALITIES_PATH)
 
 VALID_UFS = [
         "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG",
@@ -10,7 +12,6 @@ VALID_UFS = [
         ]
 
 def process_input(input_text:str) -> str:
-    input_text = unidecode.unidecode(input_text)
     input_text = input_text.lower()
     return input_text.strip()
 
