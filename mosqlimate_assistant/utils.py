@@ -46,7 +46,7 @@ def get_municipality(name:str, uf:str|None = None) -> dict:
     municipalities = read_municipalities()
     closest_match, closest_distance = get_closest_match(name, municipalities)
     
-    if uf:
+    if uf and closest_match["UF"] != uf.upper():
         municipalities_filter = filter_by_uf(municipalities, uf)
         closest_match_filter, closest_distance_filter = get_closest_match(name, municipalities_filter)
     

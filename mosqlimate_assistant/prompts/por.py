@@ -7,6 +7,8 @@ Seu dever é, a partir da pergunta do usuário fornecida em linguagem natural, e
 - Se o usuário fornecer o nome completo de um estado (ex.: "São Paulo"), converta para a sigla correspondente (ex.: "SP").
 - As datas devem ser retornadas no formato YYYY-MM-DD.
 - SE O USUÁRIO MENCIONAR UMA CIDADE, ADICIONE O ESTADO (UF).
+- SE O USUÁRIO MENCIONAR APENAS O ESTADO (UF), NÃO ADICIONE A CIDADE.
+- SE O USUÁRIO NÃO MENCIONAR NEM CIDADE, NEM ESTADO, NÃO ADICIONE NENHUM DOS DOIS.
 - Responda SOMENTE com um JSON válido contendo as chaves específicas para a tabela selecionada, sem comentários ou texto adicional.
 """
 
@@ -18,7 +20,7 @@ Esta tabela reúne informações sobre casos de dengue, zika e chikungunya regis
 
 | Nome do Parâmetro | Obrigatório | Tipo                | Descrição                                                  |
 |-------------------|-------------|---------------------|------------------------------------------------------------|
-| disease           | Sim         | str                 | Doença: 'dengue', 'zika', 'chik' ou 'chikungunya'          |
+| disease           | Sim         | str                 | Doença: 'dengue', 'zika' ou 'chikungunya'                  |
 | start             | Sim         | str *(YYYY-MM-DD)*  | Data de início (em formato YYYY-MM-DD)                     |
 | end               | Sim         | str *(YYYY-MM-DD)*  | Data de término (em formato YYYY-MM-DD)                    |
 | uf                | Não         | str *(UF)*          | Sigla do estado (ex.: SP)                                  |
@@ -38,7 +40,7 @@ Esta tabela contém séries temporais de dados climáticos para os municípios d
 ---
 
 ## Episcanner:
-Esta tabela apresenta dados sobre a expansão de epidemias de dengue, zika e chikungunya nos municípios do Brasil.
+Esta tabela apresenta dados sobre a expansão de epidemias de dengue, zika e chikungunya nos estados do Brasil.
 **USE ESTA TABELA APENAS QUANDO O USUÁRIO ESPECIFICAR DADOS EPIDÊMICOS**
 
 | Nome do Parâmetro | Obrigatório | Tipo       | Descrição                                                   |
