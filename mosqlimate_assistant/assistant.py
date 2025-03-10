@@ -5,6 +5,7 @@ from mosqlimate_assistant.prompts import por
 from mosqlimate_assistant import filters
 from mosqlimate_assistant import utils
 
+import mosqlient
 import requests
 import json
 
@@ -120,6 +121,36 @@ def generate_api_url(filters:filters.TableFilters) -> str:
         return generate_api_episcanner_url(filters)
     else:
         raise RuntimeError("Tabela não reconhecida")
+
+def generate_mosqlient_infodengue_code(filters:filters.InfodengueFilters) -> str:
+    BASE_CODE = f"""from mosqlient import get_infodengue
+
+# return a pd.DataFrame with the data 
+df = get_infodengue(
+    start_date='{filters.start}',
+    end_date='{filters.end}',
+    disease='{filters.disease}'\n"""
+    
+    if filters.uf:
+        BASE_CODE += f"    uf='{filters.uf}',\n"
+    
+    BASE_CODE += ")"
+    return BASE_CODE
+
+def generate_mosqlient_climate_code(filters:filters.ClimateFilters) -> str:
+    BASE_CODE = f"""from mosqlient import get_climate
+
+# return a pd.DataFrame with the data 
+df = get_climate(
+    start_date='{filters.start}',
+    end_date='{filters.end}'\n"""
+
+    if filters.city:
+        geocode = get_municipality_code(filters.city, filters.uf)
+        BASE_CODE += f"    geocode='{geocode}',\n"
+    
+    BASE_CODE += ")"
+    return BASE_CODE
 
 def make_query_and_get_url(prompt:str) -> str:
     output_json = query_llm(prompt)
