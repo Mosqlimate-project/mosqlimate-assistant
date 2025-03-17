@@ -11,6 +11,7 @@ dependencies = [
     "langchain-ollama>=0.2.3",
     "mosqlient>=1.7.3",
     "pydantic>=2.10.6",
+    "pytest>=8.3.5",
     "python-levenshtein>=0.27.1",
     "requests>=2.32.3",
     "typing>=3.10.0.0",
