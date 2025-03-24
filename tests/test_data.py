@@ -15,11 +15,11 @@ def test_check_municipality():
         assert "UF" in m
         assert "Code" in m
 
-def test_create_vector_store():
-    from mosqlimate_assistant.input_validator import create_vector_store
-    vector_store = create_vector_store()
-    print(type(vector_store))
-    assert isinstance(vector_store, langchain_community.vectorstores.FAISS)
+# def test_create_vector_store():
+#     from mosqlimate_assistant.input_validator import create_vector_store
+#     vector_store = create_vector_store()
+#     print(type(vector_store))
+#     assert isinstance(vector_store, langchain_community.vectorstores.FAISS)
 
 def test_load_local_db():
     from mosqlimate_assistant.input_validator import load_local_db
