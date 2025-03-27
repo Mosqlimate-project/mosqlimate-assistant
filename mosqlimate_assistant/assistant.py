@@ -4,6 +4,7 @@ from langchain.prompts import PromptTemplate, FewShotPromptTemplate
 from mosqlimate_assistant.prompts import por
 from mosqlimate_assistant import filters
 from mosqlimate_assistant import utils
+from mosqlimate_assistant.configs import API_KEY
 
 import mosqlient
 import requests
@@ -11,7 +12,6 @@ import json
 
 # A ser substituido no futuro
 modelo = OllamaLLM(model="llama3.1:latest", device='cuda')
-
 BASE_URL_API = "https://api.mosqlimate.org/api/datastore/"
 
 def make_query(user_input:str) -> str:

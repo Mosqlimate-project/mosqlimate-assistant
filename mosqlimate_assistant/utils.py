@@ -1,9 +1,11 @@
+from mosqlimate_assistant.configs import DATABASE_PATH
 import Levenshtein
 import json
 import os
 
 CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
-MUNICIPALITIES_PATH = "../data/municipios.json"
+
+MUNICIPALITIES_PATH = os.path.join(DATABASE_PATH,"municipios.json")
 MUNICIPALITIES_PATH = os.path.join(CURRENT_PATH, MUNICIPALITIES_PATH)
 
 VALID_UFS = [

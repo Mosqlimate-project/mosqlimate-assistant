@@ -2,13 +2,17 @@ from langchain_community.docstore.in_memory import InMemoryDocstore
 from langchain_community.vectorstores import FAISS
 from langchain_ollama import OllamaEmbeddings
 from langchain_core.documents import Document
+
+from mosqlimate_assistant.configs import DATABASE_PATH, EMBEDDING_MODEL
+
 import pandas as pd
 import os
 import faiss
 
-EMBEDDING_MODEL = "mxbai-embed-large:latest"
-FILE_PATH = os.path.dirname(__file__)
-ASKS_PATH = os.path.join(FILE_PATH, "../data/asks.csv")
+CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
+
+ASKS_PATH = os.path.join(DATABASE_PATH, "asks.csv")
+ASKS_PATH = os.path.join(CURRENT_PATH, ASKS_PATH)
 
 def create_vector_store(EMBEDDING_MODEL:str=EMBEDDING_MODEL) -> FAISS:
     embedding = OllamaEmbeddings(model=EMBEDDING_MODEL)
