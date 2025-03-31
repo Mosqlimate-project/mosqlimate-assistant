@@ -64,6 +64,17 @@ def get_municipality(name:str, uf:str|None = None) -> dict:
     
     return closest_match
 
+def save_logs(logs:list[str], save_path:str='') -> None:
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+    
+    save_file = os.path.join(save_path, "prompt_logs.txt")
+    with open(save_file, "a") as file:
+        for log in logs:
+            file.write(log)
+            file.write("\n")
+        file.write("\n\n")
+
 def get_mosqlimate_api_docs() -> dict:
     import requests
     response = requests.get(MOSQLIMATE_API_DOCS)

@@ -52,10 +52,14 @@ def clean_output(output:str) -> dict:
     except Exception as e:
         raise RuntimeError(f"Erro ao converter o output em json: {e}")
 
-def query_llm(prompt:str) -> dict:
+def query_llm(prompt:str, save_logs:bool=False, save_path:str='') -> dict:
     full_query = make_query(prompt)
     try:
         output = modelo.invoke(full_query)
+
+        if save_logs:
+            utils.save_logs(["User: " + prompt, "Output:\n" + output], save_path)
+
         return clean_output(output)
     except Exception as e:
         raise RuntimeError(f"Erro ao chamar o Ollama: {e}")
@@ -152,8 +156,8 @@ df = get_climate(
     BASE_CODE += ")"
     return BASE_CODE
 
-def make_query_and_get_url(prompt:str) -> str:
-    output_json = query_llm(prompt)
+def make_query_and_get_url(prompt:str, save_logs:bool=False, save_path:str='') -> str:
+    output_json = query_llm(prompt, save_logs, save_path)
     table_filters = get_table_filters(output_json)
     return generate_api_url(table_filters)
 
