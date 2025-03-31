@@ -13,6 +13,8 @@ VALID_UFS = [
         "PA", "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO"
         ]
 
+MOSQLIMATE_API_DOCS = "https://api.mosqlimate.org/api/openapi.json"
+
 def process_input(input_text:str) -> str:
     input_text = input_text.lower()
     return input_text.strip()
@@ -61,3 +63,11 @@ def get_municipality(name:str, uf:str|None = None) -> dict:
         raise ValueError(f"Município não encontrado: {name}")
     
     return closest_match
+
+def get_mosqlimate_api_docs() -> dict:
+    import requests
+    response = requests.get(MOSQLIMATE_API_DOCS)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise RuntimeError(f"Erro ao obter a documentação da API: {response.status_code}")
