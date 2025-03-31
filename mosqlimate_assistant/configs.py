@@ -5,7 +5,7 @@ CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
 DOTENV_PATH = os.path.join(CURRENT_PATH, ".env")
 load_dotenv(DOTENV_PATH)
 
-DEFAULT_API_KEY = ""
+DEFAULT_API_KEY = "sk-"
 DEFAULT_DATABASE_PATH = "../data"
 DEFAULT_EMBEDDING_MODEL = "mxbai-embed-large:latest"
 
