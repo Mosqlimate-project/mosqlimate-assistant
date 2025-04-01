@@ -6,12 +6,14 @@ from mosqlimate_assistant import filters
 from mosqlimate_assistant import utils
 from mosqlimate_assistant.configs import API_KEY
 
-import mosqlient
 import requests
+from openai import OpenAI
 import json
 
 # A ser substituido no futuro
-modelo = OllamaLLM(model="llama3.1:latest", device='cuda')
+# modelo = OllamaLLM(model="llama3.1:latest", device='cuda')
+modelo = OpenAI(api_key=API_KEY, base_url="https://api.deepseek.com")
+
 BASE_URL_API = "https://api.mosqlimate.org/api/datastore/"
 
 def make_query(user_input:str) -> str:
@@ -52,15 +54,23 @@ def clean_output(output:str) -> dict:
     except Exception as e:
         raise RuntimeError(f"Erro ao converter o output em json: {e}")
 
-def query_llm(prompt:str, save_logs:bool=False, save_path:str='') -> dict:
-    full_query = make_query(prompt)
+def query_llm(prompt:str, save_logs:bool=False, save_path:str='.') -> dict:
+    full_query = make_query('')
     try:
-        output = modelo.invoke(full_query)
-
+        # output = modelo.invoke(full_query)
+        output = modelo.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {"role": "system", "content": full_query},
+                {"role": "user", "content": prompt}
+            ],
+            stream=False,
+        ).choices[0].message
+        
         if save_logs:
-            utils.save_logs(["User: " + prompt, "Output:\n" + output], save_path)
-
-        return clean_output(output)
+            utils.save_logs(["user: " + str(prompt), "assistant:\n" + str(output)], save_path)
+            
+        return clean_output(output.content)
     except Exception as e:
         raise RuntimeError(f"Erro ao chamar o Ollama: {e}")
     
@@ -156,7 +166,7 @@ df = get_climate(
     BASE_CODE += ")"
     return BASE_CODE
 
-def make_query_and_get_url(prompt:str, save_logs:bool=False, save_path:str='') -> str:
+def make_query_and_get_url(prompt:str, save_logs:bool=False, save_path:str='.') -> str:
     output_json = query_llm(prompt, save_logs, save_path)
     table_filters = get_table_filters(output_json)
     return generate_api_url(table_filters)

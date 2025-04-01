@@ -64,7 +64,7 @@ def get_municipality(name:str, uf:str|None = None) -> dict:
     
     return closest_match
 
-def save_logs(logs:list[str], save_path:str='') -> None:
+def save_logs(logs:list[str], save_path:str='.') -> None:
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     

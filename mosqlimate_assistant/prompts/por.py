@@ -45,7 +45,7 @@ Esta tabela apresenta dados sobre a expansão de epidemias de dengue, zika e chi
 
 | Nome do Parâmetro | Obrigatório | Tipo       | Descrição                                                   |
 |-------------------|-------------|------------|-------------------------------------------------------------|
-| disease           | Sim         | str        | Doença específica: 'dengue', 'zika' ou 'chik'               |
+| disease           | Sim         | str        | Doença específica: 'dengue', 'zika' ou 'chikungunya'               |
 | uf                | Sim         | str *(UF)* | Sigla do estado (ex.: SP)                                   |
 | year              | Não         | int        | Ano específico (padrão: ano corrente)                       |
 
