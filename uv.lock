@@ -791,7 +791,6 @@ dependencies = [
     { name = "pydantic" },
     { name = "python-levenshtein" },
     { name = "requests" },
-    { name = "typing" },
 ]
 
 [package.dev-dependencies]
@@ -815,7 +814,6 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.10.6" },
     { name = "python-levenshtein", specifier = ">=0.27.1" },
     { name = "requests", specifier = ">=2.32.3" },
-    { name = "typing", specifier = ">=3.10.0.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -1650,15 +1648,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/00/7d/eb174f74e3f5634eaacb38031bbe467dfe2e545bc255e5c90096ec46bc46/types_requests-2.32.0.20250328.tar.gz", hash = "sha256:c9e67228ea103bd811c96984fac36ed2ae8da87a36a633964a21f199d60baf32", size = 22995, upload_time = "2025-03-28T02:55:13.271Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cc/15/3700282a9d4ea3b37044264d3e4d1b1f0095a4ebf860a99914fd544e3be3/types_requests-2.32.0.20250328-py3-none-any.whl", hash = "sha256:72ff80f84b15eb3aa7a8e2625fffb6a93f2ad5a0c20215fc1dcfa61117bcb2a2", size = 20663, upload_time = "2025-03-28T02:55:11.946Z" },
-]
-
-[[package]]
-name = "typing"
-version = "3.10.0.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/b0/1b/835d4431805939d2996f8772aca1d2313a57e8860fec0e48e8e7dfe3a477/typing-3.10.0.0.tar.gz", hash = "sha256:13b4ad211f54ddbf93e5901a9967b1e07720c1d1b78d596ac6a439641aa1b130", size = 78962, upload_time = "2021-05-01T18:03:58.186Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/f2/5d/865e17349564eb1772688d8afc5e3081a5964c640d64d1d2880ebaed002d/typing-3.10.0.0-py3-none-any.whl", hash = "sha256:12fbdfbe7d6cca1a42e485229afcb0b0c8259258cfb919b8a5e2a5c953742f89", size = 26320, upload_time = "2021-05-01T18:03:56.398Z" },
 ]
 
 [[package]]
