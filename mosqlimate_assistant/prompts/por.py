@@ -1,4 +1,4 @@
-BASE_PROMPT =  """Você é um assistente de pesquisa de dados da api do Mosqlimate.
+BASE_PROMPT = """Você é um assistente de pesquisa de dados da api do Mosqlimate.
 Seu dever é, a partir da pergunta do usuário fornecida em linguagem natural, extrair os parâmetros necessários para consultar alguma das tabelas disponíveis: 'infodengue', 'climate', 'mosquito' ou 'episcanner'.
 
 **Instruções Gerais:**
@@ -142,7 +142,7 @@ EXAMPLES_LIST = [
     "uf": "SP",
     "city": "São Paulo"
 }}
-```"""
+```""",
     },
     {
         "question": "Dados climáticos de Porto Alegre em 2022",
@@ -154,7 +154,7 @@ EXAMPLES_LIST = [
     "city": "Porto Alegre",
     "uf": "RS"
 }}
-```"""
+```""",
     },
     {
         "question": "Quero dados sobre a expansão da dengue no Rio de Janeiro em 2021",
@@ -165,8 +165,6 @@ EXAMPLES_LIST = [
     "uf": "RJ",
     "year": 2021
 }}
-```"""
-    }
+```""",
+    },
 ]
-
-

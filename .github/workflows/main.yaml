@@ -16,13 +16,13 @@ jobs:
         python-version: ["3.11"]
     steps:
       - uses: actions/checkout@v4
-      
+
       # - name: Install ollama
       #   run: curl -fsSL https://ollama.com/install.sh | sh
 
       # - name: Install embedding model
       #   run: ollama pull mxbai-embed-large:latest
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
 
