@@ -3,7 +3,7 @@ name = "mosqlimate-assistant"
 version = "0.1.0"  # changed by semantic-release
 description = "Add your description here"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.13"
 dependencies = [
     "faiss-cpu>=1.10.0",
     "langchain>=0.3.20",
