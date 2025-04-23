@@ -1,0 +1,44 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.0.1
+  hooks:
+  - id: check-added-large-files
+  - id: check-toml
+  - id: check-yaml
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+
+- repo: local
+  hooks:
+  - id: black
+    name: black
+    entry: black
+    language: system
+    types: [python]
+    args: ['--line-length=79']
+    pass_filenames: true
+    stages: [push,commit]
+
+  - id: isort
+    name: isort
+    entry: isort
+    language: system
+    types: [python]
+    pass_filenames: true
+    stages: [push,commit]
+
+  - id: ruff
+    name: ruff
+    entry: ruff check
+    language: system
+    types: [python]
+    pass_filenames: true
+    stages: [push,commit]
+
+  - id: mypy
+    name: mypy
+    entry: uv run mypy
+    language: system
+    types: [python]
+    pass_filenames: true
+    stages: [push,commit]

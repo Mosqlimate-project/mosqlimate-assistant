@@ -10,11 +10,21 @@ dependencies = [
     "langchain-community>=0.3.19",
     "langchain-ollama>=0.2.3",
     "mosqlient>=1.7.3",
-    "openai>=1.69.0",
     "pydantic>=2.10.6",
-    "pytest>=8.3.5",
-    "python-dotenv>=1.0.1",
     "python-levenshtein>=0.27.1",
     "requests>=2.32.3",
     "typing>=3.10.0.0",
+]
+
+[tool.setuptools]
+packages = ["mosqlimate_assistant"]
+
+[dependency-groups]
+dev = [
+    "black>=25.1.0",
+    "isort>=6.0.1",
+    "mypy>=1.15.0",
+    "pre-commit>=4.2.0",
+    "pytest>=8.3.5",
+    "ruff>=0.11.6",
 ]
