@@ -30,7 +30,9 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Linting
-        run: uv run pre-commit run --all-files
+        run: |
+          uv pip install pandas-stubs
+          uv run pre-commit run --all-files
 
       - name: Run tests
         run: uv run pytest tests
