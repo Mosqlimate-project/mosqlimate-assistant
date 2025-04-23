@@ -1,6 +1,9 @@
 from .assistant import *
-from .prompts import por, eng
 from .filters import *
-from .utils import *
 from .input_validator import *
+<<<<<<< HEAD
 from .configs import *
+=======
+from .prompts import eng, por
+from .utils import *
+>>>>>>> 3659591 (feat(package): improve repo structure, include linters and semantic-release)

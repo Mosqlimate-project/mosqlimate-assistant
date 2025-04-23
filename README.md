@@ -50,4 +50,3 @@ On mosqlimate api documentation, we have the following [description](https://api
 | disease      | yes      | str        | Specific disease. Options: dengue, zika, chik |
 | uf          | yes      | str *(UF)* | Two-letter Brazilian state abbreviation. E.g.: SP |
 | year        | no       | int        | Specific year. Default: current year |
-
