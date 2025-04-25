@@ -1,4 +1,5 @@
 import os
+from typing import Dict
 
 import faiss  # type: ignore
 import pandas as pd  # type: ignore
@@ -31,21 +32,21 @@ def create_vector_store(EMBEDDING_MODEL: str = EMBEDDING_MODEL) -> FAISS:
     return vector_store
 
 
-def load_asks(ASKS_PATH: str = ASKS_PATH) -> dict[int, Document]:
-    asks = pd.read_csv(ASKS_PATH)
-    processed_asks = dict()
-    for index, row in asks.iterrows():
+def load_asks(ASKS_PATH: str = ASKS_PATH) -> Dict[int, Document]:
+    processed_asks: Dict[int, Document] = dict()
+    asks_df = pd.read_csv(ASKS_PATH)
+    for index, row in asks_df.iterrows():
         ask = Document(
-            id=index,
+            id=str(index),
             page_content=row["Pergunta"],
             metadata={"table": row["Tabela"]},
         )
-        processed_asks[index] = ask
+        processed_asks[int(str(index))] = ask
     return processed_asks
 
 
 def save_asks_local_db(
-    vector_db: FAISS, asks: dict[int, Document], output_path: str
+    vector_db: FAISS, asks: Dict[int, Document], output_path: str
 ) -> None:
     vector_db.add_documents(
         documents=list(asks.values()), ids=list(asks.keys())
