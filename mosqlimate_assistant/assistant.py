@@ -1,4 +1,5 @@
 import json
+from typing import Optional, Union
 
 import requests
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
@@ -37,7 +38,9 @@ def make_query(user_input: str) -> str:
     return full_query
 
 
-def clean_output(output: str) -> dict:
+def clean_output(output: Optional[str]) -> dict:
+    if output is None:
+        raise RuntimeError("Erro ao limpar output: output é None")
     if "```json" in output:
         output = output[output.find("```json") + 7 :]
     elif "</think>" in output:
@@ -84,7 +87,7 @@ def query_llm(
         raise RuntimeError(f"Erro ao chamar o Ollama: {e}")
 
 
-def get_municipality_code(municipality: str, uf: str) -> str:
+def get_municipality_code(municipality: str, uf: Optional[str]) -> str:
     try:
         municipality_code = utils.get_municipality(municipality, uf)
         return municipality_code["Code"]
@@ -92,7 +95,15 @@ def get_municipality_code(municipality: str, uf: str) -> str:
         raise RuntimeError(f"Erro ao obter o código do município: {e}")
 
 
-def get_table_filters(output_json: dict) -> filters.TableFilters:
+def get_table_filters(
+    output_json: dict,
+) -> Union[
+    filters.InfodengueFilters,
+    filters.ClimateFilters,
+    filters.MosquitoFilters,
+    filters.EpiscannerFilters,
+    filters.TableFilters,
+]:
     try:
         output_data = filters.TableFilters(**output_json)
 
@@ -104,7 +115,7 @@ def get_table_filters(output_json: dict) -> filters.TableFilters:
             return filters.MosquitoFilters(**output_json)
         elif output_data.table == "episcanner":
             return filters.EpiscannerFilters(**output_json)
-
+        return output_data
     except Exception as e:
         raise RuntimeError(f"Erro ao converter o output em json: {e}")
 
@@ -140,15 +151,40 @@ def generate_api_episcanner_url(filters: filters.EpiscannerFilters) -> str:
     return url
 
 
-def generate_api_url(filters: filters.TableFilters) -> str:
-    if filters.table == "infodengue":
-        return generate_api_infodengue_url(filters)
-    elif filters.table == "climate":
-        return generate_api_climate_url(filters)
-    elif filters.table == "mosquito":
-        return generate_api_mosquito_url(filters)
-    elif filters.table == "episcanner":
-        return generate_api_episcanner_url(filters)
+def generate_api_url(
+    filters_obj: Union[
+        filters.InfodengueFilters,
+        filters.ClimateFilters,
+        filters.MosquitoFilters,
+        filters.EpiscannerFilters,
+        filters.TableFilters,
+    ],
+) -> str:
+    if isinstance(filters_obj, filters.InfodengueFilters):
+        return generate_api_infodengue_url(filters_obj)
+    elif isinstance(filters_obj, filters.ClimateFilters):
+        return generate_api_climate_url(filters_obj)
+    elif isinstance(filters_obj, filters.MosquitoFilters):
+        return generate_api_mosquito_url(filters_obj)
+    elif isinstance(filters_obj, filters.EpiscannerFilters):
+        return generate_api_episcanner_url(filters_obj)
+
+    if filters_obj.table == "infodengue":
+        return generate_api_infodengue_url(
+            filters.InfodengueFilters(**filters_obj.model_dump())
+        )
+    elif filters_obj.table == "climate":
+        return generate_api_climate_url(
+            filters.ClimateFilters(**filters_obj.model_dump())
+        )
+    elif filters_obj.table == "mosquito":
+        return generate_api_mosquito_url(
+            filters.MosquitoFilters(**filters_obj.model_dump())
+        )
+    elif filters_obj.table == "episcanner":
+        return generate_api_episcanner_url(
+            filters.EpiscannerFilters(**filters_obj.model_dump())
+        )
     else:
         raise RuntimeError("Tabela não reconhecida")
 
@@ -195,7 +231,7 @@ def make_query_and_get_url(
     return generate_api_url(table_filters)
 
 
-def check_api_response(url: str) -> dict:
+def check_api_response(url: str) -> int:
     try:
         response = requests.get(url)
         response.raise_for_status()
