@@ -2,7 +2,6 @@ import json
 
 import requests
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
-from langchain_ollama import OllamaLLM
 from openai import OpenAI
 
 from mosqlimate_assistant import filters, utils

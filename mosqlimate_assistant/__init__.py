@@ -1,12 +1,8 @@
 from importlib import metadata as importlib_metadata
 from typing import List
 
-from .assistant import *
-from .configs import *
-from .filters import *
-from .input_validator import *
+from . import assistant, configs, filters, input_validator, utils
 from .prompts import eng, por
-from .utils import *
 
 
 def get_version() -> str:
@@ -18,4 +14,12 @@ def get_version() -> str:
 
 version: str = get_version()
 __version__: str = version
-__all__: List[str] = []  # noqa: WPS410 (the only __variable__ we use)
+__all__: List[str] = [
+    "assistant",
+    "configs",
+    "filters",
+    "input_validator",
+    "eng",
+    "por",
+    "utils",
+]  # noqa: WPS410 (the only __variable__ we use)
