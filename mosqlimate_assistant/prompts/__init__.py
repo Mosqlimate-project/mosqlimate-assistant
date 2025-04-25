@@ -1,2 +1,6 @@
-from .eng import *
-from .por import *
+from . import eng, por
+
+__all__ = [
+    "eng",
+    "por",
+]

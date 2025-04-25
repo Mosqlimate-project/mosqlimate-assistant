@@ -1,7 +1,4 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
-name: Python package
+name: Release
 
 on:
   push:
@@ -11,26 +8,58 @@ on:
 
 jobs:
   build:
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.11"]
+    defaults:
+      run:
+        shell: bash -l {0}
+
     steps:
       - uses: actions/checkout@v4
-      
-      # - name: Install ollama
-      #   run: curl -fsSL https://ollama.com/install.sh | sh
+        with:
+          fetch-depth: 0
 
-      # - name: Install embedding model
-      #   run: ollama pull mxbai-embed-large:latest
-      
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20.11.0
 
-      - name: Install the project
-        run: uv sync --all-extras --dev
+      - name: Validate PR commits with commitlint
+        if: github.event_name == 'pull_request'
+        run: |
+          npm install --no-save @commitlint/config-conventional &&
+          npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
-      - name: Run tests
-        run: uv run pytest tests
+      - name: Run semantic release (for tests)
+        if: ${{ github.event_name != 'workflow_dispatch' }}
+        run: |
+          npx --yes \
+          -p semantic-release \
+          -p "@semantic-release/commit-analyzer" \
+          -p "@semantic-release/release-notes-generator" \
+          -p "@semantic-release/changelog" \
+          -p "@semantic-release/exec" \
+          -p "@semantic-release/github" \
+          -p "@semantic-release/git" \
+          -p "semantic-release-replace-plugin@1.2.7" \
+          semantic-release --dry-run
+
+      - name: Run semantic release
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          npx --yes \
+          -p semantic-release \
+          -p "@semantic-release/commit-analyzer" \
+          -p "@semantic-release/release-notes-generator" \
+          -p "@semantic-release/changelog" \
+          -p "@semantic-release/exec" \
+          -p "@semantic-release/github" \
+          -p "@semantic-release/git" \
+          -p "semantic-release-replace-plugin@1.2.7" \
+          semantic-release --ci --debug

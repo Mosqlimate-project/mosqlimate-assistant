@@ -1,2 +1,6 @@
-from .test_data import *
-from .test_levenshtein import *
+from . import test_data, test_levenshtein
+
+__all__ = [
+    "test_data",
+    "test_levenshtein",
+]
