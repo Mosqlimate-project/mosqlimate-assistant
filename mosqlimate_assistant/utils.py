@@ -48,8 +48,10 @@ def process_input(input_text: str) -> str:
     return input_text.strip()
 
 
-def get_closest_match(input_text: str, options: list[dict]) -> str:
-    closest_match = None
+def get_closest_match(
+    input_text: str, options: list[dict]
+) -> tuple[dict, float]:
+    closest_match = {"Municipality": "", "UF": "", "Code": ""}
     closest_distance = float("inf")
     for option in options:
         distance = Levenshtein.distance(input_text, option["Municipality"])
