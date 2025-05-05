@@ -1,17 +1,18 @@
 import json
-import os
-
-import Levenshtein
 from typing import Optional
 
-from mosqlimate_assistant.settings import DATABASE_PATH, VALID_UFS, MUNICIPALITIES_PATH
+import Levenshtein
+
+from mosqlimate_assistant.settings import MUNICIPALITIES_PATH, VALID_UFS
 
 
 def process_input(text: str) -> str:
     return text.lower().strip()
 
 
-def get_closest_match(input_text: str, options: list[dict]) -> tuple[dict, float]:
+def get_closest_match(
+    input_text: str, options: list[dict]
+) -> tuple[dict, float]:
     closest_match = {"Municipality": "", "UF": "", "Code": ""}
     closest_distance = float("inf")
     for option in options:

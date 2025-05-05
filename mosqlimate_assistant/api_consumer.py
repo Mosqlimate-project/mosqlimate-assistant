@@ -1,5 +1,6 @@
-import requests
 from typing import Union
+
+import requests
 
 from mosqlimate_assistant import schemas
 from mosqlimate_assistant.muni_codes import get_municipality_code

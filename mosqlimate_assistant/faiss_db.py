@@ -1,4 +1,3 @@
-import os
 from typing import Dict
 
 import faiss  # type: ignore
@@ -43,11 +42,15 @@ def load_asks(asks_path: str = ASKS_PATH) -> Dict[int, Document]:
 def save_asks_local_db(
     vector_db: FAISS, asks: Dict[int, Document], output_path: str
 ) -> None:
-    vector_db.add_documents(documents=list(asks.values()), ids=list(asks.keys()))
+    vector_db.add_documents(
+        documents=list(asks.values()), ids=list(asks.keys())
+    )
     vector_db.save_local(output_path)
 
 
-def load_local_db(db_path: str, embedding_model: str = EMBEDDING_MODEL) -> FAISS:
+def load_local_db(
+    db_path: str, embedding_model: str = EMBEDDING_MODEL
+) -> FAISS:
     embedding = OllamaEmbeddings(model=embedding_model)
 
     vector_store = FAISS.load_local(
