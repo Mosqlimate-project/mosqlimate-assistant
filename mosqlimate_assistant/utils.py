@@ -1,3 +1,4 @@
+import json
 import os
 
 from mosqlimate_assistant.settings import MOSQLIMATE_API_DOCS
@@ -25,3 +26,11 @@ def get_mosqlimate_api_docs() -> dict:
         raise RuntimeError(
             f"Erro ao obter a documentação da API: {response.status_code}"
         )
+
+
+def format_answer(answer: str) -> str:
+    ans_dict = json.loads(answer)
+    answer = "```json\n"
+    answer += json.dumps(ans_dict, indent=2) + "\n```"
+
+    return answer

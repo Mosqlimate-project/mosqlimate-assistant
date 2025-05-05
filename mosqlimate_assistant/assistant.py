@@ -4,7 +4,7 @@ from typing import Optional, Union
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from openai import OpenAI
 
-from mosqlimate_assistant import schemas, utils
+from mosqlimate_assistant import faiss_db, schemas, utils
 from mosqlimate_assistant.api_consumer import generate_api_url
 from mosqlimate_assistant.muni_codes import get_municipality_code
 from mosqlimate_assistant.prompts import por
@@ -22,7 +22,9 @@ def get_model():
     return OpenAI(api_key=API_KEY, base_url=DEEPSEEK_API_URL)
 
 
-def make_query(user_input: str) -> str:
+def make_query(
+    user_input: str, examples_list: list[dict[str, str]] = por.EXAMPLES_LIST
+) -> str:
     example_template = """Exemplo:\nPergunta: {question}\nResposta: {answer}"""
 
     prefix = f"""{por.BASE_PROMPT}\n{por.TABLE_PROMPT}\n{por.UF_PROMPT}"""
@@ -30,7 +32,7 @@ def make_query(user_input: str) -> str:
     suffix = """Agora, responda à seguinte pergunta: {user_question}\n"""
 
     few_shot_prompt = FewShotPromptTemplate(
-        examples=por.EXAMPLES_LIST,
+        examples=examples_list,
         example_prompt=PromptTemplate(
             input_variables=["question", "answer"], template=example_template
         ),
@@ -64,9 +66,12 @@ def clean_output(output: Optional[str]) -> dict:
 
 
 def query_llm(
-    prompt: str, save_logs: bool = False, save_path: str = "."
+    prompt: str,
+    examples_list: list[dict[str, str]] = por.EXAMPLES_LIST,
+    save_logs: bool = False,
+    save_path: str = ".",
 ) -> dict:
-    full_query = make_query(prompt)
+    full_query = make_query(prompt, examples_list=examples_list)
     try:
         modelo = get_model()
         output = (
@@ -152,9 +157,38 @@ df = get_climate(
     return BASE_CODE
 
 
+def get_relevant_sample_asks(
+    prompt: str, k: int = 3
+) -> tuple[list[dict[str, str]], float]:
+    """
+    Retorna uma lista de exemplos relevantes para a pergunta do usuário.
+    """
+    vector_db = faiss_db.get_or_create_vector_db()
+    docs = vector_db.similarity_search_with_score(prompt, k=k)
+
+    samples = [
+        {
+            "question": doc[0].page_content,
+            "answer": utils.format_answer(doc[0].metadata["output"]),
+        }
+        for doc in docs
+    ]
+
+    return samples, float(docs[0][1])
+
+
 def make_query_and_get_url(
-    prompt: str, save_logs: bool = False, save_path: str = "."
+    prompt: str,
+    threshold: float = 0.8,
+    save_logs: bool = False,
+    save_path: str = ".",
 ) -> str:
-    output_json = query_llm(prompt, save_logs, save_path)
+    relevant_samples = get_relevant_sample_asks(prompt)
+    if relevant_samples[1] < threshold:
+        raise RuntimeError(
+            f"Não foi possível encontrar exemplos relevantes para a pergunta: {prompt}"
+        )
+
+    output_json = query_llm(prompt, relevant_samples[0], save_logs, save_path)
     table_filters = get_table_filters(output_json)
     return generate_api_url(table_filters)
