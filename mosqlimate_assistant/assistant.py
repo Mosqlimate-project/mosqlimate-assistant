@@ -1,19 +1,25 @@
 import json
 from typing import Optional, Union
 
-import requests
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from openai import OpenAI
 
-from mosqlimate_assistant import filters, utils
-from mosqlimate_assistant.configs import API_KEY
+from mosqlimate_assistant import schemas, utils
+from mosqlimate_assistant.api_consumer import generate_api_url
+from mosqlimate_assistant.muni_codes import get_municipality_code
 from mosqlimate_assistant.prompts import por
+from mosqlimate_assistant.settings import (
+    API_KEY,
+    DEEPSEEK_API_URL,
+    DEEPSEEK_MODEL,
+)
 
-# A ser substituido no futuro
-# modelo = OllamaLLM(model="llama3.1:latest", device='cuda')
-modelo = OpenAI(api_key=API_KEY, base_url="https://api.deepseek.com")
 
-BASE_URL_API = "https://api.mosqlimate.org/api/datastore/"
+def get_model():
+    """
+    Inicializa e retorna o modelo de LLM a ser utilizado.
+    """
+    return OpenAI(api_key=API_KEY, base_url=DEEPSEEK_API_URL)
 
 
 def make_query(user_input: str) -> str:
@@ -60,12 +66,12 @@ def clean_output(output: Optional[str]) -> dict:
 def query_llm(
     prompt: str, save_logs: bool = False, save_path: str = "."
 ) -> dict:
-    full_query = make_query("")
+    full_query = make_query(prompt)
     try:
-        # output = modelo.invoke(full_query)
+        modelo = get_model()
         output = (
             modelo.chat.completions.create(
-                model="deepseek-chat",
+                model=DEEPSEEK_MODEL,
                 messages=[
                     {"role": "system", "content": full_query},
                     {"role": "user", "content": prompt},
@@ -84,113 +90,36 @@ def query_llm(
 
         return clean_output(output.content)
     except Exception as e:
-        raise RuntimeError(f"Erro ao chamar o Ollama: {e}")
-
-
-def get_municipality_code(municipality: str, uf: Optional[str]) -> str:
-    try:
-        municipality_code = utils.get_municipality(municipality, uf)
-        return municipality_code["Code"]
-    except Exception as e:
-        raise RuntimeError(f"Erro ao obter o código do município: {e}")
+        raise RuntimeError(f"Erro ao chamar o modelo: {e}")
 
 
 def get_table_filters(
     output_json: dict,
 ) -> Union[
-    filters.InfodengueFilters,
-    filters.ClimateFilters,
-    filters.MosquitoFilters,
-    filters.EpiscannerFilters,
-    filters.TableFilters,
+    schemas.InfodengueFilters,
+    schemas.ClimateFilters,
+    schemas.MosquitoFilters,
+    schemas.EpiscannerFilters,
+    schemas.TableFilters,
 ]:
     try:
-        output_data = filters.TableFilters(**output_json)
+        output_data = schemas.TableFilters(**output_json)
 
         if output_data.table == "infodengue":
-            return filters.InfodengueFilters(**output_json)
+            return schemas.InfodengueFilters(**output_json)
         elif output_data.table == "climate":
-            return filters.ClimateFilters(**output_json)
+            return schemas.ClimateFilters(**output_json)
         elif output_data.table == "mosquito":
-            return filters.MosquitoFilters(**output_json)
+            return schemas.MosquitoFilters(**output_json)
         elif output_data.table == "episcanner":
-            return filters.EpiscannerFilters(**output_json)
+            return schemas.EpiscannerFilters(**output_json)
         return output_data
     except Exception as e:
         raise RuntimeError(f"Erro ao converter o output em json: {e}")
 
 
-def generate_api_infodengue_url(filters: filters.InfodengueFilters) -> str:
-    url = f"{BASE_URL_API}infodengue?page=1&per_page=100&disease={filters.disease}&start={filters.start}&end={filters.end}"
-    if filters.uf:
-        url += f"&uf={filters.uf}"
-    if filters.city:
-        geocode = get_municipality_code(filters.city, filters.uf)
-        url += f"&geocode={geocode}"
-    return url
-
-
-def generate_api_climate_url(filters: filters.ClimateFilters) -> str:
-    url = f"{BASE_URL_API}climate?page=1&per_page=100&start={filters.start}&end={filters.end}"
-    if filters.uf:
-        url += f"&uf={filters.uf}"
-    if filters.city:
-        geocode = get_municipality_code(filters.city, filters.uf)
-        url += f"&geocode={geocode}"
-    return url
-
-
-def generate_api_mosquito_url(filters: filters.MosquitoFilters) -> str:
-    return f"{BASE_URL_API}mosquito?page=1&key={filters.key}"
-
-
-def generate_api_episcanner_url(filters: filters.EpiscannerFilters) -> str:
-    url = f"{BASE_URL_API}episcanner?disease={filters.disease}&uf={filters.uf}"
-    if filters.year:
-        url += f"&year={filters.year}"
-    return url
-
-
-def generate_api_url(
-    filters_obj: Union[
-        filters.InfodengueFilters,
-        filters.ClimateFilters,
-        filters.MosquitoFilters,
-        filters.EpiscannerFilters,
-        filters.TableFilters,
-    ],
-) -> str:
-    if isinstance(filters_obj, filters.InfodengueFilters):
-        return generate_api_infodengue_url(filters_obj)
-    elif isinstance(filters_obj, filters.ClimateFilters):
-        return generate_api_climate_url(filters_obj)
-    elif isinstance(filters_obj, filters.MosquitoFilters):
-        return generate_api_mosquito_url(filters_obj)
-    elif isinstance(filters_obj, filters.EpiscannerFilters):
-        return generate_api_episcanner_url(filters_obj)
-
-    if filters_obj.table == "infodengue":
-        return generate_api_infodengue_url(
-            filters.InfodengueFilters(**filters_obj.model_dump())
-        )
-    elif filters_obj.table == "climate":
-        return generate_api_climate_url(
-            filters.ClimateFilters(**filters_obj.model_dump())
-        )
-    elif filters_obj.table == "mosquito":
-        return generate_api_mosquito_url(
-            filters.MosquitoFilters(**filters_obj.model_dump())
-        )
-    elif filters_obj.table == "episcanner":
-        return generate_api_episcanner_url(
-            filters.EpiscannerFilters(**filters_obj.model_dump())
-        )
-    else:
-        raise RuntimeError("Tabela não reconhecida")
-
-
 def generate_mosqlient_infodengue_code(
-    filters: filters.InfodengueFilters,
+    filters: schemas.InfodengueFilters,
 ) -> str:
     BASE_CODE = f"""from mosqlient import get_infodengue
 
@@ -207,7 +136,7 @@ df = get_infodengue(
     return BASE_CODE
 
 
-def generate_mosqlient_climate_code(filters: filters.ClimateFilters) -> str:
+def generate_mosqlient_climate_code(filters: schemas.ClimateFilters) -> str:
     BASE_CODE = f"""from mosqlient import get_climate
 
 # return a pd.DataFrame with the data
@@ -229,14 +158,3 @@ def make_query_and_get_url(
     output_json = query_llm(prompt, save_logs, save_path)
     table_filters = get_table_filters(output_json)
     return generate_api_url(table_filters)
-
-
-def check_api_response(url: str) -> int:
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        return response.status_code
-    except requests.exceptions.HTTPError as e:
-        raise RuntimeError(f"Erro ao chamar a API: {e}")
-    except Exception as e:
-        raise RuntimeError(f"Erro ao chamar a API: {e}")

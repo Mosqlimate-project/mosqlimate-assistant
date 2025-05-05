@@ -4,14 +4,14 @@ import langchain_community.vectorstores
 
 
 def test_load_municipalities():
-    from mosqlimate_assistant.utils import read_municipalities
+    from mosqlimate_assistant.muni_codes import read_municipalities
 
     municipalities = read_municipalities()
     assert isinstance(municipalities, list)
 
 
 def test_check_municipality():
-    from mosqlimate_assistant.utils import read_municipalities
+    from mosqlimate_assistant.muni_codes import read_municipalities
 
     municipalities = read_municipalities()
     for m in municipalities:
@@ -29,7 +29,7 @@ def test_check_municipality():
 
 
 def test_load_local_db():
-    from mosqlimate_assistant.input_validator import load_local_db
+    from mosqlimate_assistant.faiss_db import load_local_db
 
     current_dir = os.path.dirname(__file__)
     print(current_dir)
@@ -38,7 +38,7 @@ def test_load_local_db():
 
 
 def test_load_asks():
-    from mosqlimate_assistant.input_validator import load_asks
+    from mosqlimate_assistant.faiss_db import load_asks
 
     asks = load_asks()
     assert isinstance(asks, dict)

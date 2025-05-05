@@ -2,42 +2,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-Diseases = Literal[
-    "dengue",
-    "zika",
-    "chik",
-    "chikungunya",
-]
-
-UFs = Literal[
-    "AC",
-    "AL",
-    "AP",
-    "AM",
-    "BA",
-    "CE",
-    "DF",
-    "ES",
-    "GO",
-    "MA",
-    "MT",
-    "MS",
-    "MG",
-    "PA",
-    "PB",
-    "PR",
-    "PE",
-    "PI",
-    "RJ",
-    "RN",
-    "RS",
-    "RO",
-    "RR",
-    "SC",
-    "SP",
-    "SE",
-    "TO",
-]
+from mosqlimate_assistant.settings import Diseases, UFs
 
 
 class TableFilters(BaseModel):

@@ -1,4 +1,3 @@
-import os
 from typing import Dict
 
 import faiss  # type: ignore
@@ -8,16 +7,11 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_ollama import OllamaEmbeddings
 
-from mosqlimate_assistant.configs import DATABASE_PATH, EMBEDDING_MODEL
-
-CURRENT_PATH = os.path.dirname(os.path.abspath(__file__))
-
-ASKS_PATH = os.path.join(DATABASE_PATH, "asks.csv")
-ASKS_PATH = os.path.join(CURRENT_PATH, ASKS_PATH)
+from mosqlimate_assistant.settings import ASKS_PATH, EMBEDDING_MODEL
 
 
-def create_vector_store(EMBEDDING_MODEL: str = EMBEDDING_MODEL) -> FAISS:
-    embedding = OllamaEmbeddings(model=EMBEDDING_MODEL)
+def create_vector_store(embedding_model: str = EMBEDDING_MODEL) -> FAISS:
+    embedding = OllamaEmbeddings(model=embedding_model)
     docstore = InMemoryDocstore()
 
     index = faiss.IndexFlatIP(len(embedding.embed_query("hello")))
@@ -32,9 +26,9 @@ def create_vector_store(EMBEDDING_MODEL: str = EMBEDDING_MODEL) -> FAISS:
     return vector_store
 
 
-def load_asks(ASKS_PATH: str = ASKS_PATH) -> Dict[int, Document]:
+def load_asks(asks_path: str = ASKS_PATH) -> Dict[int, Document]:
     processed_asks: Dict[int, Document] = dict()
-    asks_df = pd.read_csv(ASKS_PATH)
+    asks_df = pd.read_csv(asks_path)
     for index, row in asks_df.iterrows():
         ask = Document(
             id=str(index),
@@ -55,9 +49,9 @@ def save_asks_local_db(
 
 
 def load_local_db(
-    db_path: str, EMBEDDING_MODEL: str = EMBEDDING_MODEL
+    db_path: str, embedding_model: str = EMBEDDING_MODEL
 ) -> FAISS:
-    embedding = OllamaEmbeddings(model=EMBEDDING_MODEL)
+    embedding = OllamaEmbeddings(model=embedding_model)
 
     vector_store = FAISS.load_local(
         folder_path=db_path,
