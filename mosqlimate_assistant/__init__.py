@@ -1,8 +1,15 @@
 from importlib import metadata as importlib_metadata
 from typing import List
 
-from . import (api_consumer, assistant, faiss_db, muni_codes, schemas,
-               settings, utils)
+from . import (
+    api_consumer,
+    assistant,
+    faiss_db,
+    muni_codes,
+    schemas,
+    settings,
+    utils,
+)
 from .prompts import eng, por
 
 

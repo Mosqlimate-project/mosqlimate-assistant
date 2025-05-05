@@ -8,8 +8,11 @@ from mosqlimate_assistant import schemas, utils
 from mosqlimate_assistant.api_consumer import generate_api_url
 from mosqlimate_assistant.muni_codes import get_municipality_code
 from mosqlimate_assistant.prompts import por
-from mosqlimate_assistant.settings import (API_KEY, DEEPSEEK_API_URL,
-                                           DEEPSEEK_MODEL)
+from mosqlimate_assistant.settings import (
+    API_KEY,
+    DEEPSEEK_API_URL,
+    DEEPSEEK_MODEL,
+)
 
 
 def get_model():
