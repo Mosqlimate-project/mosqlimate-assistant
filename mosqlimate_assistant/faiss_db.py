@@ -1,4 +1,5 @@
 from typing import Dict
+import os
 
 import faiss  # type: ignore
 import pandas as pd  # type: ignore
@@ -7,7 +8,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_ollama import OllamaEmbeddings
 
-from mosqlimate_assistant.settings import ASKS_PATH, EMBEDDING_MODEL
+from mosqlimate_assistant.settings import ASKS_PATH, EMBEDDING_MODEL, ASKS_DB_PATH
 
 
 def create_vector_store(embedding_model: str = EMBEDDING_MODEL) -> FAISS:
@@ -33,7 +34,10 @@ def load_asks(asks_path: str = ASKS_PATH) -> Dict[int, Document]:
         ask = Document(
             id=str(index),
             page_content=row["Pergunta"],
-            metadata={"table": row["Tabela"]},
+            metadata={
+                "table": row["Tabela"],
+                "output": row["JSON"],
+            },
         )
         processed_asks[int(str(index))] = ask
     return processed_asks
@@ -42,15 +46,11 @@ def load_asks(asks_path: str = ASKS_PATH) -> Dict[int, Document]:
 def save_asks_local_db(
     vector_db: FAISS, asks: Dict[int, Document], output_path: str
 ) -> None:
-    vector_db.add_documents(
-        documents=list(asks.values()), ids=list(asks.keys())
-    )
+    vector_db.add_documents(documents=list(asks.values()), ids=list(asks.keys()))
     vector_db.save_local(output_path)
 
 
-def load_local_db(
-    db_path: str, embedding_model: str = EMBEDDING_MODEL
-) -> FAISS:
+def load_local_db(db_path: str, embedding_model: str = EMBEDDING_MODEL) -> FAISS:
     embedding = OllamaEmbeddings(model=embedding_model)
 
     vector_store = FAISS.load_local(
@@ -62,8 +62,16 @@ def load_local_db(
     return vector_store
 
 
-# vector_db = create_vector_store()
-# asks = load_asks()
-
-# save_asks_local_db(vector_db, asks, "asks_db")
-# vector_db2 = load_local_db("asks_db")
+def get_or_create_vector_db(
+    db_path: str = ASKS_DB_PATH, embedding_model: str = EMBEDDING_MODEL
+) -> FAISS:
+    """
+    Retorna o vetor store FAISS carregado do disco, ou o cria e salva localmente se não existir.
+    """
+    if os.path.exists(db_path):
+        return load_local_db(db_path, embedding_model)
+    # cria e salva o vetor store
+    asks = load_asks()
+    vector_db = create_vector_store(embedding_model)
+    save_asks_local_db(vector_db, asks, db_path)
+    return vector_db

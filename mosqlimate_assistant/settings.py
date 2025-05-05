@@ -81,10 +81,9 @@ UFs = Literal[
 ]
 
 DATABASE_PATH = os.getenv("DATABASE_PATH", DEFAULT_DATABASE_PATH)
-MUNICIPALITIES_PATH = os.path.join(
-    CURRENT_PATH, DATABASE_PATH, "municipios.json"
-)
+MUNICIPALITIES_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "municipios.json")
 ASKS_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "asks.csv")
+ASKS_DB_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "asks_db")
 
 
 class Settings(BaseSettings):
