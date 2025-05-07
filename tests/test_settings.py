@@ -29,7 +29,10 @@ def test_default_embedding_model():
 
 
 def test_mosqlimate_api_docs():
-    assert settings.MOSQLIMATE_API_DOCS == "https://api.mosqlimate.org/api/openapi.json"
+    assert (
+        settings.MOSQLIMATE_API_DOCS
+        == "https://api.mosqlimate.org/api/openapi.json"
+    )
 
 
 def test_deepseek_api_url():
@@ -86,12 +89,6 @@ def test_diseases_literal_type():
 
 def test_derived_paths():
     db_path_val = os.getenv("DATABASE_PATH", settings.DEFAULT_DATABASE_PATH)
-    if not os.path.isabs(db_path_val):
-        expected_database_full_path = os.path.abspath(
-            os.path.join(settings.CURRENT_PATH, db_path_val)
-        )
-    else:
-        expected_database_full_path = db_path_val
 
     expected_municipalities_path = os.path.join(
         settings.CURRENT_PATH, db_path_val, "municipios.json"
@@ -101,10 +98,16 @@ def test_derived_paths():
         expected_municipalities_path
     )
 
-    expected_asks_path = os.path.join(settings.CURRENT_PATH, db_path_val, "asks.csv")
-    assert os.path.normpath(settings.ASKS_PATH) == os.path.normpath(expected_asks_path)
+    expected_asks_path = os.path.join(
+        settings.CURRENT_PATH, db_path_val, "asks.csv"
+    )
+    assert os.path.normpath(settings.ASKS_PATH) == os.path.normpath(
+        expected_asks_path
+    )
 
-    expected_asks_db_path = os.path.join(settings.CURRENT_PATH, db_path_val, "asks_db")
+    expected_asks_db_path = os.path.join(
+        settings.CURRENT_PATH, db_path_val, "asks_db"
+    )
     assert os.path.normpath(settings.ASKS_DB_PATH) == os.path.normpath(
         expected_asks_db_path
     )
