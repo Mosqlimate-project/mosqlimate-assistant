@@ -1,6 +1,6 @@
-from . import test_data, test_levenshtein
+from . import test_faiss_db, test_muni_codes
 
 __all__ = [
-    "test_data",
-    "test_levenshtein",
+    "test_faiss_db",
+    "test_muni_codes",
 ]
