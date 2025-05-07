@@ -1,8 +1,8 @@
 import json
 from typing import Optional, Union
 
-from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 import ollama
+from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 
 from mosqlimate_assistant import faiss_db, schemas, utils
 from mosqlimate_assistant.api_consumer import generate_api_url
@@ -18,10 +18,12 @@ def make_query(
     # Escape braces in example answers to prevent formatting errors
     escaped_examples: list[dict[str, str]] = []
     for ex in examples_list:
-        escaped_examples.append({
-            "question": ex["question"],
-            "answer": ex["answer"].replace("{", "{{").replace("}", "}}")
-        })
+        escaped_examples.append(
+            {
+                "question": ex["question"],
+                "answer": ex["answer"].replace("{", "{{").replace("}", "}}"),
+            }
+        )
     example_template = """Exemplo:\nPergunta: {question}\nResposta: {answer}"""
 
     prefix = f"""{por.BASE_PROMPT}\n{por.TABLE_PROMPT}\n{por.UF_PROMPT}"""
@@ -161,7 +163,9 @@ def get_relevant_sample_asks(
     samples = [
         {
             "question": doc[0].page_content,
-            "answer": utils.format_answer(doc[0].metadata["output"]).replace("{", "{{").replace("}", "}}"),
+            "answer": utils.format_answer(doc[0].metadata["output"])
+            .replace("{", "{{")
+            .replace("}", "}}"),
         }
         for doc in docs
     ]
