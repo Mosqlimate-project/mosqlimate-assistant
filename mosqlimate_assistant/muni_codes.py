@@ -60,7 +60,7 @@ def get_municipality(name: str, uf: str | None = None) -> dict:
             closest_match = closest_match_filter
             closest_distance = closest_distance_filter
 
-    if closest_distance > 3:
+    if closest_distance > 4:
         raise ValueError(f"Município não encontrado: {name}")
 
     return closest_match
