@@ -12,7 +12,7 @@ def test_read_municipalities_returns_list():
     municipalities = muni_codes.read_municipalities()
     assert isinstance(municipalities, list)
     assert all(isinstance(m, dict) for m in municipalities)
-    
+
     for m in municipalities:
         assert "Municipality" in m
         assert "UF" in m
