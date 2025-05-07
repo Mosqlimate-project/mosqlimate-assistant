@@ -98,33 +98,33 @@ EXAMPLE_PROMPT = """
 Exemplo de resposta para "Quero casos de dengue na cidade de São Paulo no ano de 2023":
 ```json
 {
-    "table": "infodengue",
-    "disease": "dengue",
-    "start": "2023-01-01",
-    "end": "2023-12-31",
-    "uf": "SP",
-    "city": "São Paulo"
+  "table": "infodengue",
+  "disease": "dengue",
+  "start": "2023-01-01",
+  "end": "2023-12-31",
+  "uf": "SP",
+  "city": "São Paulo"
 }
 ```
 
 Exemplo de resposta para "Dados climáticos de Porto Alegre em 2022":
 ```json
 {
-    "table": "climate",
-    "start": "2022-01-01",
-    "end": "2022-12-31",
-    "city": "Porto Alegre",
-    "uf": "RS"
+  "table": "climate",
+  "start": "2022-01-01",
+  "end": "2022-12-31",
+  "city": "Porto Alegre",
+  "uf": "RS"
 }
 ```
 
 Exemplo de resposta para "Quero dados sobre a expansão da dengue no Rio de Janeiro em 2021":
 ```json
 {
-    "table": "episcanner",
-    "disease": "dengue",
-    "uf": "RJ",
-    "year": 2021
+  "table": "episcanner",
+  "disease": "dengue",
+  "uf": "RJ",
+  "year": 2021
 }
 ```
 """
@@ -135,12 +135,12 @@ EXAMPLES_LIST = [
         "question": "Quero casos de dengue na cidade de São Paulo no ano de 2023",
         "answer": """```json
 {{
-    "table": "infodengue",
-    "disease": "dengue",
-    "start": "2023-01-01",
-    "end": "2023-12-31",
-    "uf": "SP",
-    "city": "São Paulo"
+  "table": "infodengue",
+  "disease": "dengue",
+  "start": "2023-01-01",
+  "end": "2023-12-31",
+  "uf": "SP",
+  "city": "São Paulo"
 }}
 ```""",
     },
@@ -148,11 +148,11 @@ EXAMPLES_LIST = [
         "question": "Dados climáticos de Porto Alegre em 2022",
         "answer": """```json
 {{
-    "table": "climate",
-    "start": "2022-01-01",
-    "end": "2022-12-31",
-    "city": "Porto Alegre",
-    "uf": "RS"
+  "table": "climate",
+  "start": "2022-01-01",
+  "end": "2022-12-31",
+  "city": "Porto Alegre",
+  "uf": "RS"
 }}
 ```""",
     },
@@ -160,10 +160,10 @@ EXAMPLES_LIST = [
         "question": "Quero dados sobre a expansão da dengue no Rio de Janeiro em 2021",
         "answer": """```json
 {{
-    "table": "episcanner",
-    "disease": "dengue",
-    "uf": "RJ",
-    "year": 2021
+  "table": "episcanner",
+  "disease": "dengue",
+  "uf": "RJ",
+  "year": 2021
 }}
 ```""",
     },

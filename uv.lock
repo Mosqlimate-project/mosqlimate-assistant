@@ -713,9 +713,11 @@ dependencies = [
     { name = "langchain-community" },
     { name = "langchain-ollama" },
     { name = "mosqlient" },
+    { name = "ollama" },
     { name = "openai" },
     { name = "pandas" },
     { name = "pydantic" },
+    { name = "pydantic-settings" },
     { name = "python-levenshtein" },
     { name = "requests" },
 ]
@@ -738,9 +740,11 @@ requires-dist = [
     { name = "langchain-community", specifier = ">=0.3.19" },
     { name = "langchain-ollama", specifier = ">=0.2.3" },
     { name = "mosqlient", specifier = ">=1.7.3" },
+    { name = "ollama", specifier = ">=0.4.8" },
     { name = "openai", specifier = ">=1.76.0" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "pydantic", specifier = ">=2.10.6" },
+    { name = "pydantic-settings", specifier = ">=2.9.1" },
     { name = "python-levenshtein", specifier = ">=0.27.1" },
     { name = "requests", specifier = ">=2.32.3" },
 ]

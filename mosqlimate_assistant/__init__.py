@@ -4,6 +4,7 @@ from typing import List
 from . import (
     api_consumer,
     assistant,
+    assistant_ollama,
     faiss_db,
     muni_codes,
     schemas,
@@ -24,6 +25,7 @@ version: str = get_version()
 __version__: str = version
 __all__: List[str] = [
     "assistant",
+    "assistant_ollama",
     "settings",
     "schemas",
     "faiss_db",
