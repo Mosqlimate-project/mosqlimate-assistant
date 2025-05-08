@@ -71,6 +71,7 @@ def query_llm(
     save_path: str = ".",
 ) -> dict:
     full_query = make_query(prompt, examples_list=examples_list)
+    print(full_query)
     try:
         response = ollama.chat(
             model=OLLAMA_MODEL,
