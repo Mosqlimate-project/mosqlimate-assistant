@@ -79,7 +79,9 @@ def query_llm(
                 {"role": "system", "content": full_query},
                 {"role": "user", "content": prompt},
             ],
+            format="json",
         )
+        print(response)
         output = response["message"]["content"]
 
         if save_logs:
