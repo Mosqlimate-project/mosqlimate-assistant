@@ -25,6 +25,15 @@ def get_model():
 def make_query(
     user_input: str, examples_list: list[dict[str, str]] = por.EXAMPLES_LIST
 ) -> str:
+
+    escaped_examples: list[dict[str, str]] = []
+    for ex in examples_list:
+        escaped_examples.append(
+            {
+                "question": ex["question"],
+                "answer": ex["answer"].replace("{", "{{").replace("}", "}}"),
+            }
+        )
     example_template = """Exemplo:\nPergunta: {question}\nResposta: {answer}"""
 
     prefix = f"""{por.BASE_PROMPT}\n{por.TABLE_PROMPT}\n{por.UF_PROMPT}"""
@@ -32,7 +41,7 @@ def make_query(
     suffix = """Agora, responda à seguinte pergunta: {user_question}\n"""
 
     few_shot_prompt = FewShotPromptTemplate(
-        examples=examples_list,
+        examples=escaped_examples,
         example_prompt=PromptTemplate(
             input_variables=["question", "answer"], template=example_template
         ),
