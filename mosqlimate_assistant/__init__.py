@@ -8,11 +8,11 @@ from . import (
     docs_consumer,
     faiss_db,
     muni_codes,
+    prompts,
     schemas,
     settings,
     utils,
 )
-from .prompts import eng, por
 
 
 def get_version() -> str:
@@ -34,6 +34,5 @@ __all__: List[str] = [
     "schemas",
     "settings",
     "utils",
-    "eng",
-    "por",
+    "prompts",
 ]  # noqa: WPS410 (the only __variable__ we use)

@@ -15,7 +15,7 @@ OLLAMA_MODEL = "llama3.2:latest"
 def make_query(
     user_input: str, examples_list: list[dict[str, str]] = por.EXAMPLES_LIST
 ) -> str:
-    
+
     escaped_examples: list[dict[str, str]] = []
     for ex in examples_list:
         escaped_examples.append(
