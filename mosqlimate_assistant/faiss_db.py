@@ -1,3 +1,4 @@
+import os
 from typing import Dict
 
 import faiss  # type: ignore
@@ -7,7 +8,11 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_ollama import OllamaEmbeddings
 
-from mosqlimate_assistant.settings import ASKS_PATH, EMBEDDING_MODEL
+from mosqlimate_assistant.settings import (
+    ASKS_DB_PATH,
+    ASKS_PATH,
+    EMBEDDING_MODEL,
+)
 
 
 def create_vector_store(embedding_model: str = EMBEDDING_MODEL) -> FAISS:
@@ -33,7 +38,10 @@ def load_asks(asks_path: str = ASKS_PATH) -> Dict[int, Document]:
         ask = Document(
             id=str(index),
             page_content=row["Pergunta"],
-            metadata={"table": row["Tabela"]},
+            metadata={
+                "table": row["Tabela"],
+                "output": row["JSON"],
+            },
         )
         processed_asks[int(str(index))] = ask
     return processed_asks
@@ -62,8 +70,16 @@ def load_local_db(
     return vector_store
 
 
-# vector_db = create_vector_store()
-# asks = load_asks()
-
-# save_asks_local_db(vector_db, asks, "asks_db")
-# vector_db2 = load_local_db("asks_db")
+def get_or_create_vector_db(
+    db_path: str = ASKS_DB_PATH, embedding_model: str = EMBEDDING_MODEL
+) -> FAISS:
+    """
+    Retorna o vetor store FAISS carregado do disco, ou o cria e salva localmente se não existir.
+    """
+    if os.path.exists(db_path):
+        return load_local_db(db_path, embedding_model)
+    # cria e salva o vetor store
+    asks = load_asks()
+    vector_db = create_vector_store(embedding_model)
+    save_asks_local_db(vector_db, asks, db_path)
+    return vector_db
