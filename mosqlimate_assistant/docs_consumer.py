@@ -74,7 +74,8 @@ def format_api_parameters(api_json: dict) -> dict:
         }
 
         if enum:
-            param_dict["enum"] = enum
+            enum_ = [e for e in enum if e != "chik"]
+            param_dict["enum"] = enum_
         if default:
             param_dict["default"] = default
         if format_:
