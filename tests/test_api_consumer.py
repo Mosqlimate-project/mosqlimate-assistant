@@ -1,8 +1,4 @@
-import pytest
-from requests.exceptions import HTTPError
-
-from mosqlimate_assistant import api_consumer
-from mosqlimate_assistant import schemas
+from mosqlimate_assistant import api_consumer, schemas
 from mosqlimate_assistant.settings import BASE_URL_API, MOSQLIMATE_API_DOCS
 
 
@@ -78,13 +74,13 @@ def test_generate_api_url_dispatch_specific():
         inf
     ) == api_consumer.generate_api_infodengue_url(inf)
     cli = schemas.ClimateFilters(start="2020-05-01", end="2020-05-31")
-    assert api_consumer.generate_api_url(cli) == api_consumer.generate_api_climate_url(
+    assert api_consumer.generate_api_url(
         cli
-    )
+    ) == api_consumer.generate_api_climate_url(cli)
     mos = schemas.MosquitoFilters(key="k")
-    assert api_consumer.generate_api_url(mos) == api_consumer.generate_api_mosquito_url(
+    assert api_consumer.generate_api_url(
         mos
-    )
+    ) == api_consumer.generate_api_mosquito_url(mos)
     epi = schemas.EpiscannerFilters(disease="zika", uf="BA")
     assert api_consumer.generate_api_url(
         epi
