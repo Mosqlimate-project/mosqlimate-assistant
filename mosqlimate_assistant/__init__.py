@@ -4,13 +4,15 @@ from typing import List
 from . import (
     api_consumer,
     assistant,
+    assistant_ollama,
+    docs_consumer,
     faiss_db,
     muni_codes,
+    prompts,
     schemas,
     settings,
     utils,
 )
-from .prompts import eng, por
 
 
 def get_version() -> str:
@@ -23,13 +25,14 @@ def get_version() -> str:
 version: str = get_version()
 __version__: str = version
 __all__: List[str] = [
-    "assistant",
-    "settings",
-    "schemas",
-    "faiss_db",
-    "utils",
     "api_consumer",
+    "assistant_ollama",
+    "assistant",
+    "docs_consumer",
+    "faiss_db",
     "muni_codes",
-    "eng",
-    "por",
+    "schemas",
+    "settings",
+    "utils",
+    "prompts",
 ]  # noqa: WPS410 (the only __variable__ we use)

@@ -1,25 +1,15 @@
 import json
 from typing import Optional, Union
 
+import ollama
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
-from openai import OpenAI
 
 from mosqlimate_assistant import faiss_db, schemas, utils
 from mosqlimate_assistant.api_consumer import generate_api_url
 from mosqlimate_assistant.muni_codes import get_municipality_code
 from mosqlimate_assistant.prompts import por
-from mosqlimate_assistant.settings import (
-    API_KEY,
-    DEEPSEEK_API_URL,
-    DEEPSEEK_MODEL,
-)
 
-
-def get_model():
-    """
-    Inicializa e retorna o modelo de LLM a ser utilizado.
-    """
-    return OpenAI(api_key=API_KEY, base_url=DEEPSEEK_API_URL)
+OLLAMA_MODEL = "llama3.2:latest"
 
 
 def make_query(
@@ -81,20 +71,18 @@ def query_llm(
     save_path: str = ".",
 ) -> dict:
     full_query = make_query(prompt, examples_list=examples_list)
+    print(full_query)
     try:
-        modelo = get_model()
-        output = (
-            modelo.chat.completions.create(
-                model=DEEPSEEK_MODEL,
-                messages=[
-                    {"role": "system", "content": full_query},
-                    {"role": "user", "content": prompt},
-                ],
-                stream=False,
-            )
-            .choices[0]
-            .message
+        response = ollama.chat(
+            model=OLLAMA_MODEL,
+            messages=[
+                {"role": "system", "content": full_query},
+                {"role": "user", "content": prompt},
+            ],
+            format="json",
         )
+        print(response)
+        output = response["message"]["content"]
 
         if save_logs:
             utils.save_logs(
@@ -102,7 +90,7 @@ def query_llm(
                 save_path,
             )
 
-        return clean_output(output.content)
+        return clean_output(output)
     except Exception as e:
         raise RuntimeError(f"Erro ao chamar o modelo: {e}")
 
@@ -178,7 +166,9 @@ def get_relevant_sample_asks(
     samples = [
         {
             "question": doc[0].page_content,
-            "answer": utils.format_answer(doc[0].metadata["output"]),
+            "answer": utils.format_answer(doc[0].metadata["output"])
+            .replace("{", "{{")
+            .replace("}", "}}"),
         }
         for doc in docs
     ]
@@ -192,6 +182,7 @@ def make_query_and_get_url(
     save_logs: bool = False,
     save_path: str = ".",
 ) -> str:
+    print(OLLAMA_MODEL)
     relevant_samples = get_relevant_sample_asks(prompt)
     if relevant_samples[1] < threshold:
         raise RuntimeError(
@@ -199,5 +190,6 @@ def make_query_and_get_url(
         )
 
     output_json = query_llm(prompt, relevant_samples[0], save_logs, save_path)
+    print(output_json)
     table_filters = get_table_filters(output_json)
     return generate_api_url(table_filters)

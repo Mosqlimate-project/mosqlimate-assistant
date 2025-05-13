@@ -91,7 +91,7 @@ class EpiscannerFilters(BaseModel):
     table: Literal["episcanner"] = Field(default="episcanner")
     disease: Literal[Diseases] = Field(
         default=...,
-        description="Doença: 'dengue', 'zika', 'chik' ou 'chikungunya'",
+        description="Doença: 'dengue', 'zika' ou 'chikungunya'",
     )
     uf: UFs = Field(
         default=...,

@@ -10,6 +10,7 @@ dependencies = [
     "langchain-community>=0.3.19",
     "langchain-ollama>=0.2.3",
     "mosqlient>=1.7.3",
+    "ollama>=0.4.8",
     "openai>=1.76.0",
     "pandas>=2.2.3",
     "pydantic>=2.10.6",
