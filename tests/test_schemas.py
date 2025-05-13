@@ -1,7 +1,7 @@
-from mosqlimate_assistant import schemas
-
 import pytest
 from pydantic import ValidationError
+
+from mosqlimate_assistant import schemas
 
 
 def test_table_filters_valid():
@@ -49,7 +49,9 @@ def test_table_filters_invalid():
 
 
 def test_table_filters_extra_fields_ignored():
-    filters = schemas.TableFilters(table="mosquito", extra_field="should_be_ignored")
+    filters = schemas.TableFilters(
+        table="mosquito", extra_field="should_be_ignored"
+    )
     assert filters.table == "mosquito"
     assert not hasattr(filters, "extra_field")
 
@@ -116,7 +118,9 @@ def test_mosquito_filters_missing_required_fields():
 
 
 def test_episcanner_filters_valid():
-    filters = schemas.EpiscannerFilters(disease="chikungunya", uf="BA", year=2024)
+    filters = schemas.EpiscannerFilters(
+        disease="chikungunya", uf="BA", year=2024
+    )
     assert filters.table == "episcanner"
     assert filters.disease == "chikungunya"
     assert filters.uf == "BA"
