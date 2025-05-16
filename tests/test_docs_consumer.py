@@ -38,7 +38,10 @@ def test_format_api_parameters():
                 "name": "bar",
                 "required": False,
                 "schema": {
-                    "anyOf": [{"type": "null"}, {"type": "integer", "default": 5}]
+                    "anyOf": [
+                        {"type": "null"},
+                        {"type": "integer", "default": 5},
+                    ]
                 },
             },
         ]
