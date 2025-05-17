@@ -67,7 +67,9 @@ Seu dever é, a partir da pergunta do usuário fornecida em linguagem natural, e
 
 
 TABLE_PROMPT = "**Detalhes das Tabelas:**\n\n"
-TABLE_PROMPT += __format_table_parameters()
+TABLE_PROMPT += (
+    __format_table_parameters().replace("{", "{{").replace("}", "}}")
+)
 
 
 UF_PROMPT = """
