@@ -10,9 +10,12 @@ from mosqlimate_assistant.api_consumer import generate_api_url
 from mosqlimate_assistant.muni_codes import get_municipality_code
 from mosqlimate_assistant.prompts import por
 from mosqlimate_assistant.settings import (
-    API_KEY,
+    DEEPSEEK_API_KEY,
     DEEPSEEK_API_URL,
     DEEPSEEK_MODEL,
+    GEMINI_MODEL,
+    GOOGLE_API_KEY,
+    GOOGLE_API_URL,
     OLLAMA_MODEL,
 )
 
@@ -163,7 +166,7 @@ class Assistant:
 class AssistantOpenAI(Assistant):
     def __init__(
         self,
-        api_key: Optional[str] = API_KEY,
+        api_key: Optional[str] = DEEPSEEK_API_KEY,
         base_url: Optional[str] = DEEPSEEK_API_URL,
     ):
         self.model = OpenAI(api_key=api_key, base_url=base_url)
@@ -223,3 +226,45 @@ class AssistantOllama(Assistant):
                 save_path,
             )
         return self.clean_output(output)
+
+
+class AssistantGemini(Assistant):
+    def __init__(
+        self,
+        api_key: Optional[str] = GOOGLE_API_KEY,
+        base_url: Optional[str] = GOOGLE_API_URL,
+    ):
+        self.api_key = api_key
+        self.model = OpenAI(api_key=api_key, base_url=base_url)
+
+    def query_llm(
+        self,
+        prompt: str,
+        examples_list: list[dict[str, str]],
+        save_logs: bool,
+        save_path: str,
+    ) -> dict:
+
+        full_query = self.make_query(prompt, examples_list)
+
+        response = self.model.beta.chat.completions.parse(
+            model=GEMINI_MODEL,
+            messages=[
+                {"role": "system", "content": full_query},
+                {"role": "user", "content": prompt},
+            ],
+            response_format=schemas.TableFilters,
+        )
+        parsed = response.choices[0].message.parsed
+
+        if save_logs:
+
+            utils.save_logs(
+                ["user: " + str(prompt), "assistant:\n" + str(parsed)],
+                save_path,
+            )
+
+        if isinstance(parsed, schemas.TableFilters):
+            return dict(parsed)
+
+        return self.clean_output(parsed)

@@ -10,8 +10,12 @@ BASE_URL_API = "https://api.mosqlimate.org/api/datastore/"
 
 # Models
 OLLAMA_MODEL = "llama3.2:latest"
+
 DEEPSEEK_MODEL = "deepseek-chat"
 DEEPSEEK_API_URL = "https://api.deepseek.com"
+
+GEMINI_MODEL = "gemini-2.0-flash"
+GOOGLE_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
 
 # Relative Paths
@@ -27,7 +31,8 @@ DEFAULT_EMBEDDING_MODEL = "mxbai-embed-large:latest"
 
 # Environment Variables
 class Settings(BaseSettings):
-    api_key: str = DEFAULT_API_KEY
+    deepseek_api_key: str = DEFAULT_API_KEY
+    google_api_key: str = DEFAULT_API_KEY
     database_path: str = DEFAULT_DATABASE_PATH
     embedding_model: str = DEFAULT_EMBEDDING_MODEL
 
@@ -39,7 +44,8 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-API_KEY = settings.api_key
+DEEPSEEK_API_KEY = settings.deepseek_api_key
+GOOGLE_API_KEY = settings.google_api_key
 EMBEDDING_MODEL = settings.embedding_model
 DATABASE_PATH = settings.database_path
 
