@@ -31,7 +31,7 @@ def __format_table_parameters() -> str:
     )
 
     result += "## Infodengue:\n"
-    result += "Esta tabela reúne informações sobre casos de dengue, zika e chikungunya registrados em diversos municípios do Brasil.\n\n"
+    result += "Esta tabela reúne informações sobre casos de dengue, zika e chikungunya registrados em diversos municípios do Brasil.\n"
     result += json.dumps(__INFODENGUE_PARAMETERS)
     result += "\n\n"
     result += "## Climate:\n"
@@ -40,7 +40,9 @@ def __format_table_parameters() -> str:
     result += "\n\n"
     result += "## Episcanner:\n"
     result += "Esta tabela apresenta dados sobre a expansão de epidemias de dengue, zika e chikungunya nos estados do Brasil.\n"
-    result += "**USE ESTA TABELA APENAS QUANDO O USUÁRIO ESPECIFICAR DADOS EPIDÊMICOS**\n\n"
+    result += "**ATENÇÃO: Esta tabela USA APENAS o parâmetro year para tempo, NUNCA start ou end.**\n"
+    result += "**USE ESTA TABELA APENAS QUANDO O USUÁRIO ESPECIFICAR DADOS DE EXPANSÃO DA EPIDEMIA.**\n"
+    result += "**NÃO USE ESTA TABELA SE O USUÁRIO NÃO SOLICITAR EXPLICITAMENTE ESTATÍSTICAS SOBRE A EPIDEMIA.**\n"
     result += json.dumps(__EPISCANNER_PARAMETERS)
     result += "\n\n"
     result += "## Mosquito:\n"
@@ -58,7 +60,9 @@ Seu dever é, a partir da pergunta do usuário fornecida em linguagem natural, e
 - Interprete a pergunta do usuário para identificar a tabela e os parâmetros relevantes.
 - Você deve retornar um JSON válido com pelo menos todos os parâmetros obrigatórios da tabela selecionada.
 - Se o usuário fornecer o nome completo de um estado (ex.: "São Paulo"), converta para a sigla correspondente (ex.: "SP").
-- As datas devem ser retornadas no formato YYYY-MM-DD.
+- AS DATAS PRECISAM SER RETORNADAS NO FORMATO YYYY-MM-DD.
+- Se a pergunta se referir ao 'Brasil', 'todo o país', ou não especificar localidade de forma clara (cidade ou estado), não inclua os parâmetros uf ou city.
+- Você deve lidar com trimestres, semestres e outras sazonalidades quando solicitado, ex. primeiro semestre de 2020 = (start=2020-01-01, end=2020-06-30)
 - SE O USUÁRIO MENCIONAR UMA CIDADE, ADICIONE O ESTADO (UF).
 - SE O USUÁRIO MENCIONAR APENAS O ESTADO (UF), NÃO ADICIONE A CIDADE.
 - SE O USUÁRIO NÃO MENCIONAR NEM CIDADE, NEM ESTADO, NÃO ADICIONE NENHUM DOS DOIS.
