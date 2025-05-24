@@ -154,9 +154,9 @@ class Assistant:
     def query_llm(
         self,
         prompt: str,
-        examples_list: list[dict[str, str]],
-        save_logs: bool,
-        save_path: str,
+        examples_list: list[dict[str, str]] = por.EXAMPLES_LIST,
+        save_logs: bool = False,
+        save_path: str = ".",
     ) -> dict:
         raise NotImplementedError(
             "query_llm deve ser implementado nas subclasses"
@@ -174,9 +174,9 @@ class AssistantOpenAI(Assistant):
     def query_llm(
         self,
         prompt: str,
-        examples_list: list[dict[str, str]],
-        save_logs: bool,
-        save_path: str,
+        examples_list: list[dict[str, str]] = por.EXAMPLES_LIST,
+        save_logs: bool = False,
+        save_path: str = ".",
     ) -> dict:
         full_query = self.make_query(prompt, examples_list)
         output = (
@@ -206,9 +206,9 @@ class AssistantOllama(Assistant):
     def query_llm(
         self,
         prompt: str,
-        examples_list: list[dict[str, str]],
-        save_logs: bool,
-        save_path: str,
+        examples_list: list[dict[str, str]] = por.EXAMPLES_LIST,
+        save_logs: bool = False,
+        save_path: str = ".",
     ) -> dict:
         full_query = self.make_query(prompt, examples_list)
         response = ollama.chat(
@@ -240,9 +240,9 @@ class AssistantGemini(Assistant):
     def query_llm(
         self,
         prompt: str,
-        examples_list: list[dict[str, str]],
-        save_logs: bool,
-        save_path: str,
+        examples_list: list[dict[str, str]] = por.EXAMPLES_LIST,
+        save_logs: bool = False,
+        save_path: str = ".",
     ) -> dict:
 
         full_query = self.make_query(prompt, examples_list)
