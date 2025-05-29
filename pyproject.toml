@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = ["mosqlimate_assistant"]
+packages = ["mosqlimate_assistant", "mosqlimate_assistant.prompts"]
 
 [dependency-groups]
 dev = [
