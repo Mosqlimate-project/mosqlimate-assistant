@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.0.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.0.0...1.0.1) (2025-05-29)
+
+
+### Bug Fixes
+
+* **release:** include missing prompts on release ([5fc81e4](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/5fc81e4f749344b20ae0a90c6226e5c11f2240bc))
+
 # 1.0.0 (2025-05-29)
 
 
