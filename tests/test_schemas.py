@@ -1,3 +1,4 @@
+import epiweeks
 import pytest
 from pydantic import ValidationError
 
@@ -25,9 +26,11 @@ def test_table_filters_valid():
     assert filters.year == 2023
 
     filters_minimal = schemas.TableFilters(table="climate")
+    last_week = epiweeks.Week.thisweek() - 1
     assert filters_minimal.table == "climate"
     assert filters_minimal.disease is None
-    assert filters_minimal.start is None
+    assert filters_minimal.start == last_week.startdate().isoformat()
+    assert filters_minimal.end == last_week.enddate().isoformat()
     assert filters_minimal.uf is None
 
 
@@ -36,16 +39,17 @@ def test_table_filters_invalid():
         schemas.TableFilters(table="invalid_table")
 
     with pytest.raises(ValidationError):
-        schemas.TableFilters(table="infodengue", start="2023/01/01")
-
-    with pytest.raises(ValidationError):
-        schemas.TableFilters(table="infodengue", end="invalid_date")
-
-    with pytest.raises(ValidationError):
         schemas.TableFilters(table="infodengue", disease="malaria")
 
     with pytest.raises(ValidationError):
         schemas.TableFilters(table="infodengue", uf="XYZ")
+
+
+def test_table_filters_invalid_dates_default_to_epiweek():
+    last_week = epiweeks.Week.thisweek() - 1
+    filters = schemas.TableFilters(table="climate", start="bad", end="bad")
+    assert filters.start == last_week.startdate().isoformat()
+    assert filters.end == last_week.enddate().isoformat()
 
 
 def test_table_filters_extra_fields_ignored():
