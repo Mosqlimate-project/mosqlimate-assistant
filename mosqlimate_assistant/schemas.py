@@ -1,10 +1,10 @@
+import re
 from typing import Literal, Optional
 
+import epiweeks
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-import re
 
 from mosqlimate_assistant.settings import Diseases, UFs
-import epiweeks
 
 
 def _last_epiweek():
