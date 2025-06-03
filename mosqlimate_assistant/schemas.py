@@ -1,8 +1,22 @@
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+import re
 
 from mosqlimate_assistant.settings import Diseases, UFs
+import epiweeks
+
+
+def _last_epiweek():
+    return epiweeks.Week.thisweek() - 1
+
+
+def _default_start():
+    return _last_epiweek().startdate().isoformat()
+
+
+def _default_end():
+    return _last_epiweek().enddate().isoformat()
 
 
 class TableFilters(BaseModel):
@@ -14,14 +28,12 @@ class TableFilters(BaseModel):
         default=None,
         description="Doença: 'dengue', 'zika' ou 'chikungunya'",
     )
-    start: Optional[str] = Field(
-        default=None,
-        pattern=r"^\d{4}-\d{2}-\d{2}$",
+    start: str = Field(
+        default_factory=_default_start,
         description="Data de início (YYYY-mm-dd)",
     )
-    end: Optional[str] = Field(
-        default=None,
-        pattern=r"^\d{4}-\d{2}-\d{2}$",
+    end: str = Field(
+        default_factory=_default_end,
         description="Data de término (YYYY-mm-dd)",
     )
     uf: Optional[UFs] = Field(
@@ -31,6 +43,18 @@ class TableFilters(BaseModel):
     city: Optional[str] = Field(default=None, description="Nome do município")
     key: Optional[str] = Field(default=None, description="ContaOvos API key")
     year: Optional[int] = Field(default=None, description="Ano específico")
+
+    @field_validator("start", mode="before")
+    def _validate_start(cls, v):
+        if isinstance(v, str) and re.match(r"^\d{4}-\d{2}-\d{2}$", v):
+            return v
+        return _default_start()
+
+    @field_validator("end", mode="before")
+    def _validate_end(cls, v):
+        if isinstance(v, str) and re.match(r"^\d{4}-\d{2}-\d{2}$", v):
+            return v
+        return _default_end()
 
     model_config = ConfigDict(extra="ignore")
 
