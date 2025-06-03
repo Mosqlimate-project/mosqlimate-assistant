@@ -1,6 +1,20 @@
 Release Notes
 ---
 
+# [1.1.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.0.1...1.1.0) (2025-06-03)
+
+
+### Bug Fixes
+
+* linting modules ([1f34b38](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/1f34b38392640b0c757578ba16224aa3d12e59c3))
+* **schemas:** Default date handling to lase epiweek ([19dfed8](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/19dfed85e888d2cc01ee6d972f70c5996c39a704))
+
+
+### Features
+
+* added epiweek dependency to the project ([6063660](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/6063660d4c89d8fa4e6776bc469424ebf679377b))
+* now using last epiweek if start or end date are invalid or not provided ([6ba3b2c](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/6ba3b2c098c76be7cd100454805c992491a30523))
+
 ## [1.0.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.0.0...1.0.1) (2025-05-29)
 
 
