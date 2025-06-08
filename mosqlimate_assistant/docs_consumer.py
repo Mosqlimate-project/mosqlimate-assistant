@@ -1,10 +1,10 @@
 import requests
 
-from mosqlimate_assistant.settings import MOSQLIMATE_API_DOCS
+from mosqlimate_assistant.settings import MOSQLIMATE_API_DOCS_JSON
 
 
 def get_mosqlimate_api_docs() -> dict:
-    url = MOSQLIMATE_API_DOCS
+    url = MOSQLIMATE_API_DOCS_JSON
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()

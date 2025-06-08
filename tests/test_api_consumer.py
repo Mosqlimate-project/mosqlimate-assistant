@@ -1,5 +1,8 @@
 from mosqlimate_assistant import api_consumer, schemas
-from mosqlimate_assistant.settings import BASE_URL_API, MOSQLIMATE_API_DOCS
+from mosqlimate_assistant.settings import (
+    BASE_URL_API,
+    MOSQLIMATE_API_DOCS_JSON,
+)
 
 
 class DummyResponse:
@@ -88,4 +91,4 @@ def test_generate_api_url_dispatch_specific():
 
 
 def test_check_api_response_success():
-    assert api_consumer.check_api_response(MOSQLIMATE_API_DOCS) == 200
+    assert api_consumer.check_api_response(MOSQLIMATE_API_DOCS_JSON) == 200
