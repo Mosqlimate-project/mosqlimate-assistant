@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Any, Dict, List
 
 from mosqlimate_assistant.docs_consumer import (
     get_mosqlimate_authors_docs,
@@ -42,7 +43,7 @@ def format_answer(answer: str) -> str:
 
 
 # Mapeamento de documentações com palavras-chave e categorias
-DOCS_KEYWORDS_MAP = {
+DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
     "project_main": {
         # Link: https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/index.md
         "function": get_mosqlimate_project_docs,
@@ -391,3 +392,15 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação do endpoint POST models",
     },
 }
+
+
+def get_formated_keywords_docs_map() -> dict:
+    formatted_map = dict()
+    for key, value in DOCS_KEYWORDS_MAP.items():
+        keywords_list: List[str] = value["keywords"]
+        formatted_map[key] = {
+            "keywords": ", ".join(keywords_list),
+            "category": value["category"],
+            "description": value["description"],
+        }
+    return formatted_map

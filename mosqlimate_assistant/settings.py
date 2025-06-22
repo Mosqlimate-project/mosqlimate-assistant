@@ -82,7 +82,7 @@ MUNICIPALITIES_PATH = os.path.join(
 )
 ASKS_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "asks.csv")
 ASKS_DB_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "asks_db")
-
+DOCS_DB_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "docs_db")
 
 VALID_UFS = [
     "AC",
