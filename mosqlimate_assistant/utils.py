@@ -44,6 +44,7 @@ def format_answer(answer: str) -> str:
 # Mapeamento de documentações com palavras-chave e categorias
 DOCS_KEYWORDS_MAP = {
     "project_main": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/index.md
         "function": get_mosqlimate_project_docs,
         "keywords": [
             "o que é mosqlimate",
@@ -71,6 +72,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação principal do projeto Mosqlimate",
     },
     "project_ovicounter": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/egg-dataset.md
         "function": get_mosqlimate_ovicounter_docs,
         "keywords": [
             "ovicounter",
@@ -92,6 +94,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação do Ovicounter (dataset de ovos de mosquito)",
     },
     "data_platform": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/index.md
         "function": get_mosqlimate_data_platform_docs,
         "keywords": [
             "como usar a api",
@@ -118,6 +121,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação da plataforma de dados",
     },
     "datastore_base": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/index.md
         "function": get_mosqlimate_datastore_base_docs,
         "keywords": [
             "datastore",
@@ -134,6 +138,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação base do datastore",
     },
     "registry_base": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/index.md
         "function": get_mosqlimate_registry_docs,
         "keywords": [
             "registry",
@@ -158,6 +163,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação do registry (repositório de modelos)",
     },
     "uid_key": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/uid-key.md
         "function": get_mosqlimate_uid_key_docs,
         "keywords": [
             "api key",
@@ -180,6 +186,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação sobre chaves UID e autenticação",
     },
     "datastore_infodengue": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/infodengue.md
         "function": get_mosqlimate_infodengue_docs,
         "keywords": [
             "dados infodengue",
@@ -206,6 +213,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação do endpoint GET infodengue",
     },
     "datastore_episcanner": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/episcanner.md
         "function": get_mosqlimate_episcanner_docs,
         "keywords": [
             "episcanner",
@@ -226,6 +234,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação do endpoint GET episcanner",
     },
     "datastore_climate": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/climate.md
         "function": get_mosqlimate_climate_docs,
         "keywords": [
             "dados climáticos",
@@ -246,6 +255,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação do endpoint GET climate",
     },
     "datastore_climate_weekly": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/climate-weekly.md
         "function": get_mosqlimate_climate_weekly_docs,
         "keywords": [
             "dados climáticos semanais",
@@ -262,6 +272,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação do endpoint GET climate weekly",
     },
     "datastore_mosquito": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/mosquito.md
         "function": get_mosqlimate_mosquito_docs,
         "keywords": [
             "dados de mosquitos",
@@ -283,6 +294,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação do endpoint GET mosquito",
     },
     "registry_predictions_get": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/predictions.md
         "function": get_mosqlimate_predictions_docs,
         "keywords": [
             "consultar previsões",
@@ -304,6 +316,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação do endpoint GET predictions",
     },
     "registry_models_get": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/models.md
         "function": get_mosqlimate_models_docs,
         "keywords": [
             "consultar modelos",
@@ -324,6 +337,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação do endpoint GET models",
     },
     "registry_authors_get": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/authors.md
         "function": get_mosqlimate_authors_docs,
         "keywords": [
             "consultar autores",
@@ -339,6 +353,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação do endpoint GET authors",
     },
     "registry_predictions_post": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/POST/predictions.md
         "function": get_mosqlimate_post_predictions_docs,
         "keywords": [
             "enviar previsões",
@@ -357,6 +372,7 @@ DOCS_KEYWORDS_MAP = {
         "description": "Documentação do endpoint POST predictions",
     },
     "registry_models_post": {
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/POST/models.md
         "function": get_mosqlimate_post_models_docs,
         "keywords": [
             "registrar modelo",
