@@ -8,6 +8,7 @@ from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_ollama import OllamaEmbeddings
 
+from mosqlimate_assistant import utils
 from mosqlimate_assistant.settings import (
     ASKS_DB_PATH,
     ASKS_PATH,
@@ -83,3 +84,21 @@ def get_or_create_vector_db(
     vector_db = create_vector_store(embedding_model)
     save_asks_local_db(vector_db, asks, db_path)
     return vector_db
+
+
+def get_relevant_sample_asks(
+    prompt: str, k: int = 3
+) -> tuple[list[dict[str, str]], list[float]]:
+    vector_db = get_or_create_vector_db()
+    docs = vector_db.similarity_search_with_score(prompt, k=k)
+    samples = [
+        {
+            "question": doc[0].page_content,
+            "answer": utils.format_answer(doc[0].metadata["output"]),
+        }
+        for doc in docs
+    ]
+
+    scores = [float(doc[1]) for doc in docs]
+
+    return samples, scores

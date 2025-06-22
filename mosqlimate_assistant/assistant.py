@@ -121,20 +121,6 @@ class Assistant:
         code += ")"
         return code
 
-    def get_relevant_sample_asks(
-        self, prompt: str, k: int = 3
-    ) -> tuple[list[dict[str, str]], float]:
-        vector_db = faiss_db.get_or_create_vector_db()
-        docs = vector_db.similarity_search_with_score(prompt, k=k)
-        samples = [
-            {
-                "question": doc[0].page_content,
-                "answer": utils.format_answer(doc[0].metadata["output"]),
-            }
-            for doc in docs
-        ]
-        return samples, float(docs[0][1])
-
     def make_query_and_get_url(
         self,
         prompt: str,
@@ -142,8 +128,8 @@ class Assistant:
         save_logs: bool = False,
         save_path: str = ".",
     ) -> str:
-        samples, score = self.get_relevant_sample_asks(prompt)
-        if score < threshold:
+        samples, scores = faiss_db.get_relevant_sample_asks(prompt)
+        if scores[0] < threshold:
             raise RuntimeError(
                 f"Não foi possível encontrar exemplos relevantes para a pergunta: {prompt}"
             )
