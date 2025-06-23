@@ -74,3 +74,11 @@ def get_municipality_code(municipality: str, uf: Optional[str]) -> str:
         raise RuntimeError(f"Erro ao obter o código do município: {ve}")
     except Exception as e:
         raise RuntimeError(f"Erro ao obter o código do município: {e}")
+
+
+def get_muni_and_uf_from_code(code: str) -> tuple[str, str]:
+    municipalities = read_municipalities()
+    for m in municipalities:
+        if m["Code"] == code:
+            return m["Municipality"], m["UF"]
+    raise ValueError(f"Código de município não encontrado: {code}")
