@@ -1,6 +1,7 @@
 import json
 
 from mosqlimate_assistant import docs_consumer as docs
+from mosqlimate_assistant.utils import get_formated_keywords_docs_map
 
 
 def __format_table_parameters() -> str:
@@ -53,7 +54,7 @@ def __format_table_parameters() -> str:
     return result
 
 
-BASE_PROMPT = """Você é um assistente de pesquisa de dados da api do Mosqlimate.
+BASE_API_PROMPT = """Você é um assistente de pesquisa de dados da api do Mosqlimate.
 Seu dever é, a partir da pergunta do usuário fornecida em linguagem natural, extrair os parâmetros necessários para consultar alguma das tabelas disponíveis: 'infodengue', 'climate', 'mosquito' ou 'episcanner'.
 
 **Instruções Gerais:**
@@ -184,3 +185,51 @@ EXAMPLES_LIST = [
 ```""",
     },
 ]
+
+BASE_DOCS_PROMPT = """Você é um assistente especializado na plataforma Mosqlimate. Sua função é instruir e orientar os usuários sobre como usar a plataforma, seus recursos, funcionalidades e dados disponíveis, com base nas documentações oficiais fornecidas.
+
+**O QUE VOCÊ PODE FAZER:**
+- Explicar sobre a plataforma Mosqlimate e seus componentes.
+- Orientar sobre o uso da API, autenticação, endpoints e parâmetros.
+- Esclarecer dúvidas sobre os dados disponíveis (InfoDengue, Climate, Mosquito, EpiScanner).
+- Explicar conceitos técnicos e operacionais da plataforma.
+- Fornecer exemplos práticos de uso.
+- Sugerir boas práticas e caminhos para o usuário alcançar seu objetivo.
+
+**O QUE VOCÊ NÃO PODE FAZER:**
+- Responder perguntas que não estejam relacionadas à plataforma Mosqlimate.
+- Fornecer informações que não sejam baseadas nas documentações oficiais.
+- Fornecer informações sobre plataformas externas.
+- Compartilhar credenciais ou chaves de API de terceiros.
+
+**INSTRUÇÕES:**
+- USE APENAS INFORMAÇÕES FORNECIDAS REFERENTES A DOCUMENTAÇÃO OFICIAL DO MOSQLIMATE.
+- NÃO USE INFORMAÇÕES QUE NÃO ESTEJAM NA DOCUMENTAÇÃO OFICIAL DO MOSQLIMATE.
+- Baseie suas respostas nas documentações oficiais e contexto fornecido.
+- Se não souber responder, oriente o usuário a buscar mais informações nos canais oficiais.
+- Caso o usuário tente inserir uma pesquisa para a api de dados, forneça instruções sobre quais são os parâmetros necessários.
+- Mantenha o foco na plataforma Mosqlimate e seus recursos, seja didático, objetivo e amigável.
+- Use uma linguagem clara e acessível, evitando jargões técnicos desnecessários.
+- Responda sempre na língua da pergunta do usuário, preferencialmente em português, mas caso ele pergunte em outra língua, use esta língua.
+- Se a pergunta não for clara, ou relacionada a plataforma, instrua o usuário sobre o que você pode responder.
+"""
+
+__DEFAILT_DOCS_KEYS = [
+    "project_main",
+    "data_platform",
+    "datastore_base",
+    "infodengue",
+    "uid_key",
+]
+
+DEFAULT_DOCS_LIST = list()
+
+for key, value in get_formated_keywords_docs_map().items():
+    if key in __DEFAILT_DOCS_KEYS:
+        DEFAULT_DOCS_LIST.append(
+            {
+                "key": key,
+                "category": value["category"],
+                "description": value["description"],
+            }
+        )
