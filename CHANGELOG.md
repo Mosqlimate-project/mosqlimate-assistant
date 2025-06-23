@@ -1,6 +1,26 @@
 Release Notes
 ---
 
+# [1.2.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.1.0...1.2.0) (2025-06-23)
+
+
+### Bug Fixes
+
+* **docs:** add markdown link to the docs as a comment ([317d1b3](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/317d1b334b4c799bea2ee947bcdb90807db4f48e))
+* **faiss_db:** move get_relevant_sample_asks from assistant to faiss_db module ([337f707](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/337f70792c0996b038ee2771fe58a8b7868497f0))
+* **faiss_db:** update asks_db to corrected asks ([7e370e0](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/7e370e0ec7ab6326d0d360be8af445ac05d3d858))
+* **settings:** adding more mosqlimate documentation links ([c2c4902](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/c2c4902accaa9891dd5e7bbd8c35cd3abf9f41e3))
+
+
+### Features
+
+* **assistant:** add new methods for assistant to handle with mosqlimate documentation ([5223c52](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/5223c522bdb05cad3a0c358ffe681ea96ca2ad38))
+* **docs:** add funcs to load or save mosqlimate docs on FAISS vector store ([720f999](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/720f9995def6f26a817e674eb599af061f7e20af))
+* **docs:** add functions to get mosqlimate markdown documentation ([33f8eac](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/33f8eac9c75c3f549e39edd66829047829436a79))
+* **docs:** add mosqlimate docs keyword mapping ([84d992e](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/84d992e2eeea2f13b8c937254c723fd5a5dd7636))
+* **examples:** add example of new pipeline usage ([f5b5528](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/f5b55281659d885cb824fe2d94f3c7d997979ab5))
+* **main:** add pipeline for consulting api, and documentation ([2e5c882](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/2e5c882bca85fc319056aaac3a59305a162a0343))
+
 # [1.1.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.0.1...1.1.0) (2025-06-03)
 
 
