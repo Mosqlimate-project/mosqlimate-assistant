@@ -30,7 +30,7 @@ def test_default_embedding_model():
 
 def test_mosqlimate_api_docs():
     assert (
-        settings.MOSQLIMATE_API_DOCS
+        settings.MOSQLIMATE_API_DOCS_JSON
         == "https://api.mosqlimate.org/api/openapi.json"
     )
 

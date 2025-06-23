@@ -1,10 +1,28 @@
 import requests
 
-from mosqlimate_assistant.settings import MOSQLIMATE_API_DOCS
+from mosqlimate_assistant.settings import (
+    MOSQLIMATE_API_DOCS_JSON,
+    MOSQLIMATE_DATA_PLATFORM_DOCS,
+    MOSQLIMATE_DATASTORE_BASE_DOCS,
+    MOSQLIMATE_DATASTORE_GET_AUTHORS_DOCS,
+    MOSQLIMATE_DATASTORE_GET_CLIMATE_DOCS,
+    MOSQLIMATE_DATASTORE_GET_CLIMATE_WEEKLY_DOCS,
+    MOSQLIMATE_DATASTORE_GET_EPISCANNER_DOCS,
+    MOSQLIMATE_DATASTORE_GET_INFODENGUE_DOCS,
+    MOSQLIMATE_DATASTORE_GET_MODELS_DOCS,
+    MOSQLIMATE_DATASTORE_GET_MOSQUITO_DOCS,
+    MOSQLIMATE_DATASTORE_GET_PREDICTIONS_DOCS,
+    MOSQLIMATE_DATASTORE_POST_MODELS_DOCS,
+    MOSQLIMATE_DATASTORE_POST_PREDICTIONS_DOCS,
+    MOSQLIMATE_OVICOUNTER_DOCS,
+    MOSQLIMATE_PROJECT_DOCS,
+    MOSQLIMATE_REGISTRY_DOCS,
+    MOSQLIMATE_UID_KEY_DOCS,
+)
 
 
 def get_mosqlimate_api_docs() -> dict:
-    url = MOSQLIMATE_API_DOCS
+    url = MOSQLIMATE_API_DOCS_JSON
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()
@@ -86,3 +104,183 @@ def format_api_parameters(api_json: dict) -> dict:
         formatted_parameters.append(param_dict)
 
     return {"parameters": formatted_parameters}
+
+
+# Funções para consumir documentação em Markdown
+
+
+def get_markdown_content(url: str) -> str:
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.text
+    except requests.RequestException as e:
+        raise RuntimeError(f"Erro ao obter markdown de {url}: {e}")
+
+
+def get_mosqlimate_project_docs() -> str:
+    """Obtém a documentação principal do projeto Mosqlimate."""
+    return get_markdown_content(MOSQLIMATE_PROJECT_DOCS)
+
+
+def get_mosqlimate_ovicounter_docs() -> str:
+    """Obtém a documentação do Ovicounter (dataset de ovos)."""
+    return get_markdown_content(MOSQLIMATE_OVICOUNTER_DOCS)
+
+
+def get_mosqlimate_data_platform_docs() -> str:
+    """Obtém a documentação da plataforma de dados."""
+    return get_markdown_content(MOSQLIMATE_DATA_PLATFORM_DOCS)
+
+
+def get_mosqlimate_datastore_base_docs() -> str:
+    """Obtém a documentação base do datastore."""
+    return get_markdown_content(MOSQLIMATE_DATASTORE_BASE_DOCS)
+
+
+def get_mosqlimate_registry_docs() -> str:
+    """Obtém a documentação do registry."""
+    return get_markdown_content(MOSQLIMATE_REGISTRY_DOCS)
+
+
+def get_mosqlimate_uid_key_docs() -> str:
+    """Obtém a documentação sobre UID keys."""
+    return get_markdown_content(MOSQLIMATE_UID_KEY_DOCS)
+
+
+# Funções para endpoints GET do datastore
+
+
+def get_mosqlimate_infodengue_docs() -> str:
+    """Obtém a documentação do endpoint GET infodengue."""
+    return get_markdown_content(MOSQLIMATE_DATASTORE_GET_INFODENGUE_DOCS)
+
+
+def get_mosqlimate_episcanner_docs() -> str:
+    """Obtém a documentação do endpoint GET episcanner."""
+    return get_markdown_content(MOSQLIMATE_DATASTORE_GET_EPISCANNER_DOCS)
+
+
+def get_mosqlimate_climate_docs() -> str:
+    """Obtém a documentação do endpoint GET climate."""
+    return get_markdown_content(MOSQLIMATE_DATASTORE_GET_CLIMATE_DOCS)
+
+
+def get_mosqlimate_climate_weekly_docs() -> str:
+    """Obtém a documentação do endpoint GET climate weekly."""
+    return get_markdown_content(MOSQLIMATE_DATASTORE_GET_CLIMATE_WEEKLY_DOCS)
+
+
+def get_mosqlimate_mosquito_docs() -> str:
+    """Obtém a documentação do endpoint GET mosquito."""
+    return get_markdown_content(MOSQLIMATE_DATASTORE_GET_MOSQUITO_DOCS)
+
+
+# Funções para endpoints GET do registry
+
+
+def get_mosqlimate_predictions_docs() -> str:
+    """Obtém a documentação do endpoint GET predictions."""
+    return get_markdown_content(MOSQLIMATE_DATASTORE_GET_PREDICTIONS_DOCS)
+
+
+def get_mosqlimate_models_docs() -> str:
+    """Obtém a documentação do endpoint GET models."""
+    return get_markdown_content(MOSQLIMATE_DATASTORE_GET_MODELS_DOCS)
+
+
+def get_mosqlimate_authors_docs() -> str:
+    """Obtém a documentação do endpoint GET authors."""
+    return get_markdown_content(MOSQLIMATE_DATASTORE_GET_AUTHORS_DOCS)
+
+
+# Funções para endpoints POST do registry
+
+
+def get_mosqlimate_post_predictions_docs() -> str:
+    """Obtém a documentação do endpoint POST predictions."""
+    return get_markdown_content(MOSQLIMATE_DATASTORE_POST_PREDICTIONS_DOCS)
+
+
+def get_mosqlimate_post_models_docs() -> str:
+    """Obtém a documentação do endpoint POST models."""
+    return get_markdown_content(MOSQLIMATE_DATASTORE_POST_MODELS_DOCS)
+
+
+# Funções para obter múltiplas documentações
+
+
+def get_all_mosqlimate_docs() -> dict:
+    """
+    Obtém toda a documentação em markdown do Mosqlimate.
+    """
+    docs = {
+        "project": {
+            "main": get_mosqlimate_project_docs(),
+            "ovicounter": get_mosqlimate_ovicounter_docs(),
+            "data_platform": get_mosqlimate_data_platform_docs(),
+            "uid_key": get_mosqlimate_uid_key_docs(),
+        },
+        "datastore": {
+            "base": get_mosqlimate_datastore_base_docs(),
+            "get": {
+                "infodengue": get_mosqlimate_infodengue_docs(),
+                "episcanner": get_mosqlimate_episcanner_docs(),
+                "climate": get_mosqlimate_climate_docs(),
+                "climate_weekly": get_mosqlimate_climate_weekly_docs(),
+                "mosquito": get_mosqlimate_mosquito_docs(),
+            },
+        },
+        "registry": {
+            "base": get_mosqlimate_registry_docs(),
+            "get": {
+                "predictions": get_mosqlimate_predictions_docs(),
+                "models": get_mosqlimate_models_docs(),
+                "authors": get_mosqlimate_authors_docs(),
+            },
+            "post": {
+                "predictions": get_mosqlimate_post_predictions_docs(),
+                "models": get_mosqlimate_post_models_docs(),
+            },
+        },
+    }
+
+    return docs
+
+
+def get_datastore_docs() -> dict:
+    """
+    Obtém apenas a documentação relacionada ao datastore.
+    """
+    docs = {
+        "base": get_mosqlimate_datastore_base_docs(),
+        "endpoints": {
+            "infodengue": get_mosqlimate_infodengue_docs(),
+            "episcanner": get_mosqlimate_episcanner_docs(),
+            "climate": get_mosqlimate_climate_docs(),
+            "climate_weekly": get_mosqlimate_climate_weekly_docs(),
+            "mosquito": get_mosqlimate_mosquito_docs(),
+        },
+    }
+
+    return docs
+
+
+def get_registry_docs() -> dict:
+    """
+    Obtém apenas a documentação relacionada ao registry.
+    """
+    docs = {
+        "base": get_mosqlimate_registry_docs(),
+        "get_endpoints": {
+            "predictions": get_mosqlimate_predictions_docs(),
+            "models": get_mosqlimate_models_docs(),
+            "authors": get_mosqlimate_authors_docs(),
+        },
+        "post_endpoints": {
+            "predictions": get_mosqlimate_post_predictions_docs(),
+            "models": get_mosqlimate_post_models_docs(),
+        },
+    }
+
+    return docs

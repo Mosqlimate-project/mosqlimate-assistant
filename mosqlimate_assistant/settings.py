@@ -4,7 +4,33 @@ from typing import Literal
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Mosqlimate API URLs
-MOSQLIMATE_API_DOCS = "https://api.mosqlimate.org/api/openapi.json"
+MOSQLIMATE_API_DOCS_JSON = "https://api.mosqlimate.org/api/openapi.json"
+
+MOSQLIMATE_PROJECT_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/index.md"
+
+MOSQLIMATE_OVICOUNTER_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/egg-dataset.md"
+
+MOSQLIMATE_DATA_PLATFORM_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/index.md"
+MOSQLIMATE_DATASTORE_BASE_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/index.md"
+
+MOSQLIMATE_DATASTORE_GET_INFODENGUE_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/infodengue.md"
+MOSQLIMATE_DATASTORE_GET_EPISCANNER_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/episcanner.md"
+MOSQLIMATE_DATASTORE_GET_CLIMATE_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/climate.md"
+MOSQLIMATE_DATASTORE_GET_CLIMATE_WEEKLY_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/climate-weekly.md"
+MOSQLIMATE_DATASTORE_GET_MOSQUITO_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/mosquito.md"
+
+MOSQLIMATE_REGISTRY_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/index.md"
+
+MOSQLIMATE_DATASTORE_GET_PREDICTIONS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/predictions.md"
+MOSQLIMATE_DATASTORE_GET_MODELS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/models.md"
+MOSQLIMATE_DATASTORE_GET_AUTHORS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/authors.md"
+
+MOSQLIMATE_DATASTORE_POST_PREDICTIONS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/POST/predictions.md"
+MOSQLIMATE_DATASTORE_POST_MODELS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/POST/models.md"
+
+MOSQLIMATE_UID_KEY_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/uid-key.md"
+
+
 BASE_URL_API = "https://api.mosqlimate.org/api/datastore/"
 
 
@@ -56,7 +82,7 @@ MUNICIPALITIES_PATH = os.path.join(
 )
 ASKS_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "asks.csv")
 ASKS_DB_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "asks_db")
-
+DOCS_DB_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "docs_db")
 
 VALID_UFS = [
     "AC",

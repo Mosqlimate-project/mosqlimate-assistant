@@ -21,12 +21,11 @@ from mosqlimate_assistant.settings import (
 
 
 class Assistant:
-    def make_query(
+    def make_api_query(
         self,
-        user_input: str,
         examples_list: list[dict[str, str]] = por.EXAMPLES_LIST,
     ) -> str:
-        escaped_examples: list[dict[str, str]] = []
+        escaped_examples: list[dict[str, str]] = list()
         for ex in examples_list:
             escaped_examples.append(
                 {
@@ -44,9 +43,11 @@ class Assistant:
             """Exemplo:\nPergunta: {question}\nResposta: {answer}"""
         )
 
-        prefix = f"""{por.BASE_PROMPT}\n{por.TABLE_PROMPT}\n{por.UF_PROMPT}"""
+        prefix = (
+            f"""{por.BASE_API_PROMPT}\n{por.TABLE_PROMPT}\n{por.UF_PROMPT}"""
+        )
 
-        suffix = """Agora, responda à seguinte pergunta: {user_question}\n"""
+        suffix = """Agora, responda à seguinte pergunta:\n"""
 
         few_shot_prompt = FewShotPromptTemplate(
             examples=escaped_examples,
@@ -56,10 +57,32 @@ class Assistant:
             ),
             prefix=prefix,
             suffix=suffix,
-            input_variables=["user_question"],
         )
 
-        return few_shot_prompt.format(user_question=user_input)
+        return few_shot_prompt.format()
+
+    def make_docs_query(
+        self,
+        similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
+    ) -> str:
+        prompt = por.BASE_DOCS_PROMPT
+
+        for doc in similar_docs:
+            key = doc.get("key")
+            if not isinstance(key, str):
+                continue
+            doc_map = utils.DOCS_KEYWORDS_MAP.get(key, None)
+
+            if doc_map:
+                doc_description = doc_map.get("description", "")
+                doc_function = doc_map.get("function", None)
+                documentation = doc_function()
+
+                prompt += f"\n---\n**{doc_description}**\n{documentation}\n"
+
+        prompt += "\nAgora, responda à seguinte pergunta:\n"
+
+        return prompt
 
     def clean_output(self, output: Optional[str]) -> dict:
         if output is None:
@@ -121,29 +144,15 @@ class Assistant:
         code += ")"
         return code
 
-    def get_relevant_sample_asks(
-        self, prompt: str, k: int = 3
-    ) -> tuple[list[dict[str, str]], float]:
-        vector_db = faiss_db.get_or_create_vector_db()
-        docs = vector_db.similarity_search_with_score(prompt, k=k)
-        samples = [
-            {
-                "question": doc[0].page_content,
-                "answer": utils.format_answer(doc[0].metadata["output"]),
-            }
-            for doc in docs
-        ]
-        return samples, float(docs[0][1])
-
-    def make_query_and_get_url(
+    def make_api_query_and_get_url(
         self,
         prompt: str,
         threshold: float = 0.8,
         save_logs: bool = False,
         save_path: str = ".",
     ) -> str:
-        samples, score = self.get_relevant_sample_asks(prompt)
-        if score < threshold:
+        samples, scores = faiss_db.get_relevant_sample_asks(prompt)
+        if scores[0] < threshold:
             raise RuntimeError(
                 f"Não foi possível encontrar exemplos relevantes para a pergunta: {prompt}"
             )
@@ -162,6 +171,17 @@ class Assistant:
             "query_llm deve ser implementado nas subclasses"
         )
 
+    def query_llm_docs(
+        self,
+        prompt: str,
+        similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
+        save_logs: bool = False,
+        save_path: str = ".",
+    ) -> dict:
+        raise NotImplementedError(
+            "query_llm_docs deve ser implementado nas subclasses"
+        )
+
 
 class AssistantOpenAI(Assistant):
     def __init__(
@@ -178,7 +198,7 @@ class AssistantOpenAI(Assistant):
         save_logs: bool = False,
         save_path: str = ".",
     ) -> dict:
-        full_query = self.make_query(prompt, examples_list)
+        full_query = self.make_api_query(examples_list)
         output = (
             self.model.chat.completions.create(
                 model=DEEPSEEK_MODEL,
@@ -198,6 +218,33 @@ class AssistantOpenAI(Assistant):
             )
         return self.clean_output(output.content)
 
+    def query_llm_docs(
+        self,
+        prompt: str,
+        similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
+        save_logs: bool = False,
+        save_path: str = ".",
+    ) -> dict:
+        full_query = self.make_docs_query(similar_docs)
+        output = (
+            self.model.chat.completions.create(
+                model=DEEPSEEK_MODEL,
+                messages=[
+                    {"role": "system", "content": full_query},
+                    {"role": "user", "content": prompt},
+                ],
+                stream=False,
+            )
+            .choices[0]
+            .message
+        )
+        if save_logs:
+            utils.save_logs(
+                ["user: " + str(prompt), "assistant:\n" + str(output)],
+                save_path,
+            )
+        return {"content": output.content}
+
 
 class AssistantOllama(Assistant):
     def __init__(self, model_name: str = OLLAMA_MODEL):
@@ -210,7 +257,7 @@ class AssistantOllama(Assistant):
         save_logs: bool = False,
         save_path: str = ".",
     ) -> dict:
-        full_query = self.make_query(prompt, examples_list)
+        full_query = self.make_api_query(examples_list)
         response = ollama.chat(
             model=self.model_name,
             messages=[
@@ -226,6 +273,29 @@ class AssistantOllama(Assistant):
                 save_path,
             )
         return self.clean_output(output)
+
+    def query_llm_docs(
+        self,
+        prompt: str,
+        similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
+        save_logs: bool = False,
+        save_path: str = ".",
+    ) -> dict:
+        full_query = self.make_docs_query(similar_docs)
+        response = ollama.chat(
+            model=self.model_name,
+            messages=[
+                {"role": "system", "content": full_query},
+                {"role": "user", "content": prompt},
+            ],
+        )
+        output = response["message"]["content"]
+        if save_logs:
+            utils.save_logs(
+                ["user: " + str(prompt), "assistant:\n" + str(output)],
+                save_path,
+            )
+        return {"content": output}
 
 
 class AssistantGemini(Assistant):
@@ -245,7 +315,7 @@ class AssistantGemini(Assistant):
         save_path: str = ".",
     ) -> dict:
 
-        full_query = self.make_query(prompt, examples_list)
+        full_query = self.make_api_query(examples_list)
 
         response = self.model.beta.chat.completions.parse(
             model=GEMINI_MODEL,
@@ -268,3 +338,27 @@ class AssistantGemini(Assistant):
             return dict(parsed)
 
         return self.clean_output(parsed)
+
+    def query_llm_docs(
+        self,
+        prompt: str,
+        similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
+        save_logs: bool = False,
+        save_path: str = ".",
+    ) -> dict:
+        full_query = self.make_docs_query(similar_docs)
+        response = self.model.chat.completions.create(
+            model=GEMINI_MODEL,
+            messages=[
+                {"role": "system", "content": full_query},
+                {"role": "user", "content": prompt},
+            ],
+            stream=False,
+        )
+        output = response.choices[0].message.content
+        if save_logs:
+            utils.save_logs(
+                ["user: " + str(prompt), "assistant:\n" + str(output)],
+                save_path,
+            )
+        return {"content": output}

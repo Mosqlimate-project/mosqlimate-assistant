@@ -6,6 +6,7 @@ from . import (
     assistant,
     docs_consumer,
     faiss_db,
+    main,
     muni_codes,
     prompts,
     schemas,
@@ -33,4 +34,5 @@ __all__: List[str] = [
     "settings",
     "utils",
     "prompts",
+    "main",
 ]  # noqa: WPS410 (the only __variable__ we use)
