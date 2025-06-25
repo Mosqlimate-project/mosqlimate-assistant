@@ -26,8 +26,8 @@ include-package-data = true
 
 [tool.poetry]
 include = [
-    "data/asks.csv",
-    "data/municipios.json"
+    "mosqlimate_assistant/data/asks.csv",
+    "mosqlimate_assistant/data/municipios.json",
 ]
 
 [dependency-groups]

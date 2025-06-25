@@ -1,2 +1,2 @@
-include data/asks.csv
-include data/municipios.json
+include mosqlimate_assistant/data/asks.csv
+include mosqlimate_assistant/data/municipios.json

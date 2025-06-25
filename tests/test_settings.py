@@ -21,7 +21,7 @@ def test_default_api_key():
 
 
 def test_default_database_path():
-    assert settings.DEFAULT_DATABASE_PATH == "../data"
+    assert settings.DEFAULT_DATABASE_PATH == "data"
 
 
 def test_default_embedding_model():
