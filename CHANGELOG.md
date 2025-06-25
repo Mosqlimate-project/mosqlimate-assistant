@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.2.2](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.2.1...1.2.2) (2025-06-25)
+
+
+### Bug Fixes
+
+* **pyptoject:** add MANIFEST.in to include data in package ([7189215](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/71892159e79e88bd6d979e7f404d0c70c6c2b4c8))
+
 ## [1.2.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.2.0...1.2.1) (2025-06-25)
 
 
