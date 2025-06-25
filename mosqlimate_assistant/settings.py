@@ -88,6 +88,7 @@ DOCS_DB_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "docs_db")
 MUNICIPALITIES_URL = "https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-assistant/refs/heads/main/mosqlimate_assistant/data/municipios.json"
 ASKS_URL = "https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-assistant/refs/heads/main/mosqlimate_assistant/data/asks.csv"
 
+
 def ensure_file_exists(local_path: str, remote_url: str):
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
     if not os.path.exists(local_path):
@@ -95,6 +96,7 @@ def ensure_file_exists(local_path: str, remote_url: str):
             urllib.request.urlretrieve(remote_url, local_path)
         except Exception as e:
             print(f"Erro ao baixar {local_path}: {e}")
+
 
 ensure_file_exists(MUNICIPALITIES_PATH, MUNICIPALITIES_URL)
 ensure_file_exists(ASKS_PATH, ASKS_URL)

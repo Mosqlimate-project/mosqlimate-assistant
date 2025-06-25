@@ -18,7 +18,16 @@ from mosqlimate_assistant.settings import (
 
 
 def create_vector_store(embedding_model: str = EMBEDDING_MODEL) -> FAISS:
-    embedding = OllamaEmbeddings(model=embedding_model)
+    ollama_url = os.getenv("OLLAMA_URL")
+
+    if ollama_url:
+        embedding = OllamaEmbeddings(
+            model=embedding_model,
+            base_url=ollama_url,
+        )
+    else:
+        embedding = OllamaEmbeddings(model=embedding_model)
+
     docstore = InMemoryDocstore()
 
     index = faiss.IndexFlatIP(len(embedding.embed_query("hello")))
