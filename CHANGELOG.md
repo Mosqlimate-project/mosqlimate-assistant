@@ -1,6 +1,14 @@
 Release Notes
 ---
 
+## [1.2.3](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.2.2...1.2.3) (2025-06-25)
+
+
+### Bug Fixes
+
+* **data:** move fixed data "../" to project relative path "./" ([80022fa](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/80022fa297c07a2192ab417ac07f3fa9690ddade))
+* **settings:** add func to ensure local files exist by downloading from github ([906157f](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/906157fba9155ab339a5712fb911edf55cc7c455))
+
 ## [1.2.2](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.2.1...1.2.2) (2025-06-25)
 
 
