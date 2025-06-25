@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.2.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.2.0...1.2.1) (2025-06-25)
+
+
+### Bug Fixes
+
+* **pyproject:** add package data inclusion and specify files for poetry ([053f521](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/053f521eb8f0f89ff1458b918964007c3e8bce08))
+
 # [1.2.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.1.0...1.2.0) (2025-06-23)
 
 
