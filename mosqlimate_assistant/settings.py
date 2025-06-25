@@ -1,4 +1,5 @@
 import os
+import urllib.request
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -76,13 +77,27 @@ EMBEDDING_MODEL = settings.embedding_model
 DATABASE_PATH = settings.database_path
 
 
-# Paths
+# Caminhos dos arquivos
 MUNICIPALITIES_PATH = os.path.join(
     CURRENT_PATH, DATABASE_PATH, "municipios.json"
 )
 ASKS_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "asks.csv")
 ASKS_DB_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "asks_db")
 DOCS_DB_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "docs_db")
+
+MUNICIPALITIES_URL = "https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-assistant/refs/heads/main/mosqlimate_assistant/data/municipios.json"
+ASKS_URL = "https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-assistant/refs/heads/main/mosqlimate_assistant/data/asks.csv"
+
+def ensure_file_exists(local_path: str, remote_url: str):
+    os.makedirs(os.path.dirname(local_path), exist_ok=True)
+    if not os.path.exists(local_path):
+        try:
+            urllib.request.urlretrieve(remote_url, local_path)
+        except Exception as e:
+            print(f"Erro ao baixar {local_path}: {e}")
+
+ensure_file_exists(MUNICIPALITIES_PATH, MUNICIPALITIES_URL)
+ensure_file_exists(ASKS_PATH, ASKS_URL)
 
 VALID_UFS = [
     "AC",
