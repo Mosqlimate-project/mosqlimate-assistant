@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+# [1.3.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.2.3...1.3.0) (2025-06-25)
+
+
+### Features
+
+* **embedding:** add support for custom Ollama URL ([690560a](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/690560a55c831b2c5d6d1ab44784037cb9be2ad4))
+
 ## [1.2.3](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.2.2...1.2.3) (2025-06-25)
 
 
