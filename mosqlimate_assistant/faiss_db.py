@@ -1,12 +1,14 @@
 import os
-from typing import Dict
+from typing import Dict, Optional
 
 import faiss  # type: ignore
+import numpy as np
+import ollama
 import pandas as pd  # type: ignore
 from langchain_community.docstore.in_memory import InMemoryDocstore
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
-from langchain_ollama import OllamaEmbeddings
+from langchain_core.embeddings import Embeddings
 
 from mosqlimate_assistant import utils
 from mosqlimate_assistant.settings import (
@@ -17,16 +19,47 @@ from mosqlimate_assistant.settings import (
 )
 
 
-def create_vector_store(embedding_model: str = EMBEDDING_MODEL) -> FAISS:
-    ollama_url = os.getenv("OLLAMA_URL")
+class OllamaEmbeddingWrapper(Embeddings):
+    """Wrapper para usar ollama diretamente com langchain"""
 
-    if ollama_url:
-        embedding = OllamaEmbeddings(
-            model=embedding_model,
-            base_url=ollama_url,
+    def __init__(self, model: str, base_url: Optional[str] = None):
+        self.model = model
+        self.client = (
+            ollama.Client(host=base_url) if base_url else ollama.Client()
         )
-    else:
-        embedding = OllamaEmbeddings(model=embedding_model)
+
+    def _normalize_vector(self, vector: list[float]) -> list[float]:
+        """Normaliza o vetor para magnitude unitária"""
+        np_vector = np.array(vector)
+        norm = np.linalg.norm(np_vector)
+        if norm == 0:
+            return vector
+        return (np_vector / norm).tolist()
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        """Embed a list of documents"""
+        embeddings = []
+        for text in texts:
+            response = self.client.embeddings(model=self.model, prompt=text)
+            normalized_embedding = self._normalize_vector(
+                response["embedding"]
+            )
+            embeddings.append(normalized_embedding)
+        return embeddings
+
+    def embed_query(self, text: str) -> list[float]:
+        """Embed a single query"""
+        response = self.client.embeddings(model=self.model, prompt=text)
+        return self._normalize_vector(response["embedding"])
+
+
+def create_vector_store(embedding_model: str = EMBEDDING_MODEL) -> FAISS:
+    ollama_url = os.getenv("OLLAMA_URL", None)
+
+    embedding = OllamaEmbeddingWrapper(
+        model=embedding_model,
+        base_url=ollama_url,
+    )
 
     docstore = InMemoryDocstore()
 
@@ -70,7 +103,12 @@ def save_asks_local_db(
 def load_local_db(
     db_path: str, embedding_model: str = EMBEDDING_MODEL
 ) -> FAISS:
-    embedding = OllamaEmbeddings(model=embedding_model)
+    ollama_url = os.getenv("OLLAMA_URL")
+
+    embedding = OllamaEmbeddingWrapper(
+        model=embedding_model,
+        base_url=ollama_url,
+    )
 
     vector_store = FAISS.load_local(
         folder_path=db_path,
