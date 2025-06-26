@@ -1,6 +1,18 @@
 Release Notes
 ---
 
+# [1.4.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.3.0...1.4.0) (2025-06-26)
+
+
+### Bug Fixes
+
+* **pyproject:** remove langchain-ollama and add numpy to dependencies, update manifest ([84c113d](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/84c113dfb9373610fa2cb3298d92b01c5cc69ac4))
+
+
+### Features
+
+* **embedding:** implement OllamaEmbeddingWrapper for document and query embedding ([e449cb7](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/e449cb785ce8b82bad80bc0b269c0e3d50b1ff44))
+
 # [1.3.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.2.3...1.3.0) (2025-06-25)
 
 
