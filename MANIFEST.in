@@ -1,2 +1,3 @@
 include mosqlimate_assistant/data/asks.csv
 include mosqlimate_assistant/data/municipios.json
+recursive-include mosqlimate_assistant/data *
