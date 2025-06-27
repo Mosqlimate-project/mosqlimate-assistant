@@ -11,25 +11,25 @@ MOSQLIMATE_PROJECT_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/
 
 MOSQLIMATE_OVICOUNTER_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/egg-dataset.md"
 
-MOSQLIMATE_DATA_PLATFORM_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/index.md"
-MOSQLIMATE_DATASTORE_BASE_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/index.md"
+MOSQLIMATE_DATA_PLATFORM_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/index.pt.md"
+MOSQLIMATE_DATASTORE_BASE_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/index.pt.md"
 
-MOSQLIMATE_DATASTORE_GET_INFODENGUE_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/infodengue.md"
-MOSQLIMATE_DATASTORE_GET_EPISCANNER_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/episcanner.md"
-MOSQLIMATE_DATASTORE_GET_CLIMATE_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/climate.md"
-MOSQLIMATE_DATASTORE_GET_CLIMATE_WEEKLY_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/climate-weekly.md"
-MOSQLIMATE_DATASTORE_GET_MOSQUITO_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/mosquito.md"
+MOSQLIMATE_DATASTORE_GET_INFODENGUE_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/infodengue.pt.md"
+MOSQLIMATE_DATASTORE_GET_EPISCANNER_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/episcanner.pt.md"
+MOSQLIMATE_DATASTORE_GET_CLIMATE_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/climate.pt.md"
+MOSQLIMATE_DATASTORE_GET_CLIMATE_WEEKLY_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/climate-weekly.pt.md"
+MOSQLIMATE_DATASTORE_GET_MOSQUITO_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/mosquito.pt.md"
 
-MOSQLIMATE_REGISTRY_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/index.md"
+MOSQLIMATE_REGISTRY_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/index.pt.md"
 
-MOSQLIMATE_DATASTORE_GET_PREDICTIONS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/predictions.md"
-MOSQLIMATE_DATASTORE_GET_MODELS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/models.md"
-MOSQLIMATE_DATASTORE_GET_AUTHORS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/authors.md"
+MOSQLIMATE_DATASTORE_GET_PREDICTIONS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/predictions.pt.md"
+MOSQLIMATE_DATASTORE_GET_MODELS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/models.pt.md"
+MOSQLIMATE_DATASTORE_GET_AUTHORS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/authors.pt.md"
 
-MOSQLIMATE_DATASTORE_POST_PREDICTIONS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/POST/predictions.md"
-MOSQLIMATE_DATASTORE_POST_MODELS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/POST/models.md"
+MOSQLIMATE_DATASTORE_POST_PREDICTIONS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/POST/predictions.pt.md"
+MOSQLIMATE_DATASTORE_POST_MODELS_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/POST/models.pt.md"
 
-MOSQLIMATE_UID_KEY_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/uid-key.md"
+MOSQLIMATE_UID_KEY_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/uid-key.pt.md"
 
 
 BASE_URL_API = "https://api.mosqlimate.org/api/datastore/"
@@ -84,6 +84,12 @@ MUNICIPALITIES_PATH = os.path.join(
 ASKS_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "asks.csv")
 ASKS_DB_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "asks_db")
 DOCS_DB_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "docs_db")
+ASKS_VECTOR_DB_PATH = os.path.join(
+    os.path.dirname(ASKS_PATH), "vector_dbs", "asks_chroma"
+)
+DOCS_VECTOR_DB_PATH = os.path.join(
+    os.path.dirname(DOCS_DB_PATH), "vector_dbs", "docs_chroma"
+)
 
 MUNICIPALITIES_URL = "https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-assistant/refs/heads/main/mosqlimate_assistant/data/municipios.json"
 ASKS_URL = "https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-assistant/refs/heads/main/mosqlimate_assistant/data/asks.csv"
