@@ -1,6 +1,14 @@
 Release Notes
 ---
 
+## [1.4.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.4.0...1.4.1) (2025-06-27)
+
+
+### Bug Fixes
+
+* **docs:** update markdown documentation URLs ([c72eeb2](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/c72eeb23e154fa322648ed492e5fc67857efde15))
+* **pyproject:** add chromadb to dependencies and add chroma db data ([3105552](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/310555260d174577e907c94c4cbafbe0ba8dbb60))
+
 # [1.4.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.3.0...1.4.0) (2025-06-26)
 
 
