@@ -11,7 +11,8 @@ from langchain_core.embeddings import Embeddings
 from mosqlimate_assistant import utils
 from mosqlimate_assistant.settings import (
     ASKS_PATH,
-    DOCS_DB_PATH,
+    ASKS_VECTOR_DB_PATH,
+    DOCS_VECTOR_DB_PATH,
     EMBEDDING_MODEL,
 )
 
@@ -80,7 +81,7 @@ def load_docs_documents() -> list[Document]:
 
 
 def get_or_create_vector_db(
-    db_path: str, embedding_model: str = EMBEDDING_MODEL
+    db_path: str = ASKS_VECTOR_DB_PATH, embedding_model: str = EMBEDDING_MODEL
 ) -> Chroma:
     embedding = OllamaEmbeddingWrapper(
         model=embedding_model, base_url=os.getenv("OLLAMA_URL")
@@ -106,7 +107,7 @@ def get_relevant_sample_asks(
     embedding_model: str = EMBEDDING_MODEL,
 ) -> tuple[list[dict[str, str]], list[float]]:
     if db_path is None:
-        db_path = "vector_dbs/asks_chroma"
+        db_path = ASKS_VECTOR_DB_PATH
     vector_db = get_or_create_vector_db(db_path, embedding_model)
     docs = vector_db.similarity_search_with_score(prompt, k=k)
     samples = [
@@ -121,7 +122,7 @@ def get_relevant_sample_asks(
 
 
 def get_or_create_docs_vector_db(
-    db_path: str = DOCS_DB_PATH, embedding_model: str = EMBEDDING_MODEL
+    db_path: str = DOCS_VECTOR_DB_PATH, embedding_model: str = EMBEDDING_MODEL
 ) -> Chroma:
     embedding = OllamaEmbeddingWrapper(
         model=embedding_model, base_url=os.getenv("OLLAMA_URL")
@@ -147,7 +148,7 @@ def get_relevant_docs(
     embedding_model: str = EMBEDDING_MODEL,
 ) -> tuple[list[dict[str, str]], list[float]]:
     if db_path is None:
-        db_path = "vector_dbs/docs_chroma"
+        db_path = DOCS_VECTOR_DB_PATH
     vector_db = get_or_create_docs_vector_db(db_path, embedding_model)
     docs = vector_db.similarity_search_with_score(prompt, k=k)
     samples = [
