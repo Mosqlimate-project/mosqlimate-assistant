@@ -4,8 +4,8 @@ from typing import List
 from . import (
     api_consumer,
     assistant,
+    chroma_db,
     docs_consumer,
-    faiss_db,
     main,
     muni_codes,
     prompts,
@@ -28,7 +28,7 @@ __all__: List[str] = [
     "api_consumer",
     "assistant",
     "docs_consumer",
-    "faiss_db",
+    "chroma_db",
     "muni_codes",
     "schemas",
     "settings",

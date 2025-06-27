@@ -5,7 +5,7 @@ import ollama
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from openai import OpenAI
 
-from mosqlimate_assistant import faiss_db, schemas, utils
+from mosqlimate_assistant import chroma_db, schemas, utils
 from mosqlimate_assistant.api_consumer import generate_api_url
 from mosqlimate_assistant.muni_codes import get_municipality_code
 from mosqlimate_assistant.prompts import por
@@ -151,7 +151,7 @@ class Assistant:
         save_logs: bool = False,
         save_path: str = ".",
     ) -> str:
-        samples, scores = faiss_db.get_relevant_sample_asks(prompt)
+        samples, scores = chroma_db.get_relevant_sample_asks(prompt)
         if scores[0] < threshold:
             raise RuntimeError(
                 f"Não foi possível encontrar exemplos relevantes para a pergunta: {prompt}"
