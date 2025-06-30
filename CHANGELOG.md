@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.4.2](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.4.1...1.4.2) (2025-06-30)
+
+
+### Bug Fixes
+
+* **docs:** update markdown URL's to the correct link, and add tests for docs consumer ([a7976a0](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/a7976a02140008605eaf5ad84f73c81d52c6ad78))
+
 ## [1.4.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.4.0...1.4.1) (2025-06-27)
 
 
