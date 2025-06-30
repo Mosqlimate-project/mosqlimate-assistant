@@ -7,9 +7,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Mosqlimate API URLs
 MOSQLIMATE_API_DOCS_JSON = "https://api.mosqlimate.org/api/openapi.json"
 
-MOSQLIMATE_PROJECT_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/index.md"
+MOSQLIMATE_PROJECT_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/index.pt.md"
 
-MOSQLIMATE_OVICOUNTER_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/egg-dataset.md"
+MOSQLIMATE_OVICOUNTER_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/egg-dataset.pt.md"
 
 MOSQLIMATE_DATA_PLATFORM_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/index.pt.md"
 MOSQLIMATE_DATASTORE_BASE_DOCS = "https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/index.pt.md"
