@@ -1,4 +1,4 @@
-from mosqlimate_assistant import assistant, chroma_db
+from mosqlimate_assistant import assistant, vector_db
 from mosqlimate_assistant.api_consumer import generate_api_url
 from mosqlimate_assistant.muni_codes import get_muni_and_uf_from_code
 from mosqlimate_assistant.prompts import por
@@ -69,14 +69,14 @@ def assistant_pipeline(
     k_num=4,
 ) -> str:
 
-    relevant_samples, scores = chroma_db.get_relevant_sample_asks(
+    relevant_samples, scores = vector_db.get_relevant_sample_asks(
         question, k=k_num
     )
 
     if scores and scores[0] > 0.75:
         return api_pipeline(question, relevant_samples)
 
-    relevant_docs, docs_scores = chroma_db.get_relevant_docs(question, k=k_num)
+    relevant_docs, docs_scores = vector_db.get_relevant_docs(question, k=k_num)
 
     similar_docs = [
         doc for doc, score in zip(relevant_docs, docs_scores) if score > 0.5

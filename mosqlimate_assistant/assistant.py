@@ -5,7 +5,7 @@ import ollama
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from openai import OpenAI
 
-from mosqlimate_assistant import chroma_db, schemas, utils
+from mosqlimate_assistant import schemas, utils, vector_db
 from mosqlimate_assistant.api_consumer import generate_api_url
 from mosqlimate_assistant.muni_codes import get_municipality_code
 from mosqlimate_assistant.prompts import por
@@ -75,10 +75,12 @@ class Assistant:
 
             if doc_map:
                 doc_description = doc_map.get("description", "")
-                doc_function = doc_map.get("function", None)
-                documentation = doc_function()
+                prompt += f"\n---\n**{doc_description}**\n"
 
-                prompt += f"\n---\n**{doc_description}**\n{documentation}\n"
+                doc_function = doc_map.get("function", None)
+                if doc_function:
+                    documentation = doc_function()
+                    prompt += f"{documentation}\n"
 
         prompt += "\nAgora, responda à seguinte pergunta:\n"
 
@@ -151,7 +153,7 @@ class Assistant:
         save_logs: bool = False,
         save_path: str = ".",
     ) -> str:
-        samples, scores = chroma_db.get_relevant_sample_asks(prompt)
+        samples, scores = vector_db.get_relevant_sample_asks(prompt)
         if scores[0] < threshold:
             raise RuntimeError(
                 f"Não foi possível encontrar exemplos relevantes para a pergunta: {prompt}"
