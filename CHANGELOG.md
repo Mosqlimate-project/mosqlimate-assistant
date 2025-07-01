@@ -1,6 +1,21 @@
 Release Notes
 ---
 
+# [1.5.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.4.2...1.5.0) (2025-07-01)
+
+
+### Bug Fixes
+
+* **data:** remove old databases data and update lock file ([ad0de17](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/ad0de17484a838f4c33be33fc43afc7744b35315))
+* **dependencies:** remove unused dependencies and update __init__.py ([f24a3b0](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/f24a3b0461b9295da88b8c7a9cb2474d5082c63a))
+* **old_databases:** remove old databases, chroma_db.py and faiss_db.py ([24add90](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/24add90cc784397c9a5e9aebaf22ae7b81840a36))
+* **tests:** reorganize test imports and remove unused test_faiss_db.py ([7852fc9](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/7852fc988e9ed56bb6a2c9836da67b2f1c2e523e))
+
+
+### Features
+
+* **vector_db:** implement VectorDB using pandas, numpy and pickle files ([8b20529](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/8b20529e01b8bab5118484bab07ec414c5480143))
+
 ## [1.4.2](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.4.1...1.4.2) (2025-06-30)
 
 
