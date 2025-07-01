@@ -4,7 +4,6 @@ from typing import List
 from . import (
     api_consumer,
     assistant,
-    chroma_db,
     docs_consumer,
     main,
     muni_codes,
@@ -12,6 +11,7 @@ from . import (
     schemas,
     settings,
     utils,
+    vector_db,
 )
 
 
@@ -28,7 +28,7 @@ __all__: List[str] = [
     "api_consumer",
     "assistant",
     "docs_consumer",
-    "chroma_db",
+    "vector_db",
     "muni_codes",
     "schemas",
     "settings",
