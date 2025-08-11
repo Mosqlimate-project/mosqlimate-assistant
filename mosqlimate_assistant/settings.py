@@ -41,7 +41,7 @@ OLLAMA_MODEL = "llama3.2:latest"
 DEEPSEEK_MODEL = "deepseek-chat"
 DEEPSEEK_API_URL = "https://api.deepseek.com"
 
-GEMINI_MODEL = "gemini-2.0-flash"
+GEMINI_MODEL = "gemini-2.5-flash"
 GOOGLE_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 
 
