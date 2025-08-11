@@ -174,15 +174,19 @@ def get_relevant_sample_asks(
 
 
 def load_docs_documents() -> List[Document]:
-    docs_map = utils.get_formated_keywords_docs_map()
+    docs_map = utils.DOCS_KEYWORDS_MAP
     documents = []
     for key, value in docs_map.items():
+        # Obter o conteúdo completo do markdown
+        markdown_content = value["function"]()
+
         doc = Document(
-            page_content=value["keywords"],
+            page_content=markdown_content,
             metadata={
                 "key": key,
                 "category": value["category"],
                 "description": value["description"],
+                "keywords": ", ".join(value["keywords"]),
             },
         )
         documents.append(doc)
@@ -219,7 +223,8 @@ def get_relevant_docs(
             "key": doc[0].metadata["key"],
             "category": doc[0].metadata["category"],
             "description": doc[0].metadata["description"],
-            "keywords": doc[0].page_content,
+            "keywords": doc[0].metadata["keywords"],
+            "content": doc[0].page_content,
         }
         for doc in docs
     ]
