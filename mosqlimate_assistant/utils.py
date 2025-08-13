@@ -45,7 +45,8 @@ def format_answer(answer: str) -> str:
 # Mapeamento de documentações com palavras-chave e categorias
 DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
     "project_main": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/index.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/index.pt.md
+        "link": "https://mosqlimate.org/pt/",
         "function": get_mosqlimate_project_docs,
         "keywords": [
             "o que é mosqlimate",
@@ -73,7 +74,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação principal do projeto Mosqlimate",
     },
     "project_ovicounter": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/egg-dataset.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Mosqlimate-project.github.io/refs/heads/main/pages/egg-dataset.pt.md
+        "link": "https://mosqlimate.org/pt/egg-dataset/",
         "function": get_mosqlimate_ovicounter_docs,
         "keywords": [
             "ovicounter",
@@ -95,7 +97,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação do Ovicounter (dataset de ovos de mosquito)",
     },
     "data_platform": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/index.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/index.pt.md
+        "link": "https://api.mosqlimate.org/docs/",
         "function": get_mosqlimate_data_platform_docs,
         "keywords": [
             "como usar a api",
@@ -122,7 +125,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação da plataforma de dados",
     },
     "datastore_base": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/index.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/index.pt.md
+        "link": "https://api.mosqlimate.org/docs/datastore/",
         "function": get_mosqlimate_datastore_base_docs,
         "keywords": [
             "datastore",
@@ -139,7 +143,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação base do datastore",
     },
     "registry_base": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/index.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/index.pt.md
+        "link": "https://api.mosqlimate.org/docs/registry/",
         "function": get_mosqlimate_registry_docs,
         "keywords": [
             "registry",
@@ -164,7 +169,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação do registry (repositório de modelos)",
     },
     "uid_key": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/uid-key.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/uid-key.pt.md
+        "link": "https://api.mosqlimate.org/docs/uid-key/",
         "function": get_mosqlimate_uid_key_docs,
         "keywords": [
             "api key",
@@ -187,7 +193,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação sobre chaves UID e autenticação",
     },
     "datastore_infodengue": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/infodengue.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/infodengue.pt.md
+        "link": "https://api.mosqlimate.org/docs/datastore/GET/infodengue/",
         "function": get_mosqlimate_infodengue_docs,
         "keywords": [
             "dados infodengue",
@@ -214,7 +221,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação do endpoint GET infodengue",
     },
     "datastore_episcanner": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/episcanner.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/episcanner.pt.md
+        "link": "https://api.mosqlimate.org/docs/datastore/GET/episcanner/",
         "function": get_mosqlimate_episcanner_docs,
         "keywords": [
             "episcanner",
@@ -235,7 +243,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação do endpoint GET episcanner",
     },
     "datastore_climate": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/climate.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/climate.pt.md
+        "link": "https://api.mosqlimate.org/docs/datastore/GET/climate/",
         "function": get_mosqlimate_climate_docs,
         "keywords": [
             "dados climáticos",
@@ -256,7 +265,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação do endpoint GET climate",
     },
     "datastore_climate_weekly": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/climate-weekly.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/climate-weekly.pt.md
+        "link": "https://api.mosqlimate.org/docs/datastore/GET/climate-weekly/",
         "function": get_mosqlimate_climate_weekly_docs,
         "keywords": [
             "dados climáticos semanais",
@@ -273,7 +283,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação do endpoint GET climate weekly",
     },
     "datastore_mosquito": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/mosquito.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/datastore/GET/mosquito.pt.md
+        "link": "https://api.mosqlimate.org/docs/datastore/GET/mosquito/",
         "function": get_mosqlimate_mosquito_docs,
         "keywords": [
             "dados de mosquitos",
@@ -295,7 +306,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação do endpoint GET mosquito",
     },
     "registry_predictions_get": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/predictions.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/predictions.pt.md
+        "link": "https://api.mosqlimate.org/docs/registry/GET/predictions/",
         "function": get_mosqlimate_predictions_docs,
         "keywords": [
             "consultar previsões",
@@ -317,7 +329,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação do endpoint GET predictions",
     },
     "registry_models_get": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/models.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/models.pt.md
+        "link": "https://api.mosqlimate.org/docs/registry/GET/models/",
         "function": get_mosqlimate_models_docs,
         "keywords": [
             "consultar modelos",
@@ -338,7 +351,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação do endpoint GET models",
     },
     "registry_authors_get": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/authors.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/GET/authors.pt.md
+        "link": "https://api.mosqlimate.org/docs/registry/GET/authors/",
         "function": get_mosqlimate_authors_docs,
         "keywords": [
             "consultar autores",
@@ -354,7 +368,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação do endpoint GET authors",
     },
     "registry_predictions_post": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/POST/predictions.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/POST/predictions.pt.md
+        "link": "https://api.mosqlimate.org/docs/registry/POST/predictions/",
         "function": get_mosqlimate_post_predictions_docs,
         "keywords": [
             "enviar previsões",
@@ -373,7 +388,8 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
         "description": "Documentação do endpoint POST predictions",
     },
     "registry_models_post": {
-        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/POST/models.md
+        # Link: https://raw.githubusercontent.com/Mosqlimate-project/Data-platform/refs/heads/main/mkdocs/docs/registry/POST/models.pt.md
+        "link": "https://api.mosqlimate.org/docs/registry/POST/models/",
         "function": get_mosqlimate_post_models_docs,
         "keywords": [
             "registrar modelo",
