@@ -410,6 +410,47 @@ DOCS_KEYWORDS_MAP: Dict[str, Dict[str, Any]] = {
 }
 
 
+DOCS_BLOCKS_MAP = {
+    "project_intro_block": ["project_main", "data_platform", "datastore_base"],
+    "uid_key_block": ["project_main", "data_platform", "uid_key"],
+    "ovicounter_block": ["project_main", "project_ovicounter"],
+    "infodengue_block": [
+        "project_main",
+        "data_platform",
+        "datastore_infodengue",
+    ],
+    "climate_block": [
+        "project_main",
+        "data_platform",
+        "datastore_climate",
+    ],
+    "climate_week_block": [
+        "project_main",
+        "data_platform",
+        "datastore_climate_weekly",
+    ],
+    "mosquito_block": ["project_main", "data_platform", "datastore_mosquito"],
+    "episcanner_block": [
+        "project_main",
+        "data_platform",
+        "datastore_episcanner",
+    ],
+    "models_query_block": [
+        "project_main",
+        "registry_models_get",
+        "registry_authors_get",
+    ],
+    "models_register_block": [
+        "project_main",
+        "registry_base",
+        "registry_models_post",
+    ],
+    "predictions_query_block": ["project_main", "registry_predictions_get"],
+    "predictions_submit_block": ["project_main", "registry_predictions_post"],
+    "registry_overview_block": ["project_main", "registry_base"],
+}
+
+
 def get_formated_keywords_docs_map() -> dict:
     formatted_map = dict()
     for key, value in DOCS_KEYWORDS_MAP.items():
