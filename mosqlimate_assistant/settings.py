@@ -84,6 +84,7 @@ MUNICIPALITIES_PATH = os.path.join(
 ASKS_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "asks.csv")
 ASKS_DB_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "asks_db")
 DOCS_DB_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "docs_db")
+BLOCKS_DB_PATH = os.path.join(CURRENT_PATH, DATABASE_PATH, "blocks_db")
 ASKS_VECTOR_DB_PATH = os.path.join(
     os.path.dirname(ASKS_PATH), "vector_dbs", "asks_chroma"
 )

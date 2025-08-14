@@ -459,5 +459,19 @@ def get_formated_keywords_docs_map() -> dict:
             "keywords": ", ".join(keywords_list),
             "category": value["category"],
             "description": value["description"],
+            "link": value["link"],
+        }
+    return formatted_map
+
+
+def get_formated_docs_map() -> dict:
+    formatted_map = dict()
+    for key, value in DOCS_KEYWORDS_MAP.items():
+        formatted_map[key] = {
+            "link": value["link"],
+            "function": value["function"],
+            "keywords": ", ".join(value["keywords"]),
+            "category": value["category"],
+            "description": value["description"],
         }
     return formatted_map

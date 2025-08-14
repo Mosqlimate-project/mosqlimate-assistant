@@ -13,6 +13,7 @@ from mosqlimate_assistant.settings import (
     ASKS_DB_PATH,
     ASKS_PATH,
     DOCS_DB_PATH,
+    BLOCKS_DB_PATH,
     EMBEDDING_MODEL,
 )
 
@@ -229,5 +230,114 @@ def get_relevant_docs(
         for doc in docs
     ]
     scores = [float(doc[1]) for doc in docs]
+
+    return samples, scores
+
+
+def load_docs_blocks() -> List[Document]:
+    blocks_map = utils.DOCS_BLOCKS_MAP
+    docs_map = utils.DOCS_KEYWORDS_MAP
+    documents = list()
+
+    for block_key, doc_keys in blocks_map.items():
+        # Combinar conteúdos e metadados
+        combined_content = ""
+        all_keywords = list()
+        all_links = list()
+        all_descriptions = list()
+
+        for doc_key in doc_keys:
+            if doc_key in docs_map:
+                doc_info = docs_map[doc_key]
+                content = doc_info["function"]()
+                combined_content += (
+                    f"\n\n# {doc_info['description']}\n\n{content}"
+                )
+                all_keywords.extend(doc_info["keywords"])
+                all_links.append(doc_info["link"])
+                all_descriptions.append(doc_info["description"])
+
+        doc = Document(
+            page_content=combined_content.strip(),
+            metadata={
+                "block_key": block_key,
+                "doc_keys": doc_keys,
+                "links": all_links,
+                "descriptions": all_descriptions,
+                "keywords": ", ".join(set(all_keywords)),
+            },
+        )
+        documents.append(doc)
+
+    return documents
+
+
+def get_or_create_blocks_vector_db(
+    db_path: str = BLOCKS_DB_PATH, embedding_model: str = EMBEDDING_MODEL
+) -> VectorDB:
+    vector_db = VectorDB(embedding_model)
+
+    try:
+        vector_db.load(db_path)
+    except (FileNotFoundError, Exception):
+        documents = load_docs_blocks()
+        vector_db.add_documents(documents, db_path)
+
+    return vector_db
+
+
+def get_relevant_blocks(
+    prompt: str,
+    k: int = 3,
+    threshold: float = 0.3,
+    db_path: Optional[str] = None,
+) -> Tuple[List[Dict[str, any]], List[float]]:
+    """Busca blocos relevantes. Se score baixo, recomenda introdução."""
+    if db_path is None:
+        db_path = BLOCKS_DB_PATH
+
+    vector_db = get_or_create_blocks_vector_db(db_path)
+    docs_with_scores = vector_db.similarity_search_with_score(
+        prompt, k=len(utils.DOCS_BLOCKS_MAP)
+    )
+
+    best_score = docs_with_scores[0][1] if docs_with_scores else 0
+
+    if best_score < threshold:
+        intro_blocks = ["project_intro_block", "getting_started_block"]
+        filtered_docs = [
+            doc
+            for doc in docs_with_scores
+            if doc[0].metadata["block_key"] in intro_blocks
+        ]
+        if filtered_docs:
+            docs_with_scores = filtered_docs[:1] + docs_with_scores[: k - 1]
+
+    # Limitar a k resultados
+    docs_with_scores = docs_with_scores[:k]
+
+    samples = []
+    scores = []
+
+    for doc, score in docs_with_scores:
+        samples.append(
+            {
+                "block_key": doc.metadata["block_key"],
+                "doc_keys": doc.metadata["doc_keys"],
+                "links": doc.metadata["links"],
+                "descriptions": doc.metadata["descriptions"],
+                "keywords": (
+                    doc.metadata["keywords"][:200] + "..."
+                    if len(doc.metadata["keywords"]) > 200
+                    else doc.metadata["keywords"]
+                ),
+                "content": (
+                    doc.page_content[:1000] + "..."
+                    if len(doc.page_content) > 1000
+                    else doc.page_content
+                ),
+            }
+        )
+        scores.append(float(score))
 
     return samples, scores
