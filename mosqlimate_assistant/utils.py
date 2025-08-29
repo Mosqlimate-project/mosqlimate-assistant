@@ -35,11 +35,7 @@ def save_logs(logs: list[str], save_path: str = ".") -> None:
 
 
 def format_answer(answer: str) -> str:
-    ans_dict = json.loads(answer)
-    answer = "```json\n"
-    answer += json.dumps(ans_dict, indent=2) + "\n```"
-
-    return answer
+    return "```json\n" + json.dumps(json.loads(answer), indent=2) + "\n```"
 
 
 # Mapeamento de documentações com palavras-chave e categorias
