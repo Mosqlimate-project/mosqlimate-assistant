@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import ollama
@@ -12,8 +12,8 @@ from mosqlimate_assistant import utils
 from mosqlimate_assistant.settings import (
     ASKS_DB_PATH,
     ASKS_PATH,
-    DOCS_DB_PATH,
     BLOCKS_DB_PATH,
+    DOCS_DB_PATH,
     EMBEDDING_MODEL,
 )
 
@@ -348,7 +348,7 @@ def get_relevant_blocks(
     threshold: float = 0.3,
     db_path: Optional[str] = None,
     use_keywords: bool = False,
-) -> Tuple[List[Dict[str, any]], List[float]]:
+) -> Tuple[List[Dict[str, Any]], List[float]]:
     if db_path is None:
         db_path = BLOCKS_DB_PATH
 

@@ -1,5 +1,5 @@
 import json
-from typing import Optional
+from typing import Any, Optional
 
 import Levenshtein
 
@@ -7,22 +7,24 @@ from mosqlimate_assistant.settings import MUNICIPALITIES_PATH, VALID_UFS
 
 
 def get_closest_match(
-    input_text: str, options: list[dict]
-) -> tuple[dict, float]:
-    closest_match = {
+    input_text: str, options: list[dict[str, Any]]
+) -> tuple[dict[str, Any], float]:
+    closest_match: dict[str, Any] = {
         "Municipality": "",
         "UF": "",
         "Code": "",
         "distance": float("inf"),
     }
     for option in options:
-        distance = Levenshtein.distance(input_text, option["Municipality"])
+        distance = float(
+            Levenshtein.distance(input_text, option["Municipality"])
+        )
         if distance < closest_match["distance"]:
             closest_match = {**option, "distance": distance}
     return closest_match, closest_match["distance"]
 
 
-def read_municipalities() -> list[dict]:
+def read_municipalities() -> list[dict[str, Any]]:
     with open(MUNICIPALITIES_PATH, "r") as file:
         municipalities = json.load(file)
 
