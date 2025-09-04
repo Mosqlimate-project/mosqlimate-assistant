@@ -1,13 +1,10 @@
 import json
-from typing import Optional, Union
+from typing import Optional
 
 import ollama
-from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from openai import OpenAI
 
-from mosqlimate_assistant import schemas, utils, vector_db
-from mosqlimate_assistant.api_consumer import generate_api_url
-from mosqlimate_assistant.muni_codes import get_municipality_code
+from mosqlimate_assistant import func_tools, utils
 from mosqlimate_assistant.prompts import por
 from mosqlimate_assistant.settings import (
     DEEPSEEK_API_KEY,
@@ -21,46 +18,6 @@ from mosqlimate_assistant.settings import (
 
 
 class Assistant:
-    def make_api_query(
-        self,
-        examples_list: list[dict[str, str]] = por.EXAMPLES_LIST,
-    ) -> str:
-        escaped_examples: list[dict[str, str]] = list()
-        for ex in examples_list:
-            escaped_examples.append(
-                {
-                    "question": ex["question"],
-                    "answer": (
-                        ex["answer"]
-                        .replace("{", "{{")
-                        .replace("}", "}}")["answer"]
-                        if False
-                        else ex["answer"].replace("{", "{{").replace("}", "}}")
-                    ),
-                }
-            )
-        example_template = (
-            """Exemplo:\nPergunta: {question}\nResposta: {answer}"""
-        )
-
-        prefix = (
-            f"""{por.BASE_API_PROMPT}\n{por.TABLE_PROMPT}\n{por.UF_PROMPT}"""
-        )
-
-        suffix = """Agora, responda à seguinte pergunta:\n"""
-
-        few_shot_prompt = FewShotPromptTemplate(
-            examples=escaped_examples,
-            example_prompt=PromptTemplate(
-                input_variables=["question", "answer"],
-                template=example_template,
-            ),
-            prefix=prefix,
-            suffix=suffix,
-        )
-
-        return few_shot_prompt.format()
-
     def make_docs_query(
         self,
         similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
@@ -86,92 +43,15 @@ class Assistant:
 
         return prompt
 
-    def clean_output(self, output: Optional[str]) -> dict:
-        if output is None:
-            raise RuntimeError("Erro ao limpar output: output é None")
-        if "```json" in output:
-            output = output[output.find("```json") + 7 :]
-        elif "</think>" in output:
-            output = output[output.find("</think>") + 10 :]
-
-        output = output.replace("```", "")
-        output = output[output.rfind("{") : output.rfind("}") + 1]
-        output = output.replace("None", "null").strip()
-        output = output.replace("{{", "{").replace("}}", "}")
-
-        try:
-            return json.loads(output)
-        except Exception as e:
-            raise RuntimeError(f"Erro ao converter o output em json: {e}")
-
-    def get_table_filters(self, output_json: dict) -> Union[
-        schemas.InfodengueFilters,
-        schemas.ClimateFilters,
-        schemas.MosquitoFilters,
-        schemas.EpiscannerFilters,
-        schemas.TableFilters,
-    ]:
-        output_data = schemas.TableFilters(**output_json)
-        if output_data.table == "infodengue":
-            return schemas.InfodengueFilters(**output_json)
-        elif output_data.table == "climate":
-            return schemas.ClimateFilters(**output_json)
-        elif output_data.table == "mosquito":
-            return schemas.MosquitoFilters(**output_json)
-        elif output_data.table == "episcanner":
-            return schemas.EpiscannerFilters(**output_json)
-        return output_data
-
-    def generate_mosqlient_infodengue_code(
-        self, filters: schemas.InfodengueFilters
-    ) -> str:
-        code = f"from mosqlient import get_infodengue\n\n# return a pd.DataFrame with the data\ndf = get_infodengue(start_date='{filters.start}',end_date='{filters.end}',disease='{filters.disease}'"
-        if filters.uf:
-            code += f",uf='{filters.uf}'"
-        if filters.city:
-            geocode = get_municipality_code(filters.city, filters.uf)
-            code += f",geocode='{geocode}'"
-        code += ")"
-        return code
-
-    def generate_mosqlient_climate_code(
-        self, filters: schemas.ClimateFilters
-    ) -> str:
-        code = f"from mosqlient import get_climate\n\n# return a pd.DataFrame with the data\ndf = get_climate(start_date='{filters.start}',end_date='{filters.end}'"
-        if filters.uf:
-            code += f",uf='{filters.uf}'"
-        if filters.city:
-            geocode = get_municipality_code(filters.city, filters.uf)
-            code += f",geocode='{geocode}'"
-        code += ")"
-        return code
-
-    def make_api_query_and_get_url(
-        self,
-        prompt: str,
-        threshold: float = 0.8,
-        save_logs: bool = False,
-        save_path: str = ".",
-    ) -> str:
-        samples, scores = vector_db.get_relevant_sample_asks(prompt)
-        if scores[0] < threshold:
-            raise RuntimeError(
-                f"Não foi possível encontrar exemplos relevantes para a pergunta: {prompt}"
-            )
-        output_json = self.query_llm(prompt, samples, save_logs, save_path)
-        table_filters = self.get_table_filters(output_json)
-        return generate_api_url(table_filters)
-
-    def query_llm(
-        self,
-        prompt: str,
-        examples_list: list[dict[str, str]] = por.EXAMPLES_LIST,
-        save_logs: bool = False,
-        save_path: str = ".",
-    ) -> dict:
-        raise NotImplementedError(
-            "query_llm deve ser implementado nas subclasses"
-        )
+    def execute_tool_call(self, tool_name: str, tool_args: dict) -> str:
+        if tool_name in func_tools.TOOL_FUNCTIONS:
+            tool_function = func_tools.TOOL_FUNCTIONS[tool_name]
+            try:
+                return tool_function(**tool_args)
+            except Exception as e:
+                return f"Erro ao executar a ferramenta {tool_name}: {str(e)}"
+        else:
+            return f"Ferramenta '{tool_name}' não encontrada"
 
     def query_llm_docs(
         self,
@@ -193,33 +73,6 @@ class AssistantOpenAI(Assistant):
     ):
         self.model = OpenAI(api_key=api_key, base_url=base_url)
 
-    def query_llm(
-        self,
-        prompt: str,
-        examples_list: list[dict[str, str]] = por.EXAMPLES_LIST,
-        save_logs: bool = False,
-        save_path: str = ".",
-    ) -> dict:
-        full_query = self.make_api_query(examples_list)
-        output = (
-            self.model.chat.completions.create(
-                model=DEEPSEEK_MODEL,
-                messages=[
-                    {"role": "system", "content": full_query},
-                    {"role": "user", "content": prompt},
-                ],
-                stream=False,
-            )
-            .choices[0]
-            .message
-        )
-        if save_logs:
-            utils.save_logs(
-                ["user: " + str(prompt), "assistant:\n" + str(output)],
-                save_path,
-            )
-        return self.clean_output(output.content)
-
     def query_llm_docs(
         self,
         prompt: str,
@@ -228,54 +81,57 @@ class AssistantOpenAI(Assistant):
         save_path: str = ".",
     ) -> dict:
         full_query = self.make_docs_query(similar_docs)
-        output = (
-            self.model.chat.completions.create(
-                model=DEEPSEEK_MODEL,
-                messages=[
-                    {"role": "system", "content": full_query},
-                    {"role": "user", "content": prompt},
-                ],
-                stream=False,
-            )
-            .choices[0]
-            .message
+
+        # Chama o modelo com suporte a tool calling
+        response = self.model.chat.completions.create(
+            model=DEEPSEEK_MODEL,
+            messages=[
+                {"role": "system", "content": full_query},
+                {"role": "user", "content": prompt},
+            ],
+            tools=[
+                {"type": "function", "function": schema}
+                for schema in func_tools.TOOL_SCHEMAS
+            ],
+            tool_choice="auto",
+            stream=False,
         )
+
+        message = response.choices[0].message
+
+        if message.tool_calls:
+            tool_results = []
+            for tool_call in message.tool_calls:
+                tool_name = tool_call.function.name
+                tool_args = json.loads(tool_call.function.arguments)
+                result = self.execute_tool_call(tool_name, tool_args)
+                tool_results.append(result)
+
+            if tool_results:
+                final_content = "\n\n".join(tool_results)
+            else:
+                final_content = (
+                    message.content
+                    or "Não foi possível processar a solicitação."
+                )
+        else:
+            final_content = (
+                message.content or "Não foi possível processar a solicitação."
+            )
+
         if save_logs:
             utils.save_logs(
-                ["user: " + str(prompt), "assistant:\n" + str(output)],
+                ["user: " + str(prompt), "assistant:\n" + str(final_content)],
                 save_path,
             )
-        return {"content": output.content}
+
+        return {"content": final_content}
 
 
 class AssistantOllama(Assistant):
     def __init__(self, model_name: str = OLLAMA_MODEL):
         self.model_name = model_name
 
-    def query_llm(
-        self,
-        prompt: str,
-        examples_list: list[dict[str, str]] = por.EXAMPLES_LIST,
-        save_logs: bool = False,
-        save_path: str = ".",
-    ) -> dict:
-        full_query = self.make_api_query(examples_list)
-        response = ollama.chat(
-            model=self.model_name,
-            messages=[
-                {"role": "system", "content": full_query},
-                {"role": "user", "content": prompt},
-            ],
-            format="json",
-        )
-        output = response["message"]["content"]
-        if save_logs:
-            utils.save_logs(
-                ["user: " + str(prompt), "assistant:\n" + str(output)],
-                save_path,
-            )
-        return self.clean_output(output)
-
     def query_llm_docs(
         self,
         prompt: str,
@@ -284,19 +140,62 @@ class AssistantOllama(Assistant):
         save_path: str = ".",
     ) -> dict:
         full_query = self.make_docs_query(similar_docs)
+
+        enhanced_prompt = f"""
+        {full_query}
+
+        IMPORTANTE: Se o usuário está pedindo dados da API, códigos ou URLs, você deve responder com uma solicitação de ferramenta no formato:
+
+        TOOL_CALL: {{
+            "name": "nome_da_ferramenta",
+            "arguments": {{
+                "param1": "valor1",
+                "param2": "valor2"
+            }}
+        }}
+
+        Ferramentas disponíveis:
+        - get_infodengue_data: Para dados de dengue, zika, chikungunya
+        - get_climate_data: Para dados climáticos
+        - get_mosquito_data: Para dados de mosquito (ContaOvos)
+        - get_episcanner_data: Para dados do EpiScanner
+
+        Pergunta: {prompt}
+        """
+
         response = ollama.chat(
             model=self.model_name,
             messages=[
-                {"role": "system", "content": full_query},
-                {"role": "user", "content": prompt},
+                {"role": "user", "content": enhanced_prompt},
             ],
         )
+
         output = response["message"]["content"]
+
+        if "TOOL_CALL:" in output:
+            try:
+                tool_start = output.find("TOOL_CALL:") + 10
+                tool_json_str = output[tool_start:].strip()
+
+                if "```" in tool_json_str:
+                    tool_json_str = tool_json_str.split("```")[0]
+
+                tool_call = json.loads(tool_json_str)
+                tool_name = tool_call.get("name")
+                tool_args = tool_call.get("arguments", {})
+
+                result = self.execute_tool_call(tool_name, tool_args)
+                output = result
+
+            except Exception as e:
+                output = f"Erro ao processar solicitação de ferramenta: {str(e)}\n\nResposta original: {output}"
+
         if save_logs:
             utils.save_logs(
                 ["user: " + str(prompt), "assistant:\n" + str(output)],
                 save_path,
             )
+
         return {"content": output}
 
 
@@ -309,38 +208,6 @@ class AssistantGemini(Assistant):
         self.api_key = api_key
         self.model = OpenAI(api_key=api_key, base_url=base_url)
 
-    def query_llm(
-        self,
-        prompt: str,
-        examples_list: list[dict[str, str]] = por.EXAMPLES_LIST,
-        save_logs: bool = False,
-        save_path: str = ".",
-    ) -> dict:
-
-        full_query = self.make_api_query(examples_list)
-
-        response = self.model.beta.chat.completions.parse(
-            model=GEMINI_MODEL,
-            messages=[
-                {"role": "system", "content": full_query},
-                {"role": "user", "content": prompt},
-            ],
-            response_format=schemas.TableFilters,
-        )
-        parsed = response.choices[0].message.parsed
-
-        if save_logs:
-
-            utils.save_logs(
-                ["user: " + str(prompt), "assistant:\n" + str(parsed)],
-                save_path,
-            )
-
-        if isinstance(parsed, schemas.TableFilters):
-            return dict(parsed)
-
-        return self.clean_output(parsed)
-
     def query_llm_docs(
         self,
         prompt: str,
@@ -349,18 +216,47 @@ class AssistantGemini(Assistant):
         save_path: str = ".",
     ) -> dict:
         full_query = self.make_docs_query(similar_docs)
+
         response = self.model.chat.completions.create(
             model=GEMINI_MODEL,
             messages=[
                 {"role": "system", "content": full_query},
                 {"role": "user", "content": prompt},
             ],
+            tools=[
+                {"type": "function", "function": schema}
+                for schema in func_tools.TOOL_SCHEMAS
+            ],
+            tool_choice="auto",
             stream=False,
         )
-        output = response.choices[0].message.content
+
+        message = response.choices[0].message
+
+        if message.tool_calls:
+            tool_results = []
+            for tool_call in message.tool_calls:
+                tool_name = tool_call.function.name
+                tool_args = json.loads(tool_call.function.arguments)
+                result = self.execute_tool_call(tool_name, tool_args)
+                tool_results.append(result)
+
+            if tool_results:
+                final_content = "\n\n".join(tool_results)
+            else:
+                final_content = (
+                    message.content
+                    or "Não foi possível processar a solicitação."
+                )
+        else:
+            final_content = (
+                message.content or "Não foi possível processar a solicitação."
+            )
+
         if save_logs:
             utils.save_logs(
-                ["user: " + str(prompt), "assistant:\n" + str(output)],
+                ["user: " + str(prompt), "assistant:\n" + str(final_content)],
                 save_path,
             )
-        return {"content": output}
+
+        return {"content": final_content}
