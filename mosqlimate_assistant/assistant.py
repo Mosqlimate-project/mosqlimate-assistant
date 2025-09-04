@@ -1,8 +1,9 @@
 import json
-from typing import Optional
+from typing import Optional, cast
 
 import ollama
 from openai import OpenAI
+from openai.types.chat import ChatCompletionToolParam
 
 from mosqlimate_assistant import func_tools, utils
 from mosqlimate_assistant.prompts import por
@@ -89,10 +90,13 @@ class AssistantOpenAI(Assistant):
                 {"role": "system", "content": full_query},
                 {"role": "user", "content": prompt},
             ],
-            tools=[
-                {"type": "function", "function": schema}
-                for schema in func_tools.TOOL_SCHEMAS
-            ],
+            tools=cast(
+                list[ChatCompletionToolParam],
+                [
+                    {"type": "function", "function": schema}
+                    for schema in func_tools.TOOL_SCHEMAS
+                ],
+            ),
             tool_choice="auto",
             stream=False,
         )
@@ -223,10 +227,13 @@ class AssistantGemini(Assistant):
                 {"role": "system", "content": full_query},
                 {"role": "user", "content": prompt},
             ],
-            tools=[
-                {"type": "function", "function": schema}
-                for schema in func_tools.TOOL_SCHEMAS
-            ],
+            tools=cast(
+                list[ChatCompletionToolParam],
+                [
+                    {"type": "function", "function": schema}
+                    for schema in func_tools.TOOL_SCHEMAS
+                ],
+            ),
             tool_choice="auto",
             stream=False,
         )
