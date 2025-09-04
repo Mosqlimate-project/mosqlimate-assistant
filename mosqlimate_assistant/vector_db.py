@@ -201,12 +201,21 @@ def load_docs_documents() -> List[Document]:
     docs_map = utils.DOCS_KEYWORDS_MAP
     documents = []
     for key, value in docs_map.items():
-        # Obter o conteúdo completo do markdown
-        markdown_content = value["function"]()
+        # Obter o conteúdo completo do markdown usando a nova função de acesso
+        markdown_link = value.get("markdown_link", "")
+        if not markdown_link:
+            continue
+
+        markdown_content = utils.get_content_from_url(markdown_link)
 
         # Estruturar o conteúdo do documento com informações organizadas
-        structured_content = f"""Descrição: {value["description"]}
-Palavras-chave: {", ".join(value["keywords"])}
+        keywords = value.get("keywords", [])
+        description = value.get("description", f"Documentação sobre {key}")
+        category = value.get("category", "other")
+        link = value.get("url_link", "")
+
+        structured_content = f"""Descrição: {description}
+Palavras-chave: {", ".join(keywords)}
 
 Conteúdo do documento:
 {markdown_content}"""
@@ -215,10 +224,10 @@ Conteúdo do documento:
             page_content=structured_content,
             metadata={
                 "key": key,
-                "category": value["category"],
-                "description": value["description"],
-                "link": value["link"],
-                "keywords": ", ".join(value["keywords"]),
+                "category": category,
+                "description": description,
+                "link": link,
+                "keywords": ", ".join(keywords),
                 "raw_content": markdown_content,
             },
         )
@@ -291,10 +300,20 @@ def load_docs_blocks() -> List[Document]:
         for doc_key in doc_keys:
             if doc_key in docs_map:
                 doc_info = docs_map[doc_key]
-                content = doc_info["function"]()
+                # Usar a nova função para obter o conteúdo
+                markdown_link = doc_info.get("markdown_link", "")
+                if not markdown_link:
+                    continue
 
-                structured_content += f"""Documento: {doc_info['description']}
-Palavras-chave: {", ".join(doc_info['keywords'])}
+                content = utils.get_content_from_url(markdown_link)
+                keywords = doc_info.get("keywords", [])
+                description = doc_info.get(
+                    "description", f"Documentação sobre {doc_key}"
+                )
+                link = doc_info.get("url_link", "")
+
+                structured_content += f"""Documento: {description}
+Palavras-chave: {", ".join(keywords)}
 
 Conteúdo:
 {content}
@@ -303,12 +322,10 @@ Conteúdo:
 
 """
 
-                all_keywords.extend(doc_info["keywords"])
-                all_links.append(doc_info["link"])
-                all_descriptions.append(doc_info["description"])
-                combined_raw_content += (
-                    f"\n\n# {doc_info['description']}\n\n{content}"
-                )
+                all_keywords.extend(keywords)
+                all_links.append(link)
+                all_descriptions.append(description)
+                combined_raw_content += f"\n\n# {description}\n\n{content}"
 
         doc = Document(
             page_content=structured_content.strip(),
