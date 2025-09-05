@@ -1,34 +1,35 @@
 import json
-from typing import Optional
+from typing import Any, Optional
 
 import Levenshtein
 
 from mosqlimate_assistant.settings import MUNICIPALITIES_PATH, VALID_UFS
 
 
-def process_input(text: str) -> str:
-    return text.lower().strip()
-
-
 def get_closest_match(
-    input_text: str, options: list[dict]
-) -> tuple[dict, float]:
-    closest_match = {"Municipality": "", "UF": "", "Code": ""}
-    closest_distance = float("inf")
+    input_text: str, options: list[dict[str, Any]]
+) -> tuple[dict[str, Any], float]:
+    closest_match: dict[str, Any] = {
+        "Municipality": "",
+        "UF": "",
+        "Code": "",
+        "distance": float("inf"),
+    }
     for option in options:
-        distance = Levenshtein.distance(input_text, option["Municipality"])
-        if distance < closest_distance:
-            closest_distance = distance
-            closest_match = option
-    return closest_match, closest_distance
+        distance = float(
+            Levenshtein.distance(input_text, option["Municipality"])
+        )
+        if distance < closest_match["distance"]:
+            closest_match = {**option, "distance": distance}
+    return closest_match, closest_match["distance"]
 
 
-def read_municipalities() -> list[dict]:
+def read_municipalities() -> list[dict[str, Any]]:
     with open(MUNICIPALITIES_PATH, "r") as file:
         municipalities = json.load(file)
 
         for m in municipalities:
-            m["Municipality"] = process_input(m["Municipality"])
+            m["Municipality"] = m["Municipality"].lower().strip()
 
     return municipalities
 
@@ -42,7 +43,7 @@ def filter_by_uf(municipalities: list[dict], uf: str) -> list[dict]:
 
 
 def get_municipality(name: str, uf: str | None = None) -> dict:
-    name = process_input(name)
+    name = name.lower().strip()
 
     municipalities = read_municipalities()
     closest_match, closest_distance = get_closest_match(name, municipalities)
@@ -66,7 +67,7 @@ def get_municipality(name: str, uf: str | None = None) -> dict:
     return closest_match
 
 
-def get_municipality_code(municipality: str, uf: Optional[str]) -> str:
+def get_municipality_code(municipality: str, uf: Optional[str]) -> int:
     try:
         municipality_code = get_municipality(municipality, uf)
         return municipality_code["Code"]

@@ -3,11 +3,6 @@ import pytest
 from mosqlimate_assistant import muni_codes
 
 
-def test_process_input():
-    assert muni_codes.process_input(" AbC ") == "abc"
-    assert muni_codes.process_input("São Paulo") == "são paulo"
-
-
 def test_read_municipalities_returns_list():
     municipalities = muni_codes.read_municipalities()
     assert isinstance(municipalities, list)

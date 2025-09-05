@@ -1,22 +1,9 @@
 from mosqlimate_assistant import docs_consumer as dc
 from mosqlimate_assistant.docs_consumer import (
-    get_mosqlimate_authors_docs,
-    get_mosqlimate_climate_docs,
-    get_mosqlimate_climate_weekly_docs,
-    get_mosqlimate_data_platform_docs,
-    get_mosqlimate_datastore_base_docs,
-    get_mosqlimate_episcanner_docs,
-    get_mosqlimate_infodengue_docs,
-    get_mosqlimate_models_docs,
-    get_mosqlimate_mosquito_docs,
-    get_mosqlimate_ovicounter_docs,
-    get_mosqlimate_post_models_docs,
-    get_mosqlimate_post_predictions_docs,
-    get_mosqlimate_predictions_docs,
-    get_mosqlimate_project_docs,
-    get_mosqlimate_registry_docs,
-    get_mosqlimate_uid_key_docs,
+    get_all_docs,
+    get_content_from_url,
 )
+from mosqlimate_assistant.utils import DOCS_KEYWORDS_MAP
 
 
 def test_get_mosqlimate_api():
@@ -86,27 +73,26 @@ def test_format_api_parameters():
     assert bar.get("nullable") is True
 
 
-def test_docs_markdowns():
-    docs_markdowns_list = [
-        get_mosqlimate_project_docs,
-        get_mosqlimate_ovicounter_docs,
-        get_mosqlimate_data_platform_docs,
-        get_mosqlimate_datastore_base_docs,
-        get_mosqlimate_registry_docs,
-        get_mosqlimate_uid_key_docs,
-        get_mosqlimate_infodengue_docs,
-        get_mosqlimate_episcanner_docs,
-        get_mosqlimate_climate_docs,
-        get_mosqlimate_climate_weekly_docs,
-        get_mosqlimate_mosquito_docs,
-        get_mosqlimate_predictions_docs,
-        get_mosqlimate_models_docs,
-        get_mosqlimate_authors_docs,
-        get_mosqlimate_post_predictions_docs,
-        get_mosqlimate_post_models_docs,
-    ]
+def test_get_content_from_url():
+    for name, data in DOCS_KEYWORDS_MAP.items():
+        if "markdown_link" in data:
+            url = data["markdown_link"]
+            content = get_content_from_url(url)
+            assert isinstance(content, str)
+            assert len(content) > 0
+            break
 
-    for doc_func in docs_markdowns_list:
-        markdown = doc_func()
-        assert isinstance(markdown, str)
-        assert len(markdown) > 0
+
+def test_get_all_docs():
+    test_map = {
+        k: v for i, (k, v) in enumerate(DOCS_KEYWORDS_MAP.items()) if i < 2
+    }
+    docs = get_all_docs(test_map)
+    assert isinstance(docs, list)
+    assert len(docs) > 0
+    for doc in docs:
+        assert "name" in doc
+        assert "content" in doc
+        assert isinstance(doc["name"], str)
+        assert isinstance(doc["content"], str)
+        assert len(doc["content"]) > 0

@@ -2,13 +2,12 @@ from importlib import metadata as importlib_metadata
 from typing import List
 
 from . import (
-    api_consumer,
     assistant,
     docs_consumer,
+    func_tools,
     main,
     muni_codes,
     prompts,
-    schemas,
     settings,
     utils,
     vector_db,
@@ -25,12 +24,11 @@ def get_version() -> str:
 version: str = get_version()
 __version__: str = version
 __all__: List[str] = [
-    "api_consumer",
     "assistant",
     "docs_consumer",
+    "func_tools",
     "vector_db",
     "muni_codes",
-    "schemas",
     "settings",
     "utils",
     "prompts",
