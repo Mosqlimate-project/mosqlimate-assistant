@@ -1,6 +1,36 @@
 Release Notes
 ---
 
+# [1.6.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.5.0...1.6.0) (2025-09-05)
+
+
+### Bug Fixes
+
+* **api:** remove deprecated API consumer and schema definitions ([1a5b0f7](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/1a5b0f711df7a691fb6afc7f152822582430a1a2))
+* **assistant:** cast tool schemas to correct type, remove unused test imports ([b803835](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/b8038355aaa1f44188f42b65a9b380c7db1945cb))
+* **codebase:** update type hints in vector_db and muni_codes ([eb4f0ae](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/eb4f0ae28d2b5526a2d88dd726843fe995d58f3f))
+* **docs:** add docs links for various endpoints ([13cd15d](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/13cd15de499efae56940b03e8f86b27f0454e2c3))
+* **docs:** update load_docs_documents to use full markdown content and improve metadata ([9d3a923](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/9d3a923212f38c7e2437765be40185a8de2679c8))
+* **main:** remove unused API pipeline and related imports ([4f34a86](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/4f34a862ee08182b6c8f5cd0cc162c44fec60249))
+* **muni_codes:** streamline input processing and improve closest match logic ([f2a517e](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/f2a517ea62c3053d767aa487f16efd4eca9708bc))
+* **settings:** update GEMINI_MODEL version to 2.5-flash ([d63d2ab](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/d63d2ab9b17a80e85768544d2248e1ec8517e631))
+* **tests:** remove obsolete test files for API consumer and schemas ([9df44ae](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/9df44ae1962aa6de6746085873fa860d9c29c61c))
+* **tests:** remove unused imports and update tests ([7f2c8d1](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/7f2c8d1cb0358425213d6ae9d0f5f7a4e5237ecb))
+* **utils:** simplify JSON answer formatting ([173ccab](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/173ccab3ce8b032aede9b27542926a61d186c3cb))
+
+
+### Features
+
+* **assistant:** implement tool calling functionality and enhance prompt instructions ([e71abc3](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/e71abc387b612fda2bdfa79c48fe0dba0149a0e2))
+* **data:** add keywords_map.csv with mosqlimate docs links and keywords ([822b1be](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/822b1be608894d847463af8eb8e5241301448653))
+* **docs:** add DOCS_BLOCKS_MAP for improved documentation organization ([52d0e53](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/52d0e5359d53ee3f1483cd301ab4a905efcba014))
+* **docs:** implement functions to use  document blocks, concatenating documents ([1375908](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/1375908048286b3b3d488390da8f3b15cbefa7e1))
+* **docs:** remove deprecated documentation URLs and implement dynamic content retrieval ([d0d5aae](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/d0d5aae09d139c9a15fd1f0c6cad8d2330c7cf97))
+* **func_tools:** add func tools for assistanto to do api calls ([a8edc17](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/a8edc1727f10ffe7f61d6f939cab8fc419121fee))
+* **prompts:** update base prompts to improve performance ([3ad9181](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/3ad91818c243a26cb2b19e42ccf8427b9647c7a2))
+* **tests:** add func_tools tests ([9f7a4d4](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/9f7a4d4f0e960c4ddfe7879ceafe9e4b85f1e15d))
+* **vector_db:** add support for keywords in VectorDB and related functions ([d0791f8](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/d0791f82171769252cba1f6f8ad684831100a187))
+
 # [1.5.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.4.2...1.5.0) (2025-07-01)
 
 
