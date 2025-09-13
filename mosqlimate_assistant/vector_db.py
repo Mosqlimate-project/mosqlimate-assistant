@@ -1,4 +1,5 @@
 import os
+import pickle
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -75,7 +76,7 @@ class VectorDB:
     def add_documents(self, documents: List[Document], save_path: str) -> None:
         texts = []
         for doc in documents:
-            
+
             if self.embedding_column in doc.metadata:
                 texts.append(doc.metadata[self.embedding_column])
             else:
@@ -95,7 +96,8 @@ class VectorDB:
             "docs_metadata": [doc.metadata for doc in documents],
             "embedding_column": self.embedding_column,
         }
-        pd.to_pickle(data, store_path)
+        with open(store_path, "wb") as f:
+            pickle.dump(data, f)
 
     def load(self, load_path: str) -> None:
         store_path = Path(load_path) / "vector_store.pkl"
@@ -106,7 +108,8 @@ class VectorDB:
             )
 
         try:
-            data = pd.read_pickle(store_path)
+            with open(store_path, "rb") as f:
+                data = pickle.load(f)
             self.embeddings = data["embeddings"]
             self.embedding_column = data.get("embedding_column", "keywords")
             self.documents = [
@@ -279,7 +282,7 @@ def load_docs_blocks() -> List[Document]:
     documents = list()
 
     for block_key, doc_keys in blocks_map.items():
-        
+
         structured_content = f"Bloco: {block_key}\n\n"
         all_keywords = list()
         all_links = list()
@@ -289,7 +292,7 @@ def load_docs_blocks() -> List[Document]:
         for doc_key in doc_keys:
             if doc_key in docs_map:
                 doc_info = docs_map[doc_key]
-                
+
                 markdown_link = doc_info.get("markdown_link", "")
                 if not markdown_link:
                     continue
