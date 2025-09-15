@@ -4,6 +4,7 @@ from typing import Optional, Union, cast
 import ollama
 from openai import OpenAI
 from openai.types.chat import (
+    ChatCompletionAssistantMessageParam,
     ChatCompletionSystemMessageParam,
     ChatCompletionToolParam,
     ChatCompletionUserMessageParam,
@@ -25,6 +26,7 @@ from mosqlimate_assistant.settings import (
 MessageParam = Union[
     ChatCompletionSystemMessageParam,
     ChatCompletionUserMessageParam,
+    ChatCompletionAssistantMessageParam,
 ]
 
 
@@ -100,10 +102,18 @@ class AssistantOpenAI(Assistant):
         ]
         if message_history:
             messages.extend(
-                ChatCompletionSystemMessageParam(
-                    role="system", content=msg["content"]
+                ChatCompletionAssistantMessageParam(
+                    role="assistant", content=msg["content"]
                 )
                 for msg in message_history
+                if msg["role"] == "assistant"
+            )
+            messages.extend(
+                ChatCompletionUserMessageParam(
+                    role="user", content=msg["content"]
+                )
+                for msg in message_history
+                if msg["role"] == "user"
             )
         messages.append(
             ChatCompletionUserMessageParam(role="user", content=prompt)
@@ -233,10 +243,18 @@ class AssistantGemini(Assistant):
         ]
         if message_history:
             messages.extend(
-                ChatCompletionSystemMessageParam(
-                    role="system", content=msg["content"]
+                ChatCompletionAssistantMessageParam(
+                    role="assistant", content=msg["content"]
                 )
                 for msg in message_history
+                if msg["role"] == "assistant"
+            )
+            messages.extend(
+                ChatCompletionUserMessageParam(
+                    role="user", content=msg["content"]
+                )
+                for msg in message_history
+                if msg["role"] == "user"
             )
         messages.append(
             ChatCompletionUserMessageParam(role="user", content=prompt)
