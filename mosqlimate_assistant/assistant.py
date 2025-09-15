@@ -1,9 +1,14 @@
 import json
-from typing import Optional, cast
+from typing import Optional, Union, cast
 
 import ollama
 from openai import OpenAI
-from openai.types.chat import ChatCompletionToolParam
+from openai.types.chat import (
+    ChatCompletionSystemMessageParam,
+    ChatCompletionToolParam,
+    ChatCompletionUserMessageParam,
+)
+from openai.types.shared_params import FunctionDefinition
 
 from mosqlimate_assistant import func_tools, utils
 from mosqlimate_assistant.prompts import por
@@ -16,6 +21,11 @@ from mosqlimate_assistant.settings import (
     GOOGLE_API_URL,
     OLLAMA_MODEL,
 )
+
+MessageParam = Union[
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+]
 
 
 class Assistant:
@@ -60,6 +70,7 @@ class Assistant:
         similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
         save_logs: bool = False,
         save_path: str = ".",
+        message_history: Optional[list[dict[str, str]]] = None,
     ) -> dict:
         raise NotImplementedError(
             "query_llm_docs deve ser implementado nas subclasses"
@@ -80,23 +91,37 @@ class AssistantOpenAI(Assistant):
         similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
         save_logs: bool = False,
         save_path: str = ".",
+        message_history: Optional[list[dict[str, str]]] = None,
     ) -> dict:
         full_query = self.make_docs_query(similar_docs)
 
-        # Chama o modelo com suporte a tool calling
+        messages: list[MessageParam] = [
+            ChatCompletionSystemMessageParam(role="system", content=full_query)
+        ]
+        if message_history:
+            messages.extend(
+                ChatCompletionSystemMessageParam(
+                    role="system", content=msg["content"]
+                )
+                for msg in message_history
+            )
+        messages.append(
+            ChatCompletionUserMessageParam(role="user", content=prompt)
+        )
+
+        tools = [
+            ChatCompletionToolParam(
+                type="function",
+                function=cast(FunctionDefinition, schema),
+            )
+            for schema in func_tools.TOOL_SCHEMAS
+            if isinstance(schema, dict) and "name" in schema
+        ]
+
         response = self.model.chat.completions.create(
             model=DEEPSEEK_MODEL,
-            messages=[
-                {"role": "system", "content": full_query},
-                {"role": "user", "content": prompt},
-            ],
-            tools=cast(
-                list[ChatCompletionToolParam],
-                [
-                    {"type": "function", "function": schema}
-                    for schema in func_tools.TOOL_SCHEMAS
-                ],
-            ),
+            messages=messages,
+            tools=tools,
             tool_choice="auto",
             stream=False,
         )
@@ -142,36 +167,17 @@ class AssistantOllama(Assistant):
         similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
         save_logs: bool = False,
         save_path: str = ".",
+        message_history: Optional[list[dict[str, str]]] = None,
     ) -> dict:
         full_query = self.make_docs_query(similar_docs)
 
-        enhanced_prompt = f"""
-        {full_query}
-
-        IMPORTANTE: Se o usuário está pedindo dados da API, códigos ou URLs, você deve responder com uma solicitação de ferramenta no formato:
-
-        TOOL_CALL: {{
-            "name": "nome_da_ferramenta",
-            "arguments": {{
-                "param1": "valor1",
-                "param2": "valor2"
-            }}
-        }}
-
-        Ferramentas disponíveis:
-        - get_infodengue_data: Para dados de dengue, zika, chikungunya
-        - get_climate_data: Para dados climáticos
-        - get_mosquito_data: Para dados de mosquito (ContaOvos)
-        - get_episcanner_data: Para dados do EpiScanner
-
-        Pergunta: {prompt}
-        """
+        messages = message_history if message_history else []
+        messages.append({"role": "system", "content": full_query})
+        messages.append({"role": "user", "content": prompt})
 
         response = ollama.chat(
             model=self.model_name,
-            messages=[
-                {"role": "user", "content": enhanced_prompt},
-            ],
+            messages=messages,
         )
 
         output = response["message"]["content"]
@@ -218,22 +224,37 @@ class AssistantGemini(Assistant):
         similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
         save_logs: bool = False,
         save_path: str = ".",
+        message_history: Optional[list[dict[str, str]]] = None,
     ) -> dict:
         full_query = self.make_docs_query(similar_docs)
 
+        messages: list[MessageParam] = [
+            ChatCompletionSystemMessageParam(role="system", content=full_query)
+        ]
+        if message_history:
+            messages.extend(
+                ChatCompletionSystemMessageParam(
+                    role="system", content=msg["content"]
+                )
+                for msg in message_history
+            )
+        messages.append(
+            ChatCompletionUserMessageParam(role="user", content=prompt)
+        )
+
+        tools = [
+            ChatCompletionToolParam(
+                type="function",
+                function=cast(FunctionDefinition, schema),
+            )
+            for schema in func_tools.TOOL_SCHEMAS
+            if isinstance(schema, dict) and "name" in schema
+        ]
+
         response = self.model.chat.completions.create(
             model=GEMINI_MODEL,
-            messages=[
-                {"role": "system", "content": full_query},
-                {"role": "user", "content": prompt},
-            ],
-            tools=cast(
-                list[ChatCompletionToolParam],
-                [
-                    {"type": "function", "function": schema}
-                    for schema in func_tools.TOOL_SCHEMAS
-                ],
-            ),
+            messages=messages,
+            tools=tools,
             tool_choice="auto",
             stream=False,
         )
