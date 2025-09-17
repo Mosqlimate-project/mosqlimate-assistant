@@ -124,7 +124,9 @@ class Assistant:
 
         return tool_calls
 
-    def handle_tool_calls(self, message: ChatCompletionMessage) -> str:
+    def handle_tool_calls(
+        self, message: ChatCompletionMessage, x_uid: Optional[str] = None
+    ) -> str:
         if not message.tool_calls:
             return (
                 message.content or "Não foi possível processar a solicitação."
@@ -142,13 +144,19 @@ class Assistant:
             tool_args = tool_call["arguments"]
             results.append(self.execute_tool_call(tool_name, tool_args))
 
-        return (
-            "\n\n".join(results)
-            if results
-            else (
+        if not results:
+            return (
                 message.content or "Não foi possível processar a solicitação."
             )
-        )
+
+        final_response = "\n\n".join(results) if results else ""
+
+        if x_uid:
+            return final_response.replace("SUA_CHAVE_API", x_uid).replace(
+                ", # Substitua pela sua chave de API", ","
+            )
+
+        return final_response
 
     def query_llm_docs(
         self,
@@ -157,6 +165,7 @@ class Assistant:
         save_logs: bool = False,
         save_path: str = ".",
         message_history: Optional[list[dict[str, str]]] = None,
+        x_uid: Optional[str] = None,
     ) -> dict:
         raise NotImplementedError(
             "query_llm_docs deve ser implementado nas subclasses"
@@ -180,6 +189,7 @@ class AssistantOpenAI(Assistant):
         save_logs: bool = False,
         save_path: str = ".",
         message_history: Optional[list[dict[str, str]]] = None,
+        x_uid: Optional[str] = None,
     ) -> dict:
         full_query = self.make_docs_query(similar_docs)
         messages = self.build_messages(full_query, prompt, message_history)
@@ -199,7 +209,9 @@ class AssistantOpenAI(Assistant):
             tool_choice="auto",
         )
 
-        content = self.handle_tool_calls(response.choices[0].message)
+        content = self.handle_tool_calls(
+            response.choices[0].message, x_uid=x_uid
+        )
 
         if save_logs:
             utils.save_logs(
@@ -256,6 +268,7 @@ class AssistantOllama(Assistant):
         save_logs: bool = False,
         save_path: str = ".",
         message_history: Optional[list[dict[str, str]]] = None,
+        x_uid: Optional[str] = None,
     ) -> dict:
         full_query = self.make_docs_query(similar_docs)
         messages = self.build_messages(full_query, prompt, message_history)
@@ -268,7 +281,7 @@ class AssistantOllama(Assistant):
 
         if tool_calls:
             try:
-                results = []
+                results = list()
                 for tool_call in tool_calls:
                     result = self.execute_tool_call(
                         tool_call["name"], tool_call["arguments"]

@@ -108,7 +108,9 @@ def get_climate_data(
         "end": end,
     }
 
-    climate_link = DOCS_KEYWORDS_MAP.get("datastore_climate", {}).get("link", "")
+    climate_link = DOCS_KEYWORDS_MAP.get("datastore_climate", {}).get(
+        "link", ""
+    )
 
     if uf:
         params["uf"] = uf
@@ -183,7 +185,9 @@ def get_mosquito_data(
     base_url = f"{BASE_URL_API}mosquito/"
     params = {}
 
-    mosquito_link = DOCS_KEYWORDS_MAP.get("datastore_mosquito", {}).get("link", "")
+    mosquito_link = DOCS_KEYWORDS_MAP.get("datastore_mosquito", {}).get(
+        "link", ""
+    )
 
     if date_start:
         params["date_start"] = date_start
@@ -199,7 +203,7 @@ def get_mosquito_data(
     query_string = "&".join([f"{k}={v}" for k, v in params.items()])
     full_url = f"{base_url}?{query_string}" if params else base_url
 
-    mosqlient_example = f"""import mosqlient
+    mosqlient_example = """import mosqlient
 
 # Usando a biblioteca mosqlient (recomendado)
 df = mosqlient.get_mosquito(

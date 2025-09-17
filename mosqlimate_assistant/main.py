@@ -6,6 +6,7 @@ from mosqlimate_assistant import assistant, utils, vector_db
 def docs_pipeline(
     question: str,
     similar_docs: Optional[List[Dict[str, str]]] = None,
+    x_uid: Optional[str] = None,
 ) -> str:
     mosqlimate_assistant = assistant.AssistantGemini()
 
@@ -23,6 +24,7 @@ def docs_pipeline(
     result = mosqlimate_assistant.query_llm_docs(
         prompt=question,
         similar_docs=similar_docs,
+        x_uid=x_uid,
     )
     return result["content"]
 
@@ -31,6 +33,7 @@ def assistant_pipeline(
     question: str,
     k_num: int = 4,
     full_context: bool = True,
+    x_uid: Optional[str] = None,
 ) -> str:
     if full_context:
         similar_docs = [
@@ -51,4 +54,4 @@ def assistant_pipeline(
             for doc, score in zip(relevant_docs, docs_scores)
             if score > 0.5
         ]
-    return docs_pipeline(question, similar_docs)
+    return docs_pipeline(question, similar_docs, x_uid=x_uid)
