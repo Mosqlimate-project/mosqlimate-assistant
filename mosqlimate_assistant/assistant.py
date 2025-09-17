@@ -37,21 +37,31 @@ class Assistant:
 
     def make_docs_query(
         self,
-        similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
+        similar_docs: Optional[list[dict[str, str]]] = None,
     ) -> str:
         prompt = por.BASE_DOCS_PROMPT
 
-        for doc in similar_docs:
-            key = doc.get("key")
-            if not isinstance(key, str):
-                continue
+        docs_to_include: list[str] = []
+        if similar_docs is not None:
+            docs_to_include = [
+                doc["key"]
+                for doc in similar_docs
+                if "key" in doc and isinstance(doc["key"], str)
+            ]
+        else:
+            docs_to_include = list(utils.DOCS_KEYWORDS_MAP.keys())
 
+        for key in docs_to_include:
             doc_map = utils.DOCS_KEYWORDS_MAP.get(key)
             if not doc_map:
                 continue
 
             description = doc_map.get("description", "")
             prompt += f"\n---\n**{description}**\n"
+
+            prompt += (
+                f"Link para a documentação: {doc_map.get('link', 'N/A')}\n\n"
+            )
 
             doc_function = doc_map.get("function")
             if doc_function:
@@ -143,7 +153,7 @@ class Assistant:
     def query_llm_docs(
         self,
         prompt: str,
-        similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
+        similar_docs: Optional[list[dict[str, str]]] = None,
         save_logs: bool = False,
         save_path: str = ".",
         message_history: Optional[list[dict[str, str]]] = None,
@@ -166,10 +176,10 @@ class AssistantOpenAI(Assistant):
     def query_llm_docs(
         self,
         prompt: str,
-        similar_docs=por.DEFAULT_DOCS_LIST,
-        save_logs=False,
-        save_path=".",
-        message_history=None,
+        similar_docs: Optional[list[dict[str, str]]] = None,
+        save_logs: bool = False,
+        save_path: str = ".",
+        message_history: Optional[list[dict[str, str]]] = None,
     ) -> dict:
         full_query = self.make_docs_query(similar_docs)
         messages = self.build_messages(full_query, prompt, message_history)
@@ -242,10 +252,10 @@ class AssistantOllama(Assistant):
     def query_llm_docs(
         self,
         prompt: str,
-        similar_docs=por.DEFAULT_DOCS_LIST,
-        save_logs=False,
-        save_path=".",
-        message_history=None,
+        similar_docs: Optional[list[dict[str, str]]] = None,
+        save_logs: bool = False,
+        save_path: str = ".",
+        message_history: Optional[list[dict[str, str]]] = None,
     ) -> dict:
         full_query = self.make_docs_query(similar_docs)
         messages = self.build_messages(full_query, prompt, message_history)
