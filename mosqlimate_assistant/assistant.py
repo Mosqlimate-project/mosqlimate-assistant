@@ -206,7 +206,7 @@ class AssistantOpenAI(Assistant):
                 [f"user: {prompt}", f"assistant:\n{content}"], save_path
             )
 
-        return {"content": content}
+        return {"content": content, "prompt": full_query, "messages": messages}
 
 
 class AssistantGemini(AssistantOpenAI):
@@ -283,4 +283,4 @@ class AssistantOllama(Assistant):
                 [f"user: {prompt}", f"assistant:\n{output}"], save_path
             )
 
-        return {"content": output}
+        return {"content": output, "prompt": full_query, "messages": messages}

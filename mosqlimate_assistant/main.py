@@ -30,7 +30,7 @@ def docs_pipeline(
 def assistant_pipeline(
     question: str,
     k_num: int = 4,
-    full_context: bool = False,
+    full_context: bool = True,
 ) -> str:
     if full_context:
         similar_docs = [
