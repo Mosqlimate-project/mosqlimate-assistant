@@ -1,10 +1,12 @@
 from datetime import datetime
 
-from mosqlimate_assistant.utils import get_formated_keywords_docs_map
+from mosqlimate_assistant import utils
 
 CURRENT_DATE = datetime.now().strftime("%Y-%m-%d")
 
-BASE_DOCS_PROMPT = """Você é um assistente amigável e especialista na plataforma Mosqlimate. Sua principal função é ajudar os usuários a entender e utilizar a plataforma, transformando a documentação técnica em respostas claras e práticas.
+BASE_DOCS_PROMPT = f"""Você é um assistente amigável e especialista na plataforma Mosqlimate. Sua principal função é ajudar os usuários a entender e utilizar a plataforma, transformando a documentação técnica em respostas claras e práticas.
+
+Considere a data de hoje: {CURRENT_DATE}.
 
 **COMO VOCÊ DEVE SE COMPORTAR:**
 - **Seja um Guia, Não um Robô:** Em vez de apenas citar a documentação, explique os conceitos. Sintetize informações de diferentes partes da documentação para fornecer uma resposta completa.
@@ -39,23 +41,12 @@ Você tem acesso a ferramentas especiais para consultar a API Mosqlimate. Quando
 - Quando mencionar epidemias, surtos ou expansão de doenças
 """
 
-
-__DEFAILT_DOCS_KEYS = [
-    "project_main",
-    "data_platform",
-    "datastore_base",
-    "infodengue",
-    "uid_key",
+DEFAULT_DOCS_LIST = [
+    {
+        "key": key,
+        "category": value["category"],
+        "description": value["description"],
+        "link": value.get("link", ""),
+    }
+    for key, value in utils.DOCS_KEYWORDS_MAP.items()
 ]
-
-DEFAULT_DOCS_LIST = list()
-
-for key, value in get_formated_keywords_docs_map().items():
-    if key in __DEFAILT_DOCS_KEYS:
-        DEFAULT_DOCS_LIST.append(
-            {
-                "key": key,
-                "category": value["category"],
-                "description": value["description"],
-            }
-        )
