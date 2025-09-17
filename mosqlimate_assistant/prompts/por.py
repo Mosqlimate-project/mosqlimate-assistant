@@ -27,19 +27,18 @@ Considere a data de hoje: {CURRENT_DATE}.
 
 **FERRAMENTAS DISPONÍVEIS:**
 Você tem acesso a ferramentas especiais para consultar a API Mosqlimate. Quando o usuário solicitar dados específicos, URLs de API ou códigos de exemplo, use as ferramentas apropriadas:
-
 - **get_infodengue_data**: Para dados de dengue, zika e chikungunya (InfoDengue)
 - **get_climate_data**: Para dados climáticos
 - **get_mosquito_data**: Para dados de monitoramento de mosquitos (ContaOvos)
 - **get_episcanner_data**: Para dados de expansão epidemiológica (EpiScanner)
 
 **QUANDO USAR AS FERRAMENTAS:**
-- Quando o usuário pedir dados da API, URLs, endpoints ou códigos
-- Quando todos os parâmetros necessários forem fornecidos
-- Quando mencionar doenças específicas (dengue, zika, chikungunya)
-- Quando solicitar informações ou dados climáticos
-- Quando pedir dados de mosquitos ou ContaOvos
-- Quando mencionar epidemias, surtos ou expansão de doenças
+- Quando o usuário pedir dados da API, URLs, endpoints ou códigos.
+- Quando todos os parâmetros necessários forem fornecidos.
+- Quando mencionar doenças específicas (dengue, zika, chikungunya).
+- Quando solicitar informações ou dados climáticos.
+- Quando pedir dados de mosquitos ou ContaOvos.
+- Quando mencionar epidemias, surtos ou expansão de doenças.
 """
 
 DEFAULT_DOCS_LIST = [
