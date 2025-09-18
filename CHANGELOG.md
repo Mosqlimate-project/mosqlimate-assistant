@@ -1,6 +1,32 @@
 Release Notes
 ---
 
+# [1.7.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.6.0...1.7.0) (2025-09-18)
+
+
+### Bug Fixes
+
+* **assistant:** add optional x_uid parameter to handle_tool_calls and related functions ([a322aa3](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/a322aa30a875ffeab6c0d365bfccfddec40a4043))
+* **assistant:** add support for assistant messages in message history ([c1bced4](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/c1bced44feb024b79f213ae07f033be8a587d36c))
+* **assistant:** minor fixes in prompt and model return structure ([682a0fa](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/682a0fa5c2e7cfd55a718c6be478dad44f5dab9c))
+* **assistant:** update similar_docs parameter to be optional ([08b72bd](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/08b72bd0840cb4cc481d7102eeaf44fc502f8850))
+* **blocks:** update documentation blocks for similar queries ([d89927d](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/d89927d3b776de95d4f442a01bf6f410bf315c3a))
+* **dependencies:** update dependencies and vector store ([adc4c1e](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/adc4c1e57506d44539d7a8b305df2390d1bf0e22))
+* **func_tools:** improve return structure and add reference links ([91175d1](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/91175d14479446d73ad5fba6cd01e2228c9cdf80))
+* **pipeline:** make similar_docs parameter optional and improve handling ([163bfae](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/163bfae1e1418dbb563163f673653c91addab90b))
+* **prompts:** now using DEFAULT_DOCS_LIST as all documentation source ([aee550c](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/aee550cae888a5cc07b5e4e7966b721110cbea01))
+* **prompts:** remove example questions and improve instructions ([4328f55](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/4328f55d5ae237a8676b57a1564eb6703df58a98))
+* **prompts:** remove unused functions ([99e45a0](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/99e45a01e9c795e7e53edd000ce8ac30a87d5840))
+* **tests:** update success message assertions ([8df9942](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/8df99420d70c4e63622f8b71928d34e84cd3243d))
+
+
+### Features
+
+* **assistant:** enhance message handling and add message_history support ([e502cb0](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/e502cb00bd25000b3f6be2751e817bdfc5be8efd))
+* **assistant:** improve code execution and prompt clarity ([b1ff878](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/b1ff8780ceb278377e9635e41653703e4f6b2eb1))
+* **vector_db:** replace use_keywords with embedding_column for document processing ([459a7f3](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/459a7f318f44df31eacf07eb7efa019e7a585d9c))
+* **vector_db:** update document serialization to use pickle for vector store ([c2ab130](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/c2ab130ace216a7e6c8dc9032abe26aab86588b5))
+
 # [1.6.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.5.0...1.6.0) (2025-09-05)
 
 
