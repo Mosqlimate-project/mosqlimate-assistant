@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.7.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.7.0...1.7.1) (2025-09-18)
+
+
+### Bug Fixes
+
+* **pipeline:** adjust pipeline to handle message history ([bf931d8](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/bf931d8e9b1c11717452b4f11fad267cf3d6346b))
+
 # [1.7.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.6.0...1.7.0) (2025-09-18)
 
 
