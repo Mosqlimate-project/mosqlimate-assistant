@@ -11,7 +11,7 @@ def test_get_infodengue_data():
         city="São Paulo",
     )
 
-    assert "Consulta para a API do InfoDengue gerada com sucesso" in result
+    assert "Consulta para a API do InfoDengue:" in result
     assert "URL da API:" in result
     assert "Parâmetros Utilizados:" in result
     assert "Exemplo de Código (Python com mosqlient):" in result
@@ -26,9 +26,7 @@ def test_get_climate_data():
         start="2023-01-01", end="2023-12-31", uf="RJ"
     )
 
-    assert (
-        "Consulta para a API de dados climáticos gerada com sucesso" in result
-    )
+    assert "Consulta para a API de dados climáticos gerada:" in result
     assert "URL da API:" in result
     assert "Parâmetros Utilizados:" in result
     assert "Exemplo de Código (Python com mosqlient):" in result
@@ -42,10 +40,7 @@ def test_get_mosquito_data():
         date_start="2024-01-01", date_end="2024-12-31", state="MG"
     )
 
-    assert (
-        "Consulta para a API de dados de mosquito (ContaOvos) gerada com sucesso"
-        in result
-    )
+    assert "Consulta para a API de dados de mosquito gerada:" in result
     assert "URL da API:" in result
     assert "Parâmetros Utilizados:" in result
     assert "Exemplo de Código (Python com mosqlient):" in result
@@ -58,7 +53,7 @@ def test_get_episcanner_data():
         disease="dengue", uf="SP", year=2023
     )
 
-    assert "Consulta para a API do EpiScanner gerada com sucesso" in result
+    assert "Consulta para a API do EpiScanner gerada:" in result
     assert "URL da API:" in result
     assert "Parâmetros Utilizados:" in result
     assert "Exemplo de Código (Python com mosqlient):" in result
@@ -126,10 +121,7 @@ def test_mosquito_minimal_params():
     """Testa get_mosquito_data com parâmetros mínimos."""
     result = func_tools.get_mosquito_data()
 
-    assert (
-        "Consulta para a API de dados de mosquito (ContaOvos) gerada com sucesso"
-        in result
-    )
+    assert "Consulta para a API de dados de mosquito gerada:" in result
     assert "URL da API:" in result
     assert "/mosquito" in result
 

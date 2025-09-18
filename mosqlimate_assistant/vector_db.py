@@ -1,4 +1,5 @@
 import os
+import pickle
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -52,10 +53,10 @@ class VectorDB:
     def __init__(
         self,
         embedding_model: str = EMBEDDING_MODEL,
-        use_keywords: bool = False,
+        embedding_column: str = "keywords",
     ):
         self.embedding_model = embedding_model
-        self.use_keywords = use_keywords
+        self.embedding_column = embedding_column
         self.embedding_function = OllamaEmbeddingWrapper(
             model=embedding_model,
             base_url=os.getenv("OLLAMA_URL"),
@@ -73,17 +74,13 @@ class VectorDB:
         )
 
     def add_documents(self, documents: List[Document], save_path: str) -> None:
-        if self.use_keywords:
-            texts = [
-                (
-                    doc.metadata.get("keywords", "")
-                    if "keywords" in doc.metadata
-                    else doc.page_content
-                )
-                for doc in documents
-            ]
-        else:
-            texts = [doc.page_content for doc in documents]
+        texts = []
+        for doc in documents:
+
+            if self.embedding_column in doc.metadata:
+                texts.append(doc.metadata[self.embedding_column])
+            else:
+                texts.append(doc.page_content)
 
         embeddings = self.embedding_function.embed_documents(texts)
 
@@ -97,9 +94,10 @@ class VectorDB:
             "embeddings": self.embeddings,
             "docs_content": [doc.page_content for doc in documents],
             "docs_metadata": [doc.metadata for doc in documents],
-            "use_keywords": self.use_keywords,
+            "embedding_column": self.embedding_column,
         }
-        pd.to_pickle(data, store_path)
+        with open(store_path, "wb") as f:
+            pickle.dump(data, f)
 
     def load(self, load_path: str) -> None:
         store_path = Path(load_path) / "vector_store.pkl"
@@ -110,9 +108,10 @@ class VectorDB:
             )
 
         try:
-            data = pd.read_pickle(store_path)
+            with open(store_path, "rb") as f:
+                data = pickle.load(f)
             self.embeddings = data["embeddings"]
-            self.use_keywords = data.get("use_keywords", False)
+            self.embedding_column = data.get("embedding_column", "keywords")
             self.documents = [
                 Document(page_content=content, metadata=metadata)
                 for content, metadata in zip(
@@ -159,9 +158,8 @@ def load_asks(asks_path: str = ASKS_PATH) -> Dict[int, Document]:
 def get_or_create_vector_db(
     db_path: str = ASKS_DB_PATH,
     embedding_model: str = EMBEDDING_MODEL,
-    use_keywords: bool = False,
 ) -> VectorDB:
-    vector_db = VectorDB(embedding_model, use_keywords=use_keywords)
+    vector_db = VectorDB(embedding_model)
 
     try:
         vector_db.load(db_path)
@@ -176,12 +174,11 @@ def get_relevant_sample_asks(
     prompt: str,
     k: int = 3,
     db_path: Optional[str] = None,
-    use_keywords: bool = False,
 ) -> Tuple[List[Dict[str, str]], List[float]]:
     if db_path is None:
         db_path = ASKS_DB_PATH
 
-    vector_db = get_or_create_vector_db(db_path, use_keywords=use_keywords)
+    vector_db = get_or_create_vector_db(db_path)
     docs = vector_db.similarity_search_with_score(prompt, k=k)
 
     samples = [
@@ -201,14 +198,13 @@ def load_docs_documents() -> List[Document]:
     docs_map = utils.DOCS_KEYWORDS_MAP
     documents = []
     for key, value in docs_map.items():
-        # Obter o conteúdo completo do markdown usando a nova função de acesso
+
         markdown_link = value.get("markdown_link", "")
         if not markdown_link:
             continue
 
         markdown_content = utils.get_content_from_url(markdown_link)
 
-        # Estruturar o conteúdo do documento com informações organizadas
         keywords = value.get("keywords", [])
         description = value.get("description", f"Documentação sobre {key}")
         category = value.get("category", "other")
@@ -238,9 +234,8 @@ Conteúdo do documento:
 def get_or_create_docs_vector_db(
     db_path: str = DOCS_DB_PATH,
     embedding_model: str = EMBEDDING_MODEL,
-    use_keywords: bool = False,
 ) -> VectorDB:
-    vector_db = VectorDB(embedding_model, use_keywords=use_keywords)
+    vector_db = VectorDB(embedding_model)
 
     try:
         vector_db.load(db_path)
@@ -255,14 +250,11 @@ def get_relevant_docs(
     prompt: str,
     k: int = 3,
     db_path: Optional[str] = None,
-    use_keywords: bool = False,
 ) -> Tuple[List[Dict[str, str]], List[float]]:
     if db_path is None:
         db_path = DOCS_DB_PATH
 
-    vector_db = get_or_create_docs_vector_db(
-        db_path, use_keywords=use_keywords
-    )
+    vector_db = get_or_create_docs_vector_db(db_path)
     docs = vector_db.similarity_search_with_score(prompt, k=k)
 
     samples = [
@@ -290,7 +282,7 @@ def load_docs_blocks() -> List[Document]:
     documents = list()
 
     for block_key, doc_keys in blocks_map.items():
-        # Combinar conteúdos e metadados
+
         structured_content = f"Bloco: {block_key}\n\n"
         all_keywords = list()
         all_links = list()
@@ -300,7 +292,7 @@ def load_docs_blocks() -> List[Document]:
         for doc_key in doc_keys:
             if doc_key in docs_map:
                 doc_info = docs_map[doc_key]
-                # Usar a nova função para obter o conteúdo
+
                 markdown_link = doc_info.get("markdown_link", "")
                 if not markdown_link:
                     continue
@@ -346,9 +338,8 @@ Conteúdo:
 def get_or_create_blocks_vector_db(
     db_path: str = BLOCKS_DB_PATH,
     embedding_model: str = EMBEDDING_MODEL,
-    use_keywords: bool = False,
 ) -> VectorDB:
-    vector_db = VectorDB(embedding_model, use_keywords=use_keywords)
+    vector_db = VectorDB(embedding_model)
 
     try:
         vector_db.load(db_path)
@@ -364,19 +355,15 @@ def get_relevant_blocks(
     k: int = 3,
     threshold: float = 0.3,
     db_path: Optional[str] = None,
-    use_keywords: bool = False,
 ) -> Tuple[List[Dict[str, Any]], List[float]]:
     if db_path is None:
         db_path = BLOCKS_DB_PATH
 
-    vector_db = get_or_create_blocks_vector_db(
-        db_path, use_keywords=use_keywords
-    )
+    vector_db = get_or_create_blocks_vector_db(db_path)
     docs_with_scores = vector_db.similarity_search_with_score(
         prompt, k=len(vector_db.documents) if vector_db.documents else k
     )
 
-    # Verificar se scores são baixos e recomendar introdução
     best_score = docs_with_scores[0][1] if docs_with_scores else 0
 
     if best_score < threshold:

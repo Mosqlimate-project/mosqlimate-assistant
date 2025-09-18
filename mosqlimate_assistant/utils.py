@@ -68,43 +68,52 @@ def get_full_docs_map() -> Dict[str, Dict[str, Any]]:
 DOCS_KEYWORDS_MAP = get_full_docs_map()
 
 DOCS_BLOCKS_MAP = {
-    "project_intro_block": ["project_main", "data_platform", "datastore_base"],
-    "uid_key_block": ["project_main", "data_platform", "uid_key"],
-    "ovicounter_block": ["project_main", "project_ovicounter"],
-    "infodengue_block": [
+    # Bloco 1: Projeto, equipe, autenticação, plataforma
+    "project_block": [
         "project_main",
+        "project_team",
         "data_platform",
+        "uid_key",
+    ],
+    # Bloco 2: Todos os datastores
+    "datastore_block": [
+        "datastore_base",
         "datastore_infodengue",
-    ],
-    "climate_block": [
-        "project_main",
-        "data_platform",
-        "datastore_climate",
-    ],
-    "climate_week_block": [
-        "project_main",
-        "data_platform",
-        "datastore_climate_weekly",
-    ],
-    "mosquito_block": ["project_main", "data_platform", "datastore_mosquito"],
-    "episcanner_block": [
-        "project_main",
-        "data_platform",
         "datastore_episcanner",
+        "datastore_climate",
+        "datastore_climate_weekly",
+        "datastore_mosquito",
+        "project_ovicounter",
     ],
-    "models_query_block": [
-        "project_main",
+    # Bloco 3: Registro, modelos, previsões, autores
+    "registry_block": [
+        "registry_base",
+        "registry_predictions_get",
+        "registry_predictions_post",
         "registry_models_get",
+        "registry_models_post",
         "registry_authors_get",
     ],
-    "models_register_block": [
+    # Bloco 4: Todos os documentos juntos
+    "all_docs_block": [
         "project_main",
+        "project_team",
+        "data_platform",
+        "uid_key",
+        "datastore_base",
+        "datastore_infodengue",
+        "datastore_episcanner",
+        "datastore_climate",
+        "datastore_climate_weekly",
+        "datastore_mosquito",
+        "project_ovicounter",
         "registry_base",
+        "registry_predictions_get",
+        "registry_predictions_post",
+        "registry_models_get",
         "registry_models_post",
+        "registry_authors_get",
     ],
-    "predictions_query_block": ["project_main", "registry_predictions_get"],
-    "predictions_submit_block": ["project_main", "registry_predictions_post"],
-    "registry_overview_block": ["project_main", "registry_base"],
 }
 
 

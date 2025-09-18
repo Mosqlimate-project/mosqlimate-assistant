@@ -1,9 +1,16 @@
 import json
-from typing import Optional, cast
+from typing import Optional, Union, cast
 
 import ollama
 from openai import OpenAI
-from openai.types.chat import ChatCompletionToolParam
+from openai.types.chat import (
+    ChatCompletionAssistantMessageParam,
+    ChatCompletionMessage,
+    ChatCompletionSystemMessageParam,
+    ChatCompletionToolParam,
+    ChatCompletionUserMessageParam,
+)
+from openai.types.shared_params import FunctionDefinition
 
 from mosqlimate_assistant import func_tools, utils
 from mosqlimate_assistant.prompts import por
@@ -17,49 +24,148 @@ from mosqlimate_assistant.settings import (
     OLLAMA_MODEL,
 )
 
+MessageParam = Union[
+    ChatCompletionSystemMessageParam,
+    ChatCompletionUserMessageParam,
+    ChatCompletionAssistantMessageParam,
+]
+
 
 class Assistant:
+    def __init__(self, model_name: str):
+        self.model_name = model_name
+
     def make_docs_query(
         self,
-        similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
+        similar_docs: Optional[list[dict[str, str]]] = None,
     ) -> str:
         prompt = por.BASE_DOCS_PROMPT
 
-        for doc in similar_docs:
-            key = doc.get("key")
-            if not isinstance(key, str):
+        docs_to_include: list[str] = []
+        if similar_docs is not None:
+            docs_to_include = [
+                doc["key"]
+                for doc in similar_docs
+                if "key" in doc and isinstance(doc["key"], str)
+            ]
+        else:
+            docs_to_include = list(utils.DOCS_KEYWORDS_MAP.keys())
+
+        for key in docs_to_include:
+            doc_map = utils.DOCS_KEYWORDS_MAP.get(key)
+            if not doc_map:
                 continue
-            doc_map = utils.DOCS_KEYWORDS_MAP.get(key, None)
 
-            if doc_map:
-                doc_description = doc_map.get("description", "")
-                prompt += f"\n---\n**{doc_description}**\n"
+            description = doc_map.get("description", "")
+            prompt += f"\n---\n**{description}**\n"
 
-                doc_function = doc_map.get("function", None)
-                if doc_function:
-                    documentation = doc_function()
-                    prompt += f"{documentation}\n"
+            prompt += (
+                f"Link para a documentação: {doc_map.get('link', 'N/A')}\n\n"
+            )
 
-        prompt += "\nAgora, responda à seguinte pergunta:\n"
+            doc_function = doc_map.get("function")
+            if doc_function:
+                try:
+                    prompt += f"{doc_function()}\n"
+                except Exception as e:
+                    prompt += f"(Erro ao carregar conteúdo: {str(e)})\n"
 
         return prompt
 
     def execute_tool_call(self, tool_name: str, tool_args: dict) -> str:
-        if tool_name in func_tools.TOOL_FUNCTIONS:
-            tool_function = func_tools.TOOL_FUNCTIONS[tool_name]
-            try:
-                return tool_function(**tool_args)
-            except Exception as e:
-                return f"Erro ao executar a ferramenta {tool_name}: {str(e)}"
-        else:
+        tool_function = func_tools.TOOL_FUNCTIONS.get(tool_name)
+        if not tool_function:
             return f"Ferramenta '{tool_name}' não encontrada"
+
+        try:
+            return tool_function(**tool_args)
+        except Exception as e:
+            return f"Erro ao executar a ferramenta '{tool_name}': {str(e)}"
+
+    def build_messages(
+        self,
+        full_query: str,
+        prompt: str,
+        message_history: Optional[list[dict[str, str]]] = None,
+    ) -> list[MessageParam]:
+
+        system_content = full_query
+
+        if message_history:
+            system_content += "\n\nHistórico recente de mensagens:\n"
+            for msg in message_history:
+                if msg["role"] == "assistant":
+                    system_content += f"\nAssistente: {msg['content']}\n"
+                elif msg["role"] == "user":
+                    system_content += f"\nUsuário: {msg['content']}\n"
+
+        system_content += "\n\nAgora, responda à seguinte pergunta:\n"
+
+        messages: list[MessageParam] = [
+            ChatCompletionSystemMessageParam(
+                role="system", content=system_content
+            ),
+            ChatCompletionUserMessageParam(role="user", content=prompt),
+        ]
+        return messages
+
+    def parse_tool_calls(self, message: ChatCompletionMessage) -> list[dict]:
+        if not message.tool_calls:
+            return []
+
+        tool_calls = []
+        for tool_call in message.tool_calls:
+            tool_calls.append(
+                {
+                    "name": tool_call.function.name,
+                    "arguments": json.loads(tool_call.function.arguments),
+                }
+            )
+
+        return tool_calls
+
+    def handle_tool_calls(
+        self, message: ChatCompletionMessage, x_uid: Optional[str] = None
+    ) -> str:
+        if not message.tool_calls:
+            return (
+                message.content or "Não foi possível processar a solicitação."
+            )
+
+        tool_calls = self.parse_tool_calls(message)
+        if not tool_calls:
+            return (
+                message.content or "Não foi possível processar a solicitação."
+            )
+
+        results = list()
+        for tool_call in tool_calls:
+            tool_name = tool_call["name"]
+            tool_args = tool_call["arguments"]
+            results.append(self.execute_tool_call(tool_name, tool_args))
+
+        if not results:
+            return (
+                message.content or "Não foi possível processar a solicitação."
+            )
+
+        final_response = "\n\n".join(results) if results else ""
+
+        if x_uid:
+            return final_response.replace("SUA_CHAVE_API", x_uid).replace(
+                ", # Substitua pela sua chave de API", ","
+            )
+
+        return final_response
 
     def query_llm_docs(
         self,
         prompt: str,
-        similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
+        similar_docs: Optional[list[dict[str, str]]] = None,
         save_logs: bool = False,
         save_path: str = ".",
+        message_history: Optional[list[dict[str, str]]] = None,
+        x_uid: Optional[str] = None,
     ) -> dict:
         raise NotImplementedError(
             "query_llm_docs deve ser implementado nas subclasses"
@@ -71,199 +177,123 @@ class AssistantOpenAI(Assistant):
         self,
         api_key: Optional[str] = DEEPSEEK_API_KEY,
         base_url: Optional[str] = DEEPSEEK_API_URL,
+        model_name: str = DEEPSEEK_MODEL,
     ):
-        self.model = OpenAI(api_key=api_key, base_url=base_url)
+        super().__init__(model_name)
+        self.client = OpenAI(api_key=api_key, base_url=base_url)
 
     def query_llm_docs(
         self,
         prompt: str,
-        similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
+        similar_docs: Optional[list[dict[str, str]]] = None,
         save_logs: bool = False,
         save_path: str = ".",
+        message_history: Optional[list[dict[str, str]]] = None,
+        x_uid: Optional[str] = None,
     ) -> dict:
         full_query = self.make_docs_query(similar_docs)
+        messages = self.build_messages(full_query, prompt, message_history)
 
-        # Chama o modelo com suporte a tool calling
-        response = self.model.chat.completions.create(
-            model=DEEPSEEK_MODEL,
-            messages=[
-                {"role": "system", "content": full_query},
-                {"role": "user", "content": prompt},
-            ],
-            tools=cast(
-                list[ChatCompletionToolParam],
-                [
-                    {"type": "function", "function": schema}
-                    for schema in func_tools.TOOL_SCHEMAS
-                ],
-            ),
-            tool_choice="auto",
-            stream=False,
-        )
-
-        message = response.choices[0].message
-
-        if message.tool_calls:
-            tool_results = []
-            for tool_call in message.tool_calls:
-                tool_name = tool_call.function.name
-                tool_args = json.loads(tool_call.function.arguments)
-                result = self.execute_tool_call(tool_name, tool_args)
-                tool_results.append(result)
-
-            if tool_results:
-                final_content = "\n\n".join(tool_results)
-            else:
-                final_content = (
-                    message.content
-                    or "Não foi possível processar a solicitação."
-                )
-        else:
-            final_content = (
-                message.content or "Não foi possível processar a solicitação."
+        tools = [
+            ChatCompletionToolParam(
+                type="function", function=cast(FunctionDefinition, schema)
             )
+            for schema in func_tools.TOOL_SCHEMAS
+            if isinstance(schema, dict) and "name" in schema
+        ]
 
-        if save_logs:
-            utils.save_logs(
-                ["user: " + str(prompt), "assistant:\n" + str(final_content)],
-                save_path,
-            )
-
-        return {"content": final_content}
-
-
-class AssistantOllama(Assistant):
-    def __init__(self, model_name: str = OLLAMA_MODEL):
-        self.model_name = model_name
-
-    def query_llm_docs(
-        self,
-        prompt: str,
-        similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
-        save_logs: bool = False,
-        save_path: str = ".",
-    ) -> dict:
-        full_query = self.make_docs_query(similar_docs)
-
-        enhanced_prompt = f"""
-        {full_query}
-
-        IMPORTANTE: Se o usuário está pedindo dados da API, códigos ou URLs, você deve responder com uma solicitação de ferramenta no formato:
-
-        TOOL_CALL: {{
-            "name": "nome_da_ferramenta",
-            "arguments": {{
-                "param1": "valor1",
-                "param2": "valor2"
-            }}
-        }}
-
-        Ferramentas disponíveis:
-        - get_infodengue_data: Para dados de dengue, zika, chikungunya
-        - get_climate_data: Para dados climáticos
-        - get_mosquito_data: Para dados de mosquito (ContaOvos)
-        - get_episcanner_data: Para dados do EpiScanner
-
-        Pergunta: {prompt}
-        """
-
-        response = ollama.chat(
+        response = self.client.chat.completions.create(
             model=self.model_name,
-            messages=[
-                {"role": "user", "content": enhanced_prompt},
-            ],
+            messages=messages,
+            tools=tools,
+            tool_choice="auto",
         )
 
-        output = response["message"]["content"]
-
-        if "TOOL_CALL:" in output:
-            try:
-                tool_start = output.find("TOOL_CALL:") + 10
-                tool_json_str = output[tool_start:].strip()
-
-                if "```" in tool_json_str:
-                    tool_json_str = tool_json_str.split("```")[0]
-
-                tool_call = json.loads(tool_json_str)
-                tool_name = tool_call.get("name")
-                tool_args = tool_call.get("arguments", {})
-
-                result = self.execute_tool_call(tool_name, tool_args)
-                output = result
-
-            except Exception as e:
-                output = f"Erro ao processar solicitação de ferramenta: {str(e)}\n\nResposta original: {output}"
+        content = self.handle_tool_calls(
+            response.choices[0].message, x_uid=x_uid
+        )
 
         if save_logs:
             utils.save_logs(
-                ["user: " + str(prompt), "assistant:\n" + str(output)],
-                save_path,
+                [f"user: {prompt}", f"assistant:\n{content}"], save_path
             )
 
-        return {"content": output}
+        return {"content": content, "prompt": full_query, "messages": messages}
 
 
-class AssistantGemini(Assistant):
+class AssistantGemini(AssistantOpenAI):
     def __init__(
         self,
         api_key: Optional[str] = GOOGLE_API_KEY,
         base_url: Optional[str] = GOOGLE_API_URL,
     ):
-        self.api_key = api_key
-        self.model = OpenAI(api_key=api_key, base_url=base_url)
+        super().__init__(
+            api_key=api_key, base_url=base_url, model_name=GEMINI_MODEL
+        )
+
+
+class AssistantOllama(Assistant):
+    def __init__(self, model_name: str = OLLAMA_MODEL):
+        super().__init__(model_name)
+
+    def parse_tool_calls(self, message: ChatCompletionMessage) -> list[dict]:
+        tool_calls = list()
+
+        content = getattr(message, "content", "")
+        if not content and isinstance(message, str):
+            content = message
+
+        if content and "TOOL_CALL:" in content:
+            try:
+                tool_json_str = (
+                    content.split("TOOL_CALL:")[1].strip().split("```")[0]
+                )
+                tool_call = json.loads(tool_json_str)
+                if "name" in tool_call:
+                    tool_calls.append(
+                        {
+                            "name": tool_call.get("name"),
+                            "arguments": tool_call.get("arguments", {}),
+                        }
+                    )
+            except Exception:
+                pass
+
+        return tool_calls
 
     def query_llm_docs(
         self,
         prompt: str,
-        similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
+        similar_docs: Optional[list[dict[str, str]]] = None,
         save_logs: bool = False,
         save_path: str = ".",
+        message_history: Optional[list[dict[str, str]]] = None,
+        x_uid: Optional[str] = None,
     ) -> dict:
         full_query = self.make_docs_query(similar_docs)
+        messages = self.build_messages(full_query, prompt, message_history)
 
-        response = self.model.chat.completions.create(
-            model=GEMINI_MODEL,
-            messages=[
-                {"role": "system", "content": full_query},
-                {"role": "user", "content": prompt},
-            ],
-            tools=cast(
-                list[ChatCompletionToolParam],
-                [
-                    {"type": "function", "function": schema}
-                    for schema in func_tools.TOOL_SCHEMAS
-                ],
-            ),
-            tool_choice="auto",
-            stream=False,
-        )
+        response = ollama.chat(model=self.model_name, messages=messages)
+        output = response["message"]["content"]
 
-        message = response.choices[0].message
+        message = ChatCompletionMessage(content=output, role="assistant")
+        tool_calls = self.parse_tool_calls(message)
 
-        if message.tool_calls:
-            tool_results = []
-            for tool_call in message.tool_calls:
-                tool_name = tool_call.function.name
-                tool_args = json.loads(tool_call.function.arguments)
-                result = self.execute_tool_call(tool_name, tool_args)
-                tool_results.append(result)
-
-            if tool_results:
-                final_content = "\n\n".join(tool_results)
-            else:
-                final_content = (
-                    message.content
-                    or "Não foi possível processar a solicitação."
-                )
-        else:
-            final_content = (
-                message.content or "Não foi possível processar a solicitação."
-            )
+        if tool_calls:
+            try:
+                results = list()
+                for tool_call in tool_calls:
+                    result = self.execute_tool_call(
+                        tool_call["name"], tool_call["arguments"]
+                    )
+                    results.append(result)
+                output = "\n\n".join(results) if results else output
+            except Exception as e:
+                output = f"Erro ao processar solicitação de ferramenta: {str(e)}\n\nResposta original: {output}"
 
         if save_logs:
             utils.save_logs(
-                ["user: " + str(prompt), "assistant:\n" + str(final_content)],
-                save_path,
+                [f"user: {prompt}", f"assistant:\n{output}"], save_path
             )
 
-        return {"content": final_content}
+        return {"content": output, "prompt": full_query, "messages": messages}

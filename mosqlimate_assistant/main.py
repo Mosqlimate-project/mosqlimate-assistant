@@ -1,31 +1,57 @@
-from mosqlimate_assistant import assistant, vector_db
-from mosqlimate_assistant.prompts import por
+from typing import Dict, List, Optional
+
+from mosqlimate_assistant import assistant, utils, vector_db
 
 
 def docs_pipeline(
     question: str,
-    similar_docs: list[dict[str, str]] = por.DEFAULT_DOCS_LIST,
+    similar_docs: Optional[List[Dict[str, str]]] = None,
+    x_uid: Optional[str] = None,
 ) -> str:
     mosqlimate_assistant = assistant.AssistantGemini()
+
+    if similar_docs is None:
+        similar_docs = [
+            {
+                "key": key,
+                "category": value["category"],
+                "description": value["description"],
+                "link": value.get("link", ""),
+            }
+            for key, value in utils.DOCS_KEYWORDS_MAP.items()
+        ]
 
     result = mosqlimate_assistant.query_llm_docs(
         prompt=question,
         similar_docs=similar_docs,
+        x_uid=x_uid,
     )
-
     return result["content"]
 
 
 def assistant_pipeline(
     question: str,
-    k_num=4,
+    k_num: int = 4,
+    full_context: bool = True,
+    x_uid: Optional[str] = None,
 ) -> str:
-    relevant_docs, docs_scores = vector_db.get_relevant_docs(question, k=k_num)
-    similar_docs = [
-        doc for doc, score in zip(relevant_docs, docs_scores) if score > 0.5
-    ]
-    if len(similar_docs) < 2:
-        similar_docs += [
-            doc for doc in por.DEFAULT_DOCS_LIST if doc not in similar_docs
+    if full_context:
+        similar_docs = [
+            {
+                "key": key,
+                "category": value["category"],
+                "description": value["description"],
+                "link": value.get("link", ""),
+            }
+            for key, value in utils.DOCS_KEYWORDS_MAP.items()
         ]
-    return docs_pipeline(question, similar_docs)
+    else:
+        relevant_docs, docs_scores = vector_db.get_relevant_docs(
+            question, k=k_num
+        )
+        similar_docs = [
+            doc
+            for doc, score in zip(relevant_docs, docs_scores)
+            if score > 0.5
+        ]
+    return docs_pipeline(question, similar_docs, x_uid=x_uid)

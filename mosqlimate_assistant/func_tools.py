@@ -3,6 +3,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 from mosqlimate_assistant.muni_codes import get_municipality_code
 from mosqlimate_assistant.settings import BASE_URL_API, Diseases, UFs
+from mosqlimate_assistant.utils import DOCS_KEYWORDS_MAP
 
 
 def get_infodengue_data(
@@ -16,6 +17,10 @@ def get_infodengue_data(
 ) -> str:
     disease_map = {"chikungunya": "chik", "dengue": "dengue", "zika": "zika"}
     api_disease = disease_map.get(disease, disease)
+
+    infodengue_link = DOCS_KEYWORDS_MAP.get("datastore_infodengue", {}).get(
+        "link", ""
+    )
 
     base_url = f"{BASE_URL_API}infodengue/"
     params = {
@@ -39,7 +44,7 @@ def get_infodengue_data(
 
 # Usando a biblioteca mosqlient (recomendado)
 df = mosqlient.get_infodengue(
-    api_key=api_key,
+    api_key="SUA_CHAVE_API", # Substitua pela sua chave de API
     disease="{disease}",
     start_date="{start}",
     end_date="{end}\""""
@@ -50,9 +55,7 @@ df = mosqlient.get_infodengue(
     mosqlient_example += "\n)\nprint(df.head())"
 
     response_text = f"""
-Consulta para a API do InfoDengue gerada com sucesso.
-
-**Sobre os dados**: Dados epidemiológicos semanais do projeto InfoDengue, incluindo estimativas de casos, níveis de alerta, taxas de transmissão (Rt) e variáveis climáticas para municípios brasileiros.
+Consulta para a API do InfoDengue:
 
 **URL da API:**
 ```
@@ -74,21 +77,18 @@ Consulta para a API do InfoDengue gerada com sucesso.
 import requests
 
 url = "{full_url}"
-headers = {{"X-UID-Key": "SUA_CHAVE_API"}}  # Necessário para autenticação
+headers = {{"X-UID-Key": "SUA_CHAVE_API"}}  # Substitua pela sua chave de API
 response = requests.get(url, headers=headers)
 
 if response.status_code == 200:
     data = response.json()
-    items = data['items']  # Dados principais
-    pagination = data['pagination']  # Info de paginação
-    print(f"Total de itens: {{pagination['total_items']}}")
-    print(f"Páginas disponíveis: {{pagination['total_pages']}}")
+    print(data['items'][:3])  # Exibe os primeiros 3 registros
 else:
     print(f"Erro na requisição: {{response.status_code}}")
 ```
-
-**Campos retornados**: data_iniSE, SE, casos_est, casos_est_min, casos_est_max, casos, municipio_geocodigo, p_rt1, p_inc100k, nivel, Rt, municipio_nome, pop, receptivo, transmissao, nivel_inc, umidmax, umidmed, umidmin, tempmax, tempmed, tempmin, casprov, casprov_est, casconf, entre outros.
 """
+    if infodengue_link:
+        response_text += f"""\nPara mais detalhes, consulte a documentação oficial do InfoDengue: {infodengue_link}"""
     return response_text.strip()
 
 
@@ -100,23 +100,6 @@ def get_climate_data(
     page: int = 1,
     per_page: int = 100,
 ) -> str:
-    """
-    Gera uma URL de API e um exemplo de código para consultar dados climáticos.
-
-    Este endpoint fornece séries temporais diárias de variáveis climáticas extraídas
-    dos dados de reanálise ERA5 da Copernicus para todos os municípios brasileiros.
-
-    Args:
-        start: A data de início da consulta (formato YYYY-MM-DD).
-        end: A data de término da consulta (formato YYYY-MM-DD).
-        uf: A sigla do estado brasileiro (opcional).
-        city: O nome do município (opcional).
-        page: Página a ser exibida (padrão: 1).
-        per_page: Quantos itens por página, até 100 (padrão: 100).
-
-    Returns:
-        String estruturada com URL da API, parâmetros e exemplo de código.
-    """
     base_url = f"{BASE_URL_API}climate/"
     params = {
         "page": page,
@@ -124,6 +107,10 @@ def get_climate_data(
         "start": start,
         "end": end,
     }
+
+    climate_link = DOCS_KEYWORDS_MAP.get("datastore_climate", {}).get(
+        "link", ""
+    )
 
     if uf:
         params["uf"] = uf
@@ -138,7 +125,7 @@ def get_climate_data(
 
 # Usando a biblioteca mosqlient (recomendado)
 df = mosqlient.get_climate(
-    api_key=api_key,
+    api_key="SUA_CHAVE_API", # Substitua pela sua chave de API
     start_date="{start}",
     end_date="{end}\""""
 
@@ -151,9 +138,7 @@ df = mosqlient.get_climate(
     mosqlient_example += "\n)\nprint(df.head())"
 
     response_text = f"""
-Consulta para a API de dados climáticos gerada com sucesso.
-
-**Sobre os dados**: Séries temporais diárias de variáveis climáticas baseadas em dados de satélite ERA5 da Copernicus, processados e agregados no nível municipal brasileiro.
+Consulta para a API de dados climáticos gerada:
 
 **URL da API:**
 ```
@@ -175,21 +160,18 @@ Consulta para a API de dados climáticos gerada com sucesso.
 import requests
 
 url = "{full_url}"
-headers = {{"X-UID-Key": "SUA_CHAVE_API"}}  # Necessário para autenticação
+headers = {{"X-UID-Key": "SUA_CHAVE_API"}} # Substitua pela sua chave de API
 response = requests.get(url, headers=headers)
 
 if response.status_code == 200:
     data = response.json()
-    items = data['items']  # Dados principais
-    pagination = data['pagination']  # Info de paginação
-    print(f"Total de itens: {{pagination['total_items']}}")
-    print(f"Páginas disponíveis: {{pagination['total_pages']}}")
+    print(data['items'][:3])  # Exibe os primeiros 3 registros
 else:
     print(f"Erro na requisição: {{response.status_code}}")
 ```
-
-**Campos retornados**: date, geocodigo, temp_min, temp_med, temp_max, precip_min, precip_med, precip_max, precip_tot, pressao_min, pressao_med, pressao_max, umid_min, umid_med, umid_max.
 """
+    if climate_link:
+        response_text += f"""\nPara mais detalhes, consulte a documentação oficial de dados climáticos: {climate_link}"""
     return response_text.strip()
 
 
@@ -200,24 +182,12 @@ def get_mosquito_data(
     municipality: Optional[str] = None,
     page: int = 1,
 ) -> str:
-    """
-    Gera uma URL de API e um exemplo de código para consultar dados do ContaOvos (mosquito).
-
-    Este endpoint fornece dados de abundância de mosquitos baseados em armadilhas
-    de ovos distribuídas pelo Brasil conforme protocolo do Ministério da Saúde.
-
-    Args:
-        date_start: Data de início no formato ISO (YYYY-MM-DD, opcional).
-        date_end: Data de fim no formato ISO (YYYY-MM-DD, opcional).
-        state: Sigla do estado brasileiro (UF, opcional).
-        municipality: Nome do município (opcional).
-        page: Página a ser exibida (padrão: 1).
-
-    Returns:
-        String estruturada com URL da API, parâmetros e exemplo de código.
-    """
-    base_url = f"{BASE_URL_API}mosquito"
+    base_url = f"{BASE_URL_API}mosquito/"
     params = {}
+
+    mosquito_link = DOCS_KEYWORDS_MAP.get("datastore_mosquito", {}).get(
+        "link", ""
+    )
 
     if date_start:
         params["date_start"] = date_start
@@ -230,13 +200,14 @@ def get_mosquito_data(
     if page > 1:
         params["page"] = str(page)
 
-    if params:
-        query_string = "&".join([f"{k}={v}" for k, v in params.items()])
-        full_url = f"{base_url}?{query_string}"
-    else:
-        full_url = base_url
+    query_string = "&".join([f"{k}={v}" for k, v in params.items()])
+    full_url = f"{base_url}?{query_string}" if params else base_url
 
-    mosqlient_example = "import mosqlient\n\n# Usando a biblioteca mosqlient (recomendado)\ndf = mosqlient.get_mosquito(\n    api_key=api_key"
+    mosqlient_example = """import mosqlient
+
+# Usando a biblioteca mosqlient (recomendado)
+df = mosqlient.get_mosquito(
+    api_key="SUA_CHAVE_API",  # Substitua pela sua chave de API"""
 
     if date_start:
         mosqlient_example += f',\n    date_start="{date_start}"'
@@ -249,41 +220,8 @@ def get_mosquito_data(
 
     mosqlient_example += "\n)\nprint(df.head())"
 
-    all_pages_example = """import pandas as pd
-import mosqlient
-
-# Para buscar todas as páginas (este endpoint requer loop manual)
-params = dict(
-    api_key=api_key"""
-
-    if date_start:
-        all_pages_example += f',\n    date_start="{date_start}"'
-    if date_end:
-        all_pages_example += f',\n    date_end="{date_end}"'
-    if state:
-        all_pages_example += f',\n    state="{state}"'
-    if municipality:
-        all_pages_example += f',\n    municipality="{municipality}"'
-
-    all_pages_example += """
-)
-
-results = []
-page = 1
-while True:
-    df = mosqlient.get_mosquito(**params, page=page)
-    if df.empty:
-        break
-    results.append(df)
-    page += 1
-
-result = pd.concat(results) if results else pd.DataFrame()
-print(f"Total de registros: {len(result)}")"""
-
     response_text = f"""
-Consulta para a API de dados de mosquito (ContaOvos) gerada com sucesso.
-
-**Sobre os dados**: Dados de abundância de mosquitos do projeto ContaOvos, baseados em armadilhas de ovos distribuídas pelo Brasil. Inclui contagem de ovos, localização das armadilhas e informações temporais.
+Consulta para a API de dados de mosquito gerada:
 
 **URL da API:**
 ```
@@ -300,31 +238,23 @@ Consulta para a API de dados de mosquito (ContaOvos) gerada com sucesso.
 {mosqlient_example}
 ```
 
-**Exemplo para buscar todas as páginas:**
-```python
-{all_pages_example}
-```
-
 **Exemplo de Código (Python com requests):**
 ```python
 import requests
 
 url = "{full_url}"
-headers = {{"X-UID-Key": "SUA_CHAVE_API"}}  # Necessário para autenticação
+headers = {{"X-UID-Key": "SUA_CHAVE_API"}}  # Substitua pela sua chave de API
 response = requests.get(url, headers=headers)
 
 if response.status_code == 200:
     data = response.json()
-    print(f"Dados de mosquitos obtidos com sucesso!")
-    print(f"Primeiros registros: {{data[:3] if isinstance(data, list) else data}}")
+    print(data['items'][:3])  # Exibe os primeiros 3 registros
 else:
     print(f"Erro na requisição: {{response.status_code}}")
 ```
-
-**Campos retornados**: counting_id, date, date_collect, eggs, latitude, longitude, municipality, municipality_code, ovitrap_id, state_code, state_name, time, week, year.
-
-**Nota**: Este endpoint não suporta busca assíncrona de todas as páginas. Use um loop while para navegar por todas as páginas conforme exemplo acima.
 """
+    if mosquito_link:
+        response_text += f"""\nPara mais detalhes, consulte a documentação oficial do ContaOvos: {mosquito_link}"""
     return response_text.strip()
 
 
@@ -333,22 +263,12 @@ def get_episcanner_data(
     uf: UFs,
     year: Optional[int] = None,
 ) -> str:
-    """
-    Gera uma URL de API e um exemplo de código para consultar dados do EpiScanner.
-
-    Este endpoint fornece estimativas de parâmetros epidemiológicos em tempo real
-    para cada cidade e ano no Brasil, com foco em Dengue, Zika e Chikungunya.
-
-    Args:
-        disease: A doença a ser consultada ('dengue', 'zika', 'chik').
-        uf: A sigla do estado brasileiro.
-        year: O ano específico (opcional, padrão: ano atual).
-
-    Returns:
-        String estruturada com URL da API, parâmetros e exemplo de código.
-    """
     disease_map = {"chikungunya": "chik", "dengue": "dengue", "zika": "zika"}
     api_disease = disease_map.get(disease, disease)
+
+    episcanner_link = DOCS_KEYWORDS_MAP.get("datastore_episcanner", {}).get(
+        "link", ""
+    )
 
     base_url = f"{BASE_URL_API}episcanner/"
     params = {
@@ -366,7 +286,7 @@ def get_episcanner_data(
 
 # Usando a biblioteca mosqlient (recomendado)
 df = mosqlient.get_episcanner(
-    api_key=api_key,
+    api_key="SUA_CHAVE_API", # Substitua pela sua chave de API
     disease="{disease}",
     uf="{uf}\""""
 
@@ -376,9 +296,7 @@ df = mosqlient.get_episcanner(
     mosqlient_example += "\n)\nprint(df.head())"
 
     response_text = f"""
-Consulta para a API do EpiScanner gerada com sucesso.
-
-**Sobre os dados**: Estimativas de parâmetros epidemiológicos do Epi-Scanner para análise de expansão de epidemias. Inclui taxa de transmissibilidade (beta), número reprodutivo básico (R0), semana do pico epidêmico e duração da epidemia.
+Consulta para a API do EpiScanner gerada:
 
 **URL da API:**
 ```
@@ -400,22 +318,18 @@ Consulta para a API do EpiScanner gerada com sucesso.
 import requests
 
 url = "{full_url}"
-headers = {{"X-UID-Key": "SUA_CHAVE_API"}}  # Necessário para autenticação
+headers = {{"X-UID-Key": "SUA_CHAVE_API"}}  # Substitua pela sua chave de API
 response = requests.get(url, headers=headers)
 
 if response.status_code == 200:
     data = response.json()
-    print(f"Dados do EpiScanner obtidos com sucesso!")
-    print(f"Total de municípios: {{len(data)}}")
-    # Dados são retornados diretamente como lista, sem paginação
+    print(data['items'][:3])  # Exibe os primeiros 3 registros
 else:
     print(f"Erro na requisição: {{response.status_code}}")
 ```
-
-**Campos retornados**: disease, CID10, year, geocode, muni_name, peak_week, beta, gamma, R0, total_cases, alpha, sum_res, ep_ini, ep_end, ep_dur.
-
-**Nota**: Este endpoint NÃO usa paginação. Todos os dados são retornados em uma única resposta.
 """
+    if episcanner_link:
+        response_text += f"""\nPara mais detalhes, consulte a documentação oficial do EpiScanner: {episcanner_link}"""
     return response_text.strip()
 
 
