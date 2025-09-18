@@ -207,10 +207,10 @@ def get_mosquito_data(
 
 # Usando a biblioteca mosqlient (recomendado)
 df = mosqlient.get_mosquito(
-    api_key="SUA_CHAVE_API",  # Substitua pela sua chave de API"""
+    api_key="SUA_CHAVE_API", # Substitua pela sua chave de API"""
 
     if date_start:
-        mosqlient_example += f',\n    date_start="{date_start}"'
+        mosqlient_example += f'\n    date_start="{date_start}"'
     if date_end:
         mosqlient_example += f',\n    date_end="{date_end}"'
     if state:
@@ -243,7 +243,7 @@ Consulta para a API de dados de mosquito gerada:
 import requests
 
 url = "{full_url}"
-headers = {{"X-UID-Key": "SUA_CHAVE_API"}}  # Substitua pela sua chave de API
+headers = {{"X-UID-Key": "SUA_CHAVE_API"}} # Substitua pela sua chave de API
 response = requests.get(url, headers=headers)
 
 if response.status_code == 200:

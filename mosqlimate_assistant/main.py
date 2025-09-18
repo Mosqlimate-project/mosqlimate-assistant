@@ -7,6 +7,7 @@ def docs_pipeline(
     question: str,
     similar_docs: Optional[List[Dict[str, str]]] = None,
     x_uid: Optional[str] = None,
+    message_history: Optional[list[dict[str, str]]] = None,
 ) -> str:
     mosqlimate_assistant = assistant.AssistantGemini()
 
@@ -25,6 +26,7 @@ def docs_pipeline(
         prompt=question,
         similar_docs=similar_docs,
         x_uid=x_uid,
+        message_history=message_history,
     )
     return result["content"]
 
@@ -34,6 +36,7 @@ def assistant_pipeline(
     k_num: int = 4,
     full_context: bool = True,
     x_uid: Optional[str] = None,
+    message_history: Optional[list[dict[str, str]]] = None,
 ) -> str:
     if full_context:
         similar_docs = [
@@ -54,4 +57,6 @@ def assistant_pipeline(
             for doc, score in zip(relevant_docs, docs_scores)
             if score > 0.5
         ]
-    return docs_pipeline(question, similar_docs, x_uid=x_uid)
+    return docs_pipeline(
+        question, similar_docs, x_uid=x_uid, message_history=message_history
+    )

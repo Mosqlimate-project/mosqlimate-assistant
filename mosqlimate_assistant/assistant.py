@@ -153,7 +153,7 @@ class Assistant:
 
         if x_uid:
             return final_response.replace("SUA_CHAVE_API", x_uid).replace(
-                ", # Substitua pela sua chave de API", ","
+                "# Substitua pela sua chave de API", ""
             )
 
         return final_response
