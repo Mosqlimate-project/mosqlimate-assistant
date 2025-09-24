@@ -2,7 +2,6 @@ from mosqlimate_assistant import func_tools
 
 
 def test_get_infodengue_data():
-    """Testa a função get_infodengue_data."""
     result = func_tools.get_infodengue_data(
         disease="dengue",
         start="2023-01-01",
@@ -14,14 +13,13 @@ def test_get_infodengue_data():
     assert "Consulta para a API do InfoDengue:" in result
     assert "URL da API:" in result
     assert "Parâmetros Utilizados:" in result
-    assert "Exemplo de Código (Python com mosqlient):" in result
+    assert "Exemplo de Código Python com mosqlient (Recomendado)" in result
     assert "disease=dengue" in result
     assert "start=2023-01-01" in result
     assert "end=2023-12-31" in result
 
 
 def test_get_climate_data():
-    """Testa a função get_climate_data."""
     result = func_tools.get_climate_data(
         start="2023-01-01", end="2023-12-31", uf="RJ"
     )
@@ -29,13 +27,12 @@ def test_get_climate_data():
     assert "Consulta para a API de dados climáticos gerada:" in result
     assert "URL da API:" in result
     assert "Parâmetros Utilizados:" in result
-    assert "Exemplo de Código (Python com mosqlient):" in result
+    assert "Exemplo de Código Python com mosqlient (Recomendado)" in result
     assert "start=2023-01-01" in result
     assert "end=2023-12-31" in result
 
 
 def test_get_mosquito_data():
-    """Testa a função get_mosquito_data."""
     result = func_tools.get_mosquito_data(
         date_start="2024-01-01", date_end="2024-12-31", state="MG"
     )
@@ -43,12 +40,11 @@ def test_get_mosquito_data():
     assert "Consulta para a API de dados de mosquito gerada:" in result
     assert "URL da API:" in result
     assert "Parâmetros Utilizados:" in result
-    assert "Exemplo de Código (Python com mosqlient):" in result
+    assert "Exemplo de Código Python com mosqlient (Recomendado)" in result
     assert "date_start=2024-01-01" in result
 
 
 def test_get_episcanner_data():
-    """Testa a função get_episcanner_data."""
     result = func_tools.get_episcanner_data(
         disease="dengue", uf="SP", year=2023
     )
@@ -56,19 +52,17 @@ def test_get_episcanner_data():
     assert "Consulta para a API do EpiScanner gerada:" in result
     assert "URL da API:" in result
     assert "Parâmetros Utilizados:" in result
-    assert "Exemplo de Código (Python com mosqlient):" in result
+    assert "Exemplo de Código Python com mosqlient (Recomendado)" in result
     assert "disease=dengue" in result
     assert "uf=SP" in result
     assert "year=2023" in result
 
 
 def test_tool_schemas_structure():
-    """Testa se os schemas das ferramentas estão bem estruturados."""
     schemas = func_tools.TOOL_SCHEMAS
 
     assert len(schemas) == 4
 
-    # Verifica se cada schema tem os campos obrigatórios
     for schema in schemas:
         assert "name" in schema
         assert "description" in schema
@@ -79,7 +73,6 @@ def test_tool_schemas_structure():
 
 
 def test_tool_functions_mapping():
-    """Testa se o mapeamento das funções está correto."""
     functions = func_tools.TOOL_FUNCTIONS
 
     assert "get_infodengue_data" in functions
@@ -87,7 +80,6 @@ def test_tool_functions_mapping():
     assert "get_mosquito_data" in functions
     assert "get_episcanner_data" in functions
 
-    # Verifica se as funções são chamáveis
     assert callable(functions["get_infodengue_data"])
     assert callable(functions["get_climate_data"])
     assert callable(functions["get_mosquito_data"])
@@ -95,7 +87,6 @@ def test_tool_functions_mapping():
 
 
 def test_infodengue_without_location():
-    """Testa get_infodengue_data sem especificar localização."""
     result = func_tools.get_infodengue_data(
         disease="zika", start="2023-06-01", end="2023-06-30"
     )
@@ -103,22 +94,18 @@ def test_infodengue_without_location():
     assert "disease=zika" in result
     assert "start=2023-06-01" in result
     assert "end=2023-06-30" in result
-    # Não deve conter geocode se não especificou cidade/UF
     assert "geocode" not in result.lower()
 
 
 def test_episcanner_without_year():
-    """Testa get_episcanner_data sem especificar ano."""
     result = func_tools.get_episcanner_data(disease="chikungunya", uf="MG")
 
-    assert "disease=chik" in result  # A API usa "chik" para chikungunya
+    assert "disease=chik" in result
     assert "uf=MG" in result
-    # Não deve conter year se não especificado
     assert '"year"' not in result
 
 
 def test_mosquito_minimal_params():
-    """Testa get_mosquito_data com parâmetros mínimos."""
     result = func_tools.get_mosquito_data()
 
     assert "Consulta para a API de dados de mosquito gerada:" in result
@@ -127,7 +114,6 @@ def test_mosquito_minimal_params():
 
 
 def test_climate_with_pagination():
-    """Testa get_climate_data com paginação customizada."""
     result = func_tools.get_climate_data(
         start="2023-01-01", end="2023-01-31", page=2, per_page=50
     )

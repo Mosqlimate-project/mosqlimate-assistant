@@ -1,4 +1,3 @@
-import json
 from typing import Any, Callable, Dict, List, Optional
 
 from mosqlimate_assistant.muni_codes import get_municipality_code
@@ -15,7 +14,12 @@ def get_infodengue_data(
     page: int = 1,
     per_page: int = 100,
 ) -> str:
-    disease_map = {"chikungunya": "chik", "dengue": "dengue", "zika": "zika"}
+    disease_map = {
+        "chikungunya": "chikungunya",
+        "chick": "chikungunya",
+        "dengue": "dengue",
+        "zika": "zika",
+    }
     api_disease = disease_map.get(disease, disease)
 
     infodengue_link = DOCS_KEYWORDS_MAP.get("datastore_infodengue", {}).get(
@@ -23,9 +27,7 @@ def get_infodengue_data(
     )
 
     base_url = f"{BASE_URL_API}infodengue/"
-    params = {
-        "page": page,
-        "per_page": min(per_page, 100),
+    params: Dict[str, str | int] = {
         "disease": api_disease,
         "start": start,
         "end": end,
@@ -37,58 +39,44 @@ def get_infodengue_data(
         geocode = get_municipality_code(city, uf)
         params["geocode"] = geocode
 
+    params["per_page"] = min(per_page, 100)
+    params["page"] = page
+
+    params_markdown = "- " + "\n- ".join(
+        [f"`{k}`: `{v}`" for k, v in params.items()]
+    )
+
     query_string = "&".join([f"{k}={v}" for k, v in params.items()])
     full_url = f"{base_url}?{query_string}"
 
     mosqlient_example = f"""import mosqlient
 
-# Usando a biblioteca mosqlient (recomendado)
-df = mosqlient.get_infodengue(
-    api_key="SUA_CHAVE_API", # Substitua pela sua chave de API
-    disease="{disease}",
-    start_date="{start}",
-    end_date="{end}\""""
+df = mosqlient.get_infodengue(api_key='SUA_CHAVE_API', # Substitua pela sua chave de API
+
+&emsp;disease='{disease}', start_date='{start}', end_date='{end}'"""
 
     if uf:
-        mosqlient_example += f",\n    uf='{uf}'"
+        mosqlient_example += f", uf='{uf}'"
+    if params.get("geocode"):
+        mosqlient_example += f", geocode={params['geocode']}"
 
-    mosqlient_example += "\n)\nprint(df.head())"
+    mosqlient_example += ")\n\nprint(df.head())"
 
     response_text = f"""
 Consulta para a API do InfoDengue:
 
-**URL da API:**
-```
-{full_url}
-```
+**[URL da API: {full_url}]({full_url})**
 
 **Parâmetros Utilizados:**
-```json
-{json.dumps(params, indent=2, ensure_ascii=False)}
-```
+{params_markdown}
 
-**Exemplo de Código (Python com mosqlient):**
-```python
+**Exemplo de Código Python com mosqlient (Recomendado):**
+
 {mosqlient_example}
-```
 
-**Exemplo de Código (Python com requests):**
-```python
-import requests
-
-url = "{full_url}"
-headers = {{"X-UID-Key": "SUA_CHAVE_API"}}  # Substitua pela sua chave de API
-response = requests.get(url, headers=headers)
-
-if response.status_code == 200:
-    data = response.json()
-    print(data['items'][:3])  # Exibe os primeiros 3 registros
-else:
-    print(f"Erro na requisição: {{response.status_code}}")
-```
 """
     if infodengue_link:
-        response_text += f"""\nPara mais detalhes, consulte a documentação oficial do InfoDengue: {infodengue_link}"""
+        response_text += f"""\nPara mais detalhes, consulte a documentação oficial do InfoDengue: [{infodengue_link}]({infodengue_link})"""
     return response_text.strip()
 
 
@@ -101,9 +89,7 @@ def get_climate_data(
     per_page: int = 100,
 ) -> str:
     base_url = f"{BASE_URL_API}climate/"
-    params = {
-        "page": page,
-        "per_page": min(per_page, 100),
+    params: Dict[str, str | int] = {
         "start": start,
         "end": end,
     }
@@ -118,60 +104,44 @@ def get_climate_data(
         geocode = get_municipality_code(city, uf)
         params["geocode"] = geocode
 
+    params["page"] = page
+    params["per_page"] = min(per_page, 100)
+
+    params_markdown = "- " + "\n- ".join(
+        [f"`{k}`: `{v}`" for k, v in params.items()]
+    )
+
     query_string = "&".join([f"{k}={v}" for k, v in params.items()])
     full_url = f"{base_url}?{query_string}"
 
     mosqlient_example = f"""import mosqlient
 
-# Usando a biblioteca mosqlient (recomendado)
-df = mosqlient.get_climate(
-    api_key="SUA_CHAVE_API", # Substitua pela sua chave de API
-    start_date="{start}",
-    end_date="{end}\""""
+df = mosqlient.get_climate(api_key='SUA_CHAVE_API', # Substitua pela sua chave de API
+
+&emsp;start_date='{start}', end_date='{end}'"""
 
     if uf:
-        mosqlient_example += f",\n    uf='{uf}'"
-    if city and uf:
-        geocode = get_municipality_code(city, uf)
-        mosqlient_example += f",\n    geocode={geocode}"
+        mosqlient_example += f", uf='{uf}'"
+    if params.get("geocode"):
+        mosqlient_example += f", geocode={params['geocode']}"
 
-    mosqlient_example += "\n)\nprint(df.head())"
+    mosqlient_example += ")\n\nprint(df.head())"
 
     response_text = f"""
 Consulta para a API de dados climáticos gerada:
 
-**URL da API:**
-```
-{full_url}
-```
+**[URL da API: {full_url}]({full_url})**
 
 **Parâmetros Utilizados:**
-```json
-{json.dumps(params, indent=2, ensure_ascii=False)}
-```
+{params_markdown}
 
-**Exemplo de Código (Python com mosqlient):**
-```python
+**Exemplo de Código Python com mosqlient (Recomendado):**
+
 {mosqlient_example}
-```
 
-**Exemplo de Código (Python com requests):**
-```python
-import requests
-
-url = "{full_url}"
-headers = {{"X-UID-Key": "SUA_CHAVE_API"}} # Substitua pela sua chave de API
-response = requests.get(url, headers=headers)
-
-if response.status_code == 200:
-    data = response.json()
-    print(data['items'][:3])  # Exibe os primeiros 3 registros
-else:
-    print(f"Erro na requisição: {{response.status_code}}")
-```
 """
     if climate_link:
-        response_text += f"""\nPara mais detalhes, consulte a documentação oficial de dados climáticos: {climate_link}"""
+        response_text += f"""\nPara mais detalhes, consulte a documentação oficial de dados climáticos: [{climate_link}]({climate_link})"""
     return response_text.strip()
 
 
@@ -183,7 +153,7 @@ def get_mosquito_data(
     page: int = 1,
 ) -> str:
     base_url = f"{BASE_URL_API}mosquito/"
-    params = {}
+    params: Dict[str, str | int] = {}
 
     mosquito_link = DOCS_KEYWORDS_MAP.get("datastore_mosquito", {}).get(
         "link", ""
@@ -203,58 +173,43 @@ def get_mosquito_data(
     query_string = "&".join([f"{k}={v}" for k, v in params.items()])
     full_url = f"{base_url}?{query_string}" if params else base_url
 
+    params_markdown = (
+        "- " + "\n- ".join([f"`{k}`: `{v}`" for k, v in params.items()])
+        if params
+        else "Nenhum parâmetro utilizado."
+    )
+
     mosqlient_example = """import mosqlient
 
-# Usando a biblioteca mosqlient (recomendado)
-df = mosqlient.get_mosquito(
-    api_key="SUA_CHAVE_API", # Substitua pela sua chave de API"""
+df = mosqlient.get_mosquito(api_key="SUA_CHAVE_API", # Substitua pela sua chave de API\n
+"""
 
     if date_start:
-        mosqlient_example += f'\n    date_start="{date_start}"'
+        mosqlient_example += f"&emsp;date_start='{date_start}'"
     if date_end:
-        mosqlient_example += f',\n    date_end="{date_end}"'
+        mosqlient_example += f", date_end='{date_end}'"
     if state:
-        mosqlient_example += f',\n    state="{state}"'
+        mosqlient_example += f", state='{state}'"
     if municipality:
-        mosqlient_example += f',\n    municipality="{municipality}"'
+        mosqlient_example += f", municipality='{municipality}'"
 
-    mosqlient_example += "\n)\nprint(df.head())"
+    mosqlient_example += ")\n\nprint(df.head())"
 
     response_text = f"""
 Consulta para a API de dados de mosquito gerada:
 
-**URL da API:**
-```
-{full_url}
-```
+**[URL da API: {full_url}]({full_url})**
 
 **Parâmetros Utilizados:**
-```json
-{json.dumps(params, indent=2, ensure_ascii=False) if params else "{}"}
-```
+{params_markdown}
 
-**Exemplo de Código (Python com mosqlient):**
-```python
+**Exemplo de Código Python com mosqlient (Recomendado):**
+
 {mosqlient_example}
-```
 
-**Exemplo de Código (Python com requests):**
-```python
-import requests
-
-url = "{full_url}"
-headers = {{"X-UID-Key": "SUA_CHAVE_API"}} # Substitua pela sua chave de API
-response = requests.get(url, headers=headers)
-
-if response.status_code == 200:
-    data = response.json()
-    print(data['items'][:3])  # Exibe os primeiros 3 registros
-else:
-    print(f"Erro na requisição: {{response.status_code}}")
-```
 """
     if mosquito_link:
-        response_text += f"""\nPara mais detalhes, consulte a documentação oficial do ContaOvos: {mosquito_link}"""
+        response_text += f"""\nPara mais detalhes, consulte a documentação oficial do ContaOvos: [{mosquito_link}]({mosquito_link})"""
     return response_text.strip()
 
 
@@ -271,7 +226,7 @@ def get_episcanner_data(
     )
 
     base_url = f"{BASE_URL_API}episcanner/"
-    params = {
+    params: Dict[str, str | int] = {
         "disease": api_disease,
         "uf": uf,
     }
@@ -279,57 +234,39 @@ def get_episcanner_data(
     if year:
         params["year"] = str(year)
 
+    params_markdown = "- " + "\n- ".join(
+        [f"`{k}`: `{v}`" for k, v in params.items()]
+    )
+
     query_string = "&".join([f"{k}={v}" for k, v in params.items()])
     full_url = f"{base_url}?{query_string}"
 
     mosqlient_example = f"""import mosqlient
 
-# Usando a biblioteca mosqlient (recomendado)
-df = mosqlient.get_episcanner(
-    api_key="SUA_CHAVE_API", # Substitua pela sua chave de API
-    disease="{disease}",
-    uf="{uf}\""""
+df = mosqlient.get_episcanner(api_key='SUA_CHAVE_API', # Substitua pela sua chave de API
+
+&emsp;disease='{disease}', uf='{uf}'"""
 
     if year:
-        mosqlient_example += f",\n    year={year}"
+        mosqlient_example += f", year={year}"
 
-    mosqlient_example += "\n)\nprint(df.head())"
+    mosqlient_example += ")\n\nprint(df.head())"
 
     response_text = f"""
 Consulta para a API do EpiScanner gerada:
 
-**URL da API:**
-```
-{full_url}
-```
+**[URL da API: {full_url}]({full_url})**
 
 **Parâmetros Utilizados:**
-```json
-{json.dumps(params, indent=2, ensure_ascii=False)}
-```
+{params_markdown}
 
-**Exemplo de Código (Python com mosqlient):**
-```python
+**Exemplo de Código Python com mosqlient (Recomendado):**
+
 {mosqlient_example}
-```
 
-**Exemplo de Código (Python com requests):**
-```python
-import requests
-
-url = "{full_url}"
-headers = {{"X-UID-Key": "SUA_CHAVE_API"}}  # Substitua pela sua chave de API
-response = requests.get(url, headers=headers)
-
-if response.status_code == 200:
-    data = response.json()
-    print(data['items'][:3])  # Exibe os primeiros 3 registros
-else:
-    print(f"Erro na requisição: {{response.status_code}}")
-```
 """
     if episcanner_link:
-        response_text += f"""\nPara mais detalhes, consulte a documentação oficial do EpiScanner: {episcanner_link}"""
+        response_text += f"""\nPara mais detalhes, consulte a documentação oficial do EpiScanner: [{episcanner_link}]({episcanner_link})"""
     return response_text.strip()
 
 
