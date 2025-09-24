@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.7.2](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.7.1...1.7.2) (2025-09-24)
+
+
+### Bug Fixes
+
+* **func_tools:** Simplify code examples for clarity ([94d8763](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/94d87630b84d6057033396f633766fa0f3f34758))
+
 ## [1.7.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.7.0...1.7.1) (2025-09-18)
 
 
