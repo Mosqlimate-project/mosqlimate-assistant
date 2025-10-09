@@ -14,6 +14,10 @@ from openai.types.shared_params import FunctionDefinition
 
 from mosqlimate_assistant import func_tools, utils
 from mosqlimate_assistant.prompts import por
+from mosqlimate_assistant.coder_consumer import (
+    build_coder_agent_user_prompt,
+    build_coder_agent_system_prompt,
+)
 from mosqlimate_assistant.settings import (
     DEEPSEEK_API_KEY,
     DEEPSEEK_API_URL,
@@ -142,7 +146,16 @@ class Assistant:
         for tool_call in tool_calls:
             tool_name = tool_call["name"]
             tool_args = tool_call["arguments"]
-            results.append(self.execute_tool_call(tool_name, tool_args))
+
+            if tool_name == "coder_agent_generate_code":
+                prompt = build_coder_agent_user_prompt(
+                    tool_args.get("task_description", ""),
+                    tool_args.get("code_details"),
+                )
+                coder_response = self.query_llm_coder(prompt)
+                results.append(coder_response)
+            else:
+                results.append(self.execute_tool_call(tool_name, tool_args))
 
         if not results:
             return (
@@ -157,6 +170,23 @@ class Assistant:
             )
 
         return final_response
+
+    def query_llm_coder(self, prompt: str) -> str:
+        full_query = build_coder_agent_system_prompt()
+        messages = [
+            ChatCompletionSystemMessageParam(
+                role="system", content=full_query
+            ),
+            ChatCompletionUserMessageParam(role="user", content=prompt),
+        ]
+
+        response = self.client.chat.completions.create(
+            model=self.model_name, messages=messages
+        )
+
+        content = response.choices[0].message.content or ""
+
+        return {"content": content, "prompt": full_query, "messages": messages}
 
     def query_llm_docs(
         self,
@@ -194,6 +224,25 @@ class AssistantOpenAI(Assistant):
         full_query = self.make_docs_query(similar_docs)
         messages = self.build_messages(full_query, prompt, message_history)
 
+        coder_tool_schema = {
+            "name": "coder_agent_generate_code",
+            "description": "Gera um exemplo de código a partir de uma descrição detalhada da tarefa e da documentação fornecida. Usa apenas pandas, numpy, matplotlib, mosqlient e bibliotecas simples de Python ou R.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "task_description": {
+                        "type": "string",
+                        "description": "Descrição detalhada da tarefa a ser resolvida pelo exemplo de código.",
+                    },
+                    "code_details": {
+                        "type": "string",
+                        "description": "Detalhes adicionais sobre o código desejado, formato, linguagem, bibliotecas, etc.",
+                        "default": "",
+                    },
+                },
+                "required": ["task_description"],
+            },
+        }
         tools = [
             ChatCompletionToolParam(
                 type="function", function=cast(FunctionDefinition, schema)
@@ -201,6 +250,12 @@ class AssistantOpenAI(Assistant):
             for schema in func_tools.TOOL_SCHEMAS
             if isinstance(schema, dict) and "name" in schema
         ]
+        tools.append(
+            ChatCompletionToolParam(
+                type="function",
+                function=cast(FunctionDefinition, coder_tool_schema),
+            )
+        )
 
         response = self.client.chat.completions.create(
             model=self.model_name,
