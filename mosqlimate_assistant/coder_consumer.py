@@ -3,6 +3,9 @@ import re
 
 import pandas as pd
 import requests
+from mosqlimate_assistant.prompts import por
+from mosqlimate_assistant.settings import CODE_REFERENCES_PATH
+from typing import Optional
 
 
 def fetch_file_content(url: str) -> str:
@@ -83,3 +86,27 @@ def fetch_full_documentation_from_csv(csv_path: str) -> str:
 
         final_output += processed_content + "\n---\n"
     return final_output.strip()
+
+
+def build_coder_agent_system_prompt() -> str:
+    docs_content = fetch_full_documentation_from_csv(CODE_REFERENCES_PATH)
+    prompt = por.BASE_DOCS_PROMPT
+    prompt += f"\n\n# Documentação Fornecida\n{docs_content}\n"
+    return prompt
+
+
+def build_coder_agent_user_prompt(
+    task_description: str, code_details: Optional[str] = None
+) -> str:
+    prompt = f"# Descrição da tarefa\n{task_description}\n"
+    if code_details:
+        prompt += f"\n## Detalhes adicionais\n{code_details}\n"
+    return prompt
+
+
+def tool_call_coder_agent(
+    task_description: str, code_details: str = ""
+) -> str:
+    return json.dumps(
+        {"task_description": task_description, "code_details": code_details}
+    )

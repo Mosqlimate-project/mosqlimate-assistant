@@ -70,6 +70,9 @@ ASKS_VECTOR_DB_PATH = os.path.join(
 DOCS_VECTOR_DB_PATH = os.path.join(
     os.path.dirname(DOCS_DB_PATH), "vector_dbs", "docs_chroma"
 )
+CODE_REFERENCES_PATH = os.path.join(
+    CURRENT_PATH, DATABASE_PATH, "code_references.csv"
+)
 
 MUNICIPALITIES_URL = "https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-assistant/refs/heads/main/mosqlimate_assistant/data/municipios.json"
 ASKS_URL = "https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-assistant/refs/heads/main/mosqlimate_assistant/data/asks.csv"
