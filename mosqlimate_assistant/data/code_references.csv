@@ -1,0 +1,18 @@
+name,markdown_link,url_link
+Overview,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/index.md,https://mosqlimate-client.readthedocs.io/en/latest/
+Credits,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/credits.md,https://mosqlimate-client.readthedocs.io/en/latest/credits/
+Tutorial - Datastore,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/tutorials/API/datastore.ipynb,https://mosqlimate-client.readthedocs.io/en/latest/tutorials/API/datastore/
+Tutorial - Registry,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/tutorials/API/registry.ipynb,https://mosqlimate-client.readthedocs.io/en/latest/tutorials/API/registry/
+Tutorial - Using from R,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/tutorials/Using Mosqlient from R.ipynb,https://mosqlimate-client.readthedocs.io/en/latest/tutorials/Using Mosqlient from R/
+Tutorial - Model Scoring,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/tutorials/scoring.ipynb,https://mosqlimate-client.readthedocs.io/en/latest/tutorials/scoring/
+Tutorial - Simple forecast model,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/tutorials/baseline_model.ipynb,https://mosqlimate-client.readthedocs.io/en/latest/tutorials/baseline_model/
+Tutorial - Ensemble predictions,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/tutorials/ensemble.ipynb,https://mosqlimate-client.readthedocs.io/en/latest/tutorials/ensemble/
+Reference - Infodengue data,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/reference/infodengue.md,https://mosqlimate-client.readthedocs.io/en/latest/reference/infodengue/
+Reference - Climate data,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/reference/climate.md,https://mosqlimate-client.readthedocs.io/en/latest/reference/climate/
+Reference - Get authors,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/reference/authors.md,https://mosqlimate-client.readthedocs.io/en/latest/reference/authors/
+"Reference - Get, post and delete models",https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/reference/models.md,https://mosqlimate-client.readthedocs.io/en/latest/reference/models/
+"Reference - Get, post and delete predictions",https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/reference/predictions.md,https://mosqlimate-client.readthedocs.io/en/latest/reference/predictions/
+Reference - Score,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/reference/score.md,https://mosqlimate-client.readthedocs.io/en/latest/reference/score/
+Reference - Baseline Arima,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/reference/baseline.md,https://mosqlimate-client.readthedocs.io/en/latest/reference/baseline/
+Reference - Ensemble,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/reference/ensemble.md,https://mosqlimate-client.readthedocs.io/en/latest/reference/ensemble/
+Reference - Prediction optimize,https://raw.githubusercontent.com/Mosqlimate-project/mosqlimate-client/main/docs/reference/pred_opt.md,https://mosqlimate-client.readthedocs.io/en/latest/reference/pred_opt/
