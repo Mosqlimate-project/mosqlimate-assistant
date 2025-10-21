@@ -1,16 +1,18 @@
 import json
 import re
+from typing import Optional
 
 import pandas as pd
 import requests
+
 from mosqlimate_assistant.prompts import por
 from mosqlimate_assistant.settings import CODE_REFERENCES_PATH
-from typing import Optional
+from mosqlimate_assistant.web_cache import shared_cache_session
 
 
 def fetch_file_content(url: str) -> str:
     try:
-        response = requests.get(url)
+        response = shared_cache_session.get(url)
         response.raise_for_status()
         return response.text
     except requests.exceptions.RequestException as e:

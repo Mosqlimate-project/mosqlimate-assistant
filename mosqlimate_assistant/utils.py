@@ -4,13 +4,12 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List
 
-import requests
-
 from mosqlimate_assistant.settings import KEYWORDS_MAP_PATH
+from mosqlimate_assistant.web_cache import shared_cache_session
 
 
 def get_content_from_url(url: str) -> str:
-    response = requests.get(url)
+    response = shared_cache_session.get(url)
     response.raise_for_status()
     return response.text
 

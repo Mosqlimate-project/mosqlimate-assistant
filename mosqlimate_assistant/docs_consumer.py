@@ -1,13 +1,12 @@
 from typing import List
 
-import requests
-
 from mosqlimate_assistant.settings import MOSQLIMATE_API_DOCS_JSON
+from mosqlimate_assistant.web_cache import shared_cache_session
 
 
 def get_mosqlimate_api_docs() -> dict:
     url = MOSQLIMATE_API_DOCS_JSON
-    response = requests.get(url)
+    response = shared_cache_session.get(url)
     if response.status_code == 200:
         return response.json()
     else:
@@ -94,7 +93,7 @@ def format_api_parameters(api_json: dict) -> dict:
 
 
 def get_content_from_url(url: str) -> str:
-    response = requests.get(url)
+    response = shared_cache_session.get(url)
     response.raise_for_status()
     return response.text
 
