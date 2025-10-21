@@ -13,11 +13,11 @@ from openai.types.chat import (
 from openai.types.shared_params import FunctionDefinition
 
 from mosqlimate_assistant import func_tools, utils
-from mosqlimate_assistant.prompts import por
 from mosqlimate_assistant.coder_consumer import (
-    build_coder_agent_user_prompt,
     build_coder_agent_system_prompt,
+    build_coder_agent_user_prompt,
 )
+from mosqlimate_assistant.prompts import por
 from mosqlimate_assistant.settings import (
     DEEPSEEK_API_KEY,
     DEEPSEEK_API_URL,
@@ -38,6 +38,7 @@ MessageParam = Union[
 class Assistant:
     def __init__(self, model_name: str):
         self.model_name = model_name
+        self.client: Optional[OpenAI] = None
 
     def make_docs_query(
         self,
@@ -119,13 +120,14 @@ class Assistant:
 
         tool_calls = []
         for tool_call in message.tool_calls:
-            tool_calls.append(
-                {
-                    "name": tool_call.function.name,
-                    "arguments": json.loads(tool_call.function.arguments),
-                }
-            )
-
+            func = getattr(tool_call, "function", None)
+            if func is not None:
+                tool_calls.append(
+                    {
+                        "name": func.name,
+                        "arguments": json.loads(func.arguments),
+                    }
+                )
         return tool_calls
 
     def handle_tool_calls(
@@ -150,10 +152,11 @@ class Assistant:
             if tool_name == "coder_agent_generate_code":
                 prompt = build_coder_agent_user_prompt(
                     tool_args.get("task_description", ""),
-                    tool_args.get("code_details"),
+                    tool_args.get("code_details", None),
                 )
                 coder_response = self.query_llm_coder(prompt)
-                results.append(coder_response)
+                results.append(str(coder_response["content"]))
+
             else:
                 results.append(self.execute_tool_call(tool_name, tool_args))
 
@@ -171,7 +174,7 @@ class Assistant:
 
         return final_response
 
-    def query_llm_coder(self, prompt: str) -> str:
+    def query_llm_coder(self, prompt: str) -> dict:
         full_query = build_coder_agent_system_prompt()
         messages = [
             ChatCompletionSystemMessageParam(
@@ -179,14 +182,19 @@ class Assistant:
             ),
             ChatCompletionUserMessageParam(role="user", content=prompt),
         ]
-
+        if self.client is None:
+            raise ValueError("Client não inicializado na classe Assistant.")
         response = self.client.chat.completions.create(
             model=self.model_name, messages=messages
         )
 
         content = response.choices[0].message.content or ""
 
-        return {"content": content, "prompt": full_query, "messages": messages}
+        return {
+            "content": content,
+            "prompt": full_query,
+            "messages": messages,
+        }
 
     def query_llm_docs(
         self,
@@ -232,7 +240,7 @@ class AssistantOpenAI(Assistant):
                 "properties": {
                     "task_description": {
                         "type": "string",
-                        "description": "Descrição detalhada da tarefa a ser resolvida pelo exemplo de código.",
+                        "description": "Descrição detalhada da tarefa a ser resolvida pelo exemplo de código, se necessário adicione os parâmetros das tabelas e explique o que eles são.",
                     },
                     "code_details": {
                         "type": "string",
@@ -243,19 +251,16 @@ class AssistantOpenAI(Assistant):
                 "required": ["task_description"],
             },
         }
-        tools = [
-            ChatCompletionToolParam(
-                type="function", function=cast(FunctionDefinition, schema)
-            )
-            for schema in func_tools.TOOL_SCHEMAS
-            if isinstance(schema, dict) and "name" in schema
-        ]
+        tools = []
         tools.append(
             ChatCompletionToolParam(
                 type="function",
                 function=cast(FunctionDefinition, coder_tool_schema),
             )
         )
+
+        if self.client is None:
+            raise ValueError("Client não inicializado na classe Assistant.")
 
         response = self.client.chat.completions.create(
             model=self.model_name,
@@ -328,7 +333,14 @@ class AssistantOllama(Assistant):
         full_query = self.make_docs_query(similar_docs)
         messages = self.build_messages(full_query, prompt, message_history)
 
-        response = ollama.chat(model=self.model_name, messages=messages)
+        messages_dict = [
+            {
+                "role": m.role,
+                "content": m.content,
+            }
+            for m in messages
+        ]
+        response = ollama.chat(model=self.model_name, messages=messages_dict)
         output = response["message"]["content"]
 
         message = ChatCompletionMessage(content=output, role="assistant")
