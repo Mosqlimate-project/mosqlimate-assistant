@@ -17,6 +17,7 @@ class BaseTool(BaseModel):
         ..., description="Função que implementa a lógica da ferramenta."
     )
 
+    @property
     def get_schema_for_llm(self) -> Dict[str, Any]:
         return {
             "name": self.name,
@@ -42,23 +43,20 @@ class AgentCard(BaseModel):
     )
     _prompt_function: Optional[Callable[..., str]] = None
 
-    @classmethod
-    def get_prompt(cls, *args, **kwargs) -> str:
-        if cls._prompt_function is None:
+    def get_prompt(self, *args, **kwargs) -> str:
+        if self._prompt_function is None:
             raise NotImplementedError(
                 "Prompt function not implemented for this agent card."
             )
-        return cls._prompt_function(*args, **kwargs)
+        return self._prompt_function(*args, **kwargs)
 
-    @classmethod
-    def set_prompt_function(cls, prompt_function: Callable[..., str]) -> None:
-        cls._prompt_function = prompt_function
+    def set_prompt_function(self, prompt_function: Callable[..., str]) -> None:
+        self._prompt_function = prompt_function
 
     @property
     def get_tools_schema_for_llm(self) -> List[Dict[str, Any]]:
         return [tool.get_schema_for_llm() for tool in self.tools]
 
-    @property
     def get_tool_by_name(self, name: str) -> Optional[BaseTool]:
         for tool in self.tools:
             if tool.name == name:
