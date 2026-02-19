@@ -1,6 +1,6 @@
-import json
-from pydantic import BaseModel, Field, ValidationError
-from typing import List, Dict, Any, Type, Callable, Optional
+from typing import Any, Callable, Dict, List, Optional, Type
+
+from pydantic import BaseModel, Field, PrivateAttr, ValidationError
 
 
 class ToolInputSchema(BaseModel):
@@ -17,6 +17,7 @@ class BaseTool(BaseModel):
         ..., description="Função que implementa a lógica da ferramenta."
     )
 
+    @property
     def get_schema_for_llm(self) -> Dict[str, Any]:
         return {
             "name": self.name,
@@ -38,27 +39,41 @@ class AgentCard(BaseModel):
     name: str = Field(..., description="Nome do agente.")
     description: str = Field(..., description="Descrição do agente.")
     tools: List[BaseTool] = Field(
-        ..., description="Lista de ferramentas disponíveis para o agente."
+        default_factory=list,
+        description="Lista de ferramentas disponíveis para o agente.",
     )
-    _prompt_function: Optional[Callable[..., str]] = None
+    search_mode: str = Field(
+        default="total",
+        description="Modo de busca: 'unitary', 'group', ou 'total'",
+    )
+    target_groups: List[str] = Field(
+        default_factory=list,
+        description="Grupos alvo para busca (se aplicável)",
+    )
+    fallback_docs: Optional[str] = Field(
+        default=None,
+        description="Coleção de fallback se a busca não retornar resultados satisfatórios",
+    )
+    _prompt_function: Optional[Callable[..., str]] = PrivateAttr(default=None)
+    _executor_callback: Optional[Callable[..., Any]] = PrivateAttr(
+        default=None
+    )
 
-    @classmethod
-    def get_prompt(cls, *args, **kwargs) -> str:
-        if cls._prompt_function is None:
-            raise NotImplementedError(
-                "Prompt function not implemented for this agent card."
-            )
-        return cls._prompt_function(*args, **kwargs)
+    def get_prompt(self, *args, **kwargs) -> Optional[str]:
+        if self._prompt_function is None:
+            return None
+        return self._prompt_function(*args, **kwargs)
 
-    @classmethod
-    def set_prompt_function(cls, prompt_function: Callable[..., str]) -> None:
-        cls._prompt_function = prompt_function
+    def set_prompt_function(self, prompt_function: Callable[..., str]) -> None:
+        self._prompt_function = prompt_function
+
+    def set_executor_callback(self, callback: Callable[..., Any]) -> None:
+        self._executor_callback = callback
 
     @property
     def get_tools_schema_for_llm(self) -> List[Dict[str, Any]]:
-        return [tool.get_schema_for_llm() for tool in self.tools]
+        return [tool.get_schema_for_llm for tool in self.tools]
 
-    @property
     def get_tool_by_name(self, name: str) -> Optional[BaseTool]:
         for tool in self.tools:
             if tool.name == name:
@@ -76,9 +91,18 @@ class AgentCard(BaseModel):
             )
 
         def agent_tool_function(user_question: str, task_context: str) -> str:
-            return self.get_prompt(
+            if self._executor_callback:
+                result = self._executor_callback(user_question, task_context)
+                return (
+                    result.get("content", "")
+                    if isinstance(result, dict)
+                    else str(result)
+                )
+
+            prompt = self.get_prompt(
                 user_question=user_question, task_context=task_context
             )
+            return prompt or ""
 
         return BaseTool(
             name=self.name,
