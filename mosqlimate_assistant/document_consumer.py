@@ -301,7 +301,9 @@ class DocumentManager:
         self.consumers.append(consumer)
 
     def fetch_and_index_all(
-        self, collections: Optional[List[str]] = None
+        self,
+        collections: Optional[List[str]] = None,
+        id_key: Optional[str] = None,
     ) -> None:
         all_docs: List[VectorDocument] = []
 
@@ -322,8 +324,15 @@ class DocumentManager:
                         ).encode()
                     ).hexdigest()[:12]
 
+                    fallback_id = f"{source_doc.source_type}_{doc_hash}"
+                    doc_id = (
+                        source_doc.metadata.get(id_key) or fallback_id
+                        if id_key
+                        else fallback_id
+                    )
+
                     vector_doc = VectorDocument(
-                        id=f"{source_doc.source_type}_{doc_hash}",
+                        id=doc_id,
                         content=_enrich_content(
                             source_doc.metadata, source_doc.content
                         ),

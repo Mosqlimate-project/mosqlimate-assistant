@@ -34,6 +34,29 @@ class BaseVectorStore(ABC):
         pass
 
     @abstractmethod
+    def named_group_search(
+        self,
+        query: str,
+        groups: List[List[str]],
+        group_key: str = "id",
+    ) -> List[VectorSearchResult]:
+        """Busca por grupos customizados definidos como lista de listas.
+
+        Cada grupo é uma lista de identificadores de documentos.
+        A query é comparada com a concatenação de conteúdo de cada grupo
+        e os documentos do grupo mais similar são retornados.
+
+        Parameters
+        ----------
+        group_key : str
+            Campo usado para identificar documentos nos grupos.
+            - ``"id"`` (padrão): usa ``doc.id`` — funciona com qualquer
+              fonte de documentos (CSV, URL, arquivo, etc.)
+            - qualquer outra string: usa ``doc.metadata[group_key]``
+        """
+        pass
+
+    @abstractmethod
     def get_all_documents(self) -> List[VectorSearchResult]:
         pass
 
@@ -60,7 +83,6 @@ class InMemoryVectorStore(BaseVectorStore):
         self.documents: List[VectorDocument] = []
         self.embeddings: Optional[np.ndarray] = None
         self.group_embeddings: Dict[str, np.ndarray] = {}
-
 
     def add_documents(self, documents: List[VectorDocument]) -> None:
         if not documents:
@@ -208,6 +230,68 @@ class InMemoryVectorStore(BaseVectorStore):
                 results.append(VectorSearchResult(document=doc, score=score))
 
         return results
+
+    def named_group_search(
+        self,
+        query: str,
+        groups: List[List[str]],
+        group_key: str = "id",
+    ) -> List[VectorSearchResult]:
+        """Busca pelo grupo mais similar à query.
+
+        Para cada grupo (lista de identificadores), concatena o conteúdo de
+        todos os seus documentos e embeda o resultado. Retorna os documentos
+        do grupo que mais se aproxima da query.
+
+        Parameters
+        ----------
+        group_key : str
+            ``"id"`` (padrão) → compara com ``doc.id`` (universal para
+            CSV, URL, arquivo, qualquer fonte).
+            Qualquer outra string → compara com ``doc.metadata[group_key]``.
+        """
+        if not self.documents or not groups:
+            return []
+
+        query_embedding = np.array(self.embedding_provider.embed_query(query))
+
+        def _doc_key(doc: "VectorDocument") -> str:  # type: ignore[name-defined]
+            return (
+                doc.id
+                if group_key == "id"
+                else (doc.metadata.get(group_key) or "")
+            )
+
+        best_score = -1.0
+        best_group_ids: List[str] = []
+
+        for group_ids in groups:
+            group_docs = [
+                doc for doc in self.documents if _doc_key(doc) in group_ids
+            ]
+            if not group_docs:
+                continue
+
+            full_text = "\n\n".join(doc.content for doc in group_docs)
+            group_emb = self.embedding_provider.safe_embed(full_text)
+            if not group_emb:
+                continue
+
+            score = float(np.dot(np.array(group_emb), query_embedding))
+            if score > best_score:
+                best_score = score
+                best_group_ids = group_ids
+
+        if not best_group_ids:
+            return []
+
+        winner_docs = [
+            doc for doc in self.documents if _doc_key(doc) in best_group_ids
+        ]
+        return [
+            VectorSearchResult(document=doc, score=best_score)
+            for doc in winner_docs
+        ]
 
     def get_all_documents(self) -> List[VectorSearchResult]:
         return [
