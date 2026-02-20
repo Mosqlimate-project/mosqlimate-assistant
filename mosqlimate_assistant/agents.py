@@ -27,12 +27,21 @@ class AgentExecutor:
 
         mode = self.agent_card.search_mode.lower()
         groups = self.agent_card.target_groups
+        named_groups = self.agent_card.named_groups
+        group_key = self.agent_card.group_key
         fallback_collection = self.agent_card.fallback_docs
 
         if mode == "total":
             results = self.vector_store.get_all_documents()
         elif mode == "group":
-            results = self.vector_store.group_similarity_search(query, k=k)
+            if named_groups:
+                # Grupos customizados: List[List[str]] de valores de metadata
+                results = self.vector_store.named_group_search(
+                    query, groups=named_groups, group_key=group_key
+                )
+            else:
+                # Fallback: grupos por collection
+                results = self.vector_store.group_similarity_search(query, k=k)
         else:
             results = self.vector_store.similarity_search(
                 query, k=k, collections=groups if groups else None

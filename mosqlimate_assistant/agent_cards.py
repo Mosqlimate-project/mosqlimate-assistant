@@ -50,6 +50,22 @@ class AgentCard(BaseModel):
         default_factory=list,
         description="Grupos alvo para busca (se aplicável)",
     )
+    named_groups: List[List[str]] = Field(
+        default_factory=list,
+        description=(
+            "Grupos customizados para search_mode='group'. "
+            "Cada elemento é uma lista de valores da coluna `group_key` "
+            "do CSV (ex: values da coluna 'name'). "
+            "A busca compara a query com a concatenação de cada grupo."
+        ),
+    )
+    group_key: str = Field(
+        default="name",
+        description=(
+            "Coluna do metadata usada para identificar documentos "
+            "em named_groups (padrão: 'name')."
+        ),
+    )
     fallback_docs: Optional[str] = Field(
         default=None,
         description="Coleção de fallback se a busca não retornar resultados satisfatórios",
