@@ -11,14 +11,13 @@ class BaseEmbeddingProvider(ABC):
         pass
 
     def safe_embed(self, text: str) -> List[float]:
-        """Embeda texto, reduzindo pela metade até conseguir."""
         current = text
-        while len(current) > 200:
+        while current:
             emb = self.embed_query(current)
             if emb:
                 return emb
             current = current[: len(current) // 2]
-        return self.embed_query(current)
+        return []
 
 
 class OllamaEmbeddingProvider(BaseEmbeddingProvider):

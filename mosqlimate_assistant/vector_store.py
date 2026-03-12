@@ -1,7 +1,7 @@
 import pickle
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 
@@ -40,20 +40,6 @@ class BaseVectorStore(ABC):
         groups: List[List[str]],
         group_key: str = "id",
     ) -> List[VectorSearchResult]:
-        """Busca por grupos customizados definidos como lista de listas.
-
-        Cada grupo é uma lista de identificadores de documentos.
-        A query é comparada com a concatenação de conteúdo de cada grupo
-        e os documentos do grupo mais similar são retornados.
-
-        Parameters
-        ----------
-        group_key : str
-            Campo usado para identificar documentos nos grupos.
-            - ``"id"`` (padrão): usa ``doc.id`` — funciona com qualquer
-              fonte de documentos (CSV, URL, arquivo, etc.)
-            - qualquer outra string: usa ``doc.metadata[group_key]``
-        """
         pass
 
     @abstractmethod
@@ -76,8 +62,6 @@ class BaseVectorStore(ABC):
 
 
 class InMemoryVectorStore(BaseVectorStore):
-    """1 embedding por doc (truncado se necessário), 1 por grupo."""
-
     def __init__(self, embedding_provider: BaseEmbeddingProvider):
         self.embedding_provider = embedding_provider
         self.documents: List[VectorDocument] = []
@@ -88,8 +72,7 @@ class InMemoryVectorStore(BaseVectorStore):
         if not documents:
             return
 
-        # 1 embedding por documento (truncado se necessário)
-        paired: list[tuple[VectorDocument, List[float]]] = []
+        paired: List[Tuple[VectorDocument, List[float]]] = []
         for doc in documents:
             emb = self.embedding_provider.safe_embed(doc.content)
             if emb:
@@ -105,44 +88,48 @@ class InMemoryVectorStore(BaseVectorStore):
             self.embeddings = new_embeddings
             self.documents = list(new_docs)
         else:
-            existing_ids = {doc.id: i for i, doc in enumerate(self.documents)}
-            docs_to_add = []
-            embeddings_to_add = []
+            self._merge_into_existing(new_docs, new_embeddings)
 
-            for i, doc in enumerate(new_docs):
-                if doc.id in existing_ids:
-                    idx = existing_ids[doc.id]
-                    existing_doc = self.documents[idx]
-
-                    doc.collections = list(
-                        set(existing_doc.collections) | set(doc.collections)
-                    )
-
-                    merged_metadata = existing_doc.metadata.copy()
-                    merged_metadata.update(doc.metadata)
-                    doc.metadata = merged_metadata
-
-                    self.documents[idx] = doc
-                    self.embeddings[idx] = new_embeddings[i]
-                else:
-                    docs_to_add.append(doc)
-                    embeddings_to_add.append(new_embeddings[i])
-
-            if docs_to_add:
-                self.documents.extend(docs_to_add)
-                self.embeddings = np.vstack(
-                    [self.embeddings, np.array(embeddings_to_add)]
-                )
-
-        affected_groups = set()
+        affected_groups: Set[str] = set()
         for doc in new_docs:
             for group in doc.collections:
                 affected_groups.add(group)
 
         self._update_group_embeddings(affected_groups)
 
-    def _update_group_embeddings(self, groups: set[str]):
-        """Embeda grupos concatenando conteúdo."""
+    def _merge_into_existing(
+        self,
+        new_docs: List[VectorDocument],
+        new_embeddings: np.ndarray,
+    ) -> None:
+        assert self.embeddings is not None
+        existing_ids = {doc.id: i for i, doc in enumerate(self.documents)}
+        docs_to_add = []
+        embeddings_to_add = []
+
+        for i, doc in enumerate(new_docs):
+            if doc.id in existing_ids:
+                idx = existing_ids[doc.id]
+                existing_doc = self.documents[idx]
+
+                doc.collections = list(
+                    set(existing_doc.collections) | set(doc.collections)
+                )
+                doc.metadata = {**existing_doc.metadata, **doc.metadata}
+
+                self.documents[idx] = doc
+                self.embeddings[idx] = new_embeddings[i]
+            else:
+                docs_to_add.append(doc)
+                embeddings_to_add.append(new_embeddings[i])
+
+        if docs_to_add:
+            self.documents.extend(docs_to_add)
+            self.embeddings = np.vstack(
+                [self.embeddings, np.array(embeddings_to_add)]
+            )
+
+    def _update_group_embeddings(self, groups: Set[str]):
         for group in groups:
             group_docs = [
                 doc for doc in self.documents if group in doc.collections
@@ -237,19 +224,6 @@ class InMemoryVectorStore(BaseVectorStore):
         groups: List[List[str]],
         group_key: str = "id",
     ) -> List[VectorSearchResult]:
-        """Busca pelo grupo mais similar à query.
-
-        Para cada grupo (lista de identificadores), concatena o conteúdo de
-        todos os seus documentos e embeda o resultado. Retorna os documentos
-        do grupo que mais se aproxima da query.
-
-        Parameters
-        ----------
-        group_key : str
-            ``"id"`` (padrão) → compara com ``doc.id`` (universal para
-            CSV, URL, arquivo, qualquer fonte).
-            Qualquer outra string → compara com ``doc.metadata[group_key]``.
-        """
         if not self.documents or not groups:
             return []
 
