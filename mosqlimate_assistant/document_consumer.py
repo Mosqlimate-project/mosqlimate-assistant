@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import re
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -47,11 +48,7 @@ def get_cached_session() -> (
     return _cached_session
 
 
-# ─── Processamento de conteúdo ───────────────────────────────────
-
-
 def _process_notebook(raw_json: str) -> str:
-    """Converte JSON de Jupyter Notebook em markdown legível."""
     try:
         notebook = json.loads(raw_json)
     except json.JSONDecodeError:
@@ -63,7 +60,7 @@ def _process_notebook(raw_json: str) -> str:
         .get("language", "python")
     )
 
-    parts: list[str] = []
+    parts: List[str] = []
     for cell in notebook.get("cells", []):
         source = "".join(cell.get("source", []))
         if cell.get("cell_type") == "markdown":
@@ -97,7 +94,8 @@ def _resolve_mkdocstrings(
     session: Union[requests.Session, requests_cache.CachedSession],
 ) -> str:
     """Resolve referências ::: module.path do mkdocstrings."""
-    for match in re.finditer(r"::: ([\w._]+)", content):
+    pattern = r"::: ([\w._]+)(?:\n[ \t]+.*)*"
+    for match in re.finditer(pattern, content):
         module_path = match.group(1)
         py_path = module_path.replace(".", "/") + ".py"
         try:
@@ -117,8 +115,8 @@ def _get_base_url(url: str) -> str:
     """Extrai base URL do repo GitHub a partir da URL completa."""
     parts = url.split("/")
     # https://raw.githubusercontent.com/ORG/REPO/BRANCH/...
-    if len(parts) >= 7:
-        return "/".join(parts[:7]) + "/"
+    if len(parts) >= 7 and "githubusercontent.com" in parts[2]:
+        return "/".join(parts[:6]) + "/"
     return url.rsplit("/", 1)[0] + "/"
 
 
@@ -137,9 +135,6 @@ def _process_content(
     return content
 
 
-# ─── Fetch ───────────────────────────────────────────────────────
-
-
 def _fetch_url(
     session: requests.Session,
     url: str,
@@ -156,13 +151,20 @@ def _fetch_url(
 
         content = _process_content(response.text, url, session)
 
+        unresolved = len(re.findall(r"::: ([\w._]+)", content)) + len(
+            re.findall(r'--8<-- "([^"]+)"', content)
+        )
+        if unresolved > 0:
+            raise ValueError(f"Failed to fully render {unresolved} templates")
+
         return SourceDocument(
             content=content,
             source_type=source_type,
             source_identifier=url,
             metadata=metadata,
         )
-    except Exception:
+    except Exception as e:
+        logging.warning("Error fetching %s: %s", url, e)
         return None
 
 
@@ -224,7 +226,9 @@ class CSVLinkConsumer(BaseDocumentConsumer):
             if not url:
                 continue
 
-            row_metadata = row.where(pd.notnull(row), None).to_dict()
+            row_metadata = {
+                k: (v if pd.notnull(v) else None) for k, v in row.items()
+            }
 
             if "web_reference" in row_metadata:
                 row_metadata["url_link"] = row_metadata["web_reference"]
@@ -279,7 +283,6 @@ class FileDocumentConsumer(BaseDocumentConsumer):
 
 
 def _enrich_content(metadata: dict, content: str) -> str:
-    """Prepõe nome e keywords (se existirem) ao conteúdo."""
     parts = []
     name = metadata.get("name")
     if name:
