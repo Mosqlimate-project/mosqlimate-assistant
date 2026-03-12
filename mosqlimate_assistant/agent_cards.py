@@ -18,7 +18,7 @@ class BaseTool(BaseModel):
     )
 
     @property
-    def get_schema_for_llm(self) -> Dict[str, Any]:
+    def schema_for_llm(self) -> Dict[str, Any]:
         return {
             "name": self.name,
             "description": self.description,
@@ -70,6 +70,13 @@ class AgentCard(BaseModel):
         default=None,
         description="Coleção de fallback se a busca não retornar resultados satisfatórios",
     )
+    fallback_threshold: float = Field(
+        default=0.75,
+        description=(
+            "Score mínimo para considerar os resultados satisfatórios. "
+            "Se o melhor resultado ficar abaixo, aciona o fallback."
+        ),
+    )
     _prompt_function: Optional[Callable[..., str]] = PrivateAttr(default=None)
     _executor_callback: Optional[Callable[..., Any]] = PrivateAttr(
         default=None
@@ -87,8 +94,8 @@ class AgentCard(BaseModel):
         self._executor_callback = callback
 
     @property
-    def get_tools_schema_for_llm(self) -> List[Dict[str, Any]]:
-        return [tool.get_schema_for_llm for tool in self.tools]
+    def tools_schema_for_llm(self) -> List[Dict[str, Any]]:
+        return [tool.schema_for_llm for tool in self.tools]
 
     def get_tool_by_name(self, name: str) -> Optional[BaseTool]:
         for tool in self.tools:
@@ -109,16 +116,15 @@ class AgentCard(BaseModel):
         def agent_tool_function(user_question: str, task_context: str) -> str:
             if self._executor_callback:
                 result = self._executor_callback(user_question, task_context)
-                return (
-                    result.get("content", "")
-                    if isinstance(result, dict)
-                    else str(result)
+                if isinstance(result, dict):
+                    return result.get("content", "")
+                return str(result)
+            return (
+                self.get_prompt(
+                    user_question=user_question, task_context=task_context
                 )
-
-            prompt = self.get_prompt(
-                user_question=user_question, task_context=task_context
+                or ""
             )
-            return prompt or ""
 
         return BaseTool(
             name=self.name,
