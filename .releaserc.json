@@ -1,5 +1,7 @@
 {
-  "branches": ["main"],
+  "branches": [
+    "main"
+  ],
   "tagFormat": "${version}",
   "plugins": [
     "@semantic-release/commit-analyzer",
@@ -8,7 +10,9 @@
       {
         "replacements": [
           {
-            "files": ["pyproject.toml"],
+            "files": [
+              "pyproject.toml"
+            ],
             "from": "version = \".*\"  # changed by semantic-release",
             "to": "version = \"${nextRelease.version}\"  # changed by semantic-release",
             "results": [
@@ -22,9 +26,11 @@
             "countMatches": true
           },
           {
-            "files": ["mosqlimate_assistant/__init__.py"],
-            "from": "        return \".*\"  # changed by semantic-release",
-            "to": "        return \"${nextRelease.version}\"  # changed by semantic-release",
+            "files": [
+              "mosqlimate_assistant/__init__.py"
+            ],
+            "from": "__version__ = \".*\"  # changed by semantic-release",
+            "to": "__version__ = \"${nextRelease.version}\"  # changed by semantic-release",
             "results": [
               {
                 "file": "mosqlimate_assistant/__init__.py",
@@ -49,7 +55,10 @@
     [
       "@semantic-release/github",
       {
-        "assets": ["dist/*.whl", "dist/*.tar.gz"]
+        "assets": [
+          "dist/*.whl",
+          "dist/*.tar.gz"
+        ]
       }
     ],
     [
