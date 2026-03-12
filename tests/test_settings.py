@@ -1,7 +1,6 @@
-import os
 from mosqlimate_assistant.settings import (
-    HTTP_CACHE_ENABLED,
     HTTP_CACHE_DIR,
+    HTTP_CACHE_ENABLED,
     HTTP_CACHE_TTL_SECONDS,
 )
 

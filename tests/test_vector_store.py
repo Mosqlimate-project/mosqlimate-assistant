@@ -1,4 +1,3 @@
-import numpy as np
 from mosqlimate_assistant.embeddings import BaseEmbeddingProvider
 from mosqlimate_assistant.models import VectorDocument
 from mosqlimate_assistant.vector_store import InMemoryVectorStore
