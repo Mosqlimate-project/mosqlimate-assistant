@@ -172,3 +172,5 @@ cython_debug/
 .pypirc
 
 prompt_logs.txt
+.http_cache
+.ruff_cache
