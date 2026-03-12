@@ -1,4 +1,4 @@
-__version__ = "2.0.0"
+__version__ = "2.0.0"  # changed by semantic-release
 
 from mosqlimate_assistant.agent_cards import AgentCard, BaseTool
 from mosqlimate_assistant.agents import AgentExecutor, AgentOrchestrator

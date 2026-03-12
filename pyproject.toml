@@ -1,6 +1,6 @@
 [project]
 name = "mosqlimate-assistant"
-version = "2.0.0"
+version = "2.0.0"  # changed by semantic-release
 description = "Mosqlimate AI Assistant"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
