@@ -1,36 +1,93 @@
-from importlib import metadata as importlib_metadata
-from typing import List
+__version__ = "2.0.0"
 
-from . import (
-    assistant,
-    docs_consumer,
-    func_tools,
-    main,
-    muni_codes,
-    prompts,
-    settings,
-    utils,
-    vector_db,
+from mosqlimate_assistant.agent_cards import AgentCard, BaseTool
+from mosqlimate_assistant.agents import AgentExecutor, AgentOrchestrator
+from mosqlimate_assistant.assistant import (
+    Assistant,
+    create_deepseek_assistant,
+    create_gemini_assistant,
+    create_google_genai_assistant,
+    create_nvidia_assistant,
+    create_ollama_assistant,
+    create_openai_assistant,
+)
+from mosqlimate_assistant.document_consumer import (
+    BaseDocumentConsumer,
+    CSVLinkConsumer,
+    DocumentManager,
+    FileDocumentConsumer,
+    URLDocumentConsumer,
+)
+from mosqlimate_assistant.embeddings import (
+    BaseEmbeddingProvider,
+    OllamaEmbeddingProvider,
+    OpenAIEmbeddingProvider,
+)
+from mosqlimate_assistant.main import (
+    assistant_pipeline,
+    build_mosqlimate_assistant,
+    docs_pipeline,
+)
+from mosqlimate_assistant.models import (
+    ChatMessage,
+    ProviderResponse,
+    ProviderType,
+    SourceDocument,
+    VectorDocument,
+    VectorSearchResult,
+)
+from mosqlimate_assistant.providers import (
+    BaseProvider,
+    DeepSeekProvider,
+    GeminiProvider,
+    GoogleGenAIProvider,
+    NvidiaProvider,
+    OllamaProvider,
+    OpenAIProvider,
+    ProviderFactory,
+)
+from mosqlimate_assistant.vector_store import (
+    BaseVectorStore,
+    InMemoryVectorStore,
 )
 
-
-def get_version() -> str:
-    try:
-        return importlib_metadata.version(__name__)
-    except importlib_metadata.PackageNotFoundError:  # pragma: no cover
-        return "1.7.2"  # changed by semantic-release
-
-
-version: str = get_version()
-__version__: str = version
-__all__: List[str] = [
-    "assistant",
-    "docs_consumer",
-    "func_tools",
-    "vector_db",
-    "muni_codes",
-    "settings",
-    "utils",
-    "prompts",
-    "main",
-]  # noqa: WPS410 (the only __variable__ we use)
+__all__ = [
+    "ChatMessage",
+    "ProviderResponse",
+    "ProviderType",
+    "SourceDocument",
+    "VectorDocument",
+    "VectorSearchResult",
+    "BaseProvider",
+    "OpenAIProvider",
+    "DeepSeekProvider",
+    "GeminiProvider",
+    "GoogleGenAIProvider",
+    "NvidiaProvider",
+    "OllamaProvider",
+    "ProviderFactory",
+    "BaseEmbeddingProvider",
+    "OllamaEmbeddingProvider",
+    "OpenAIEmbeddingProvider",
+    "BaseVectorStore",
+    "InMemoryVectorStore",
+    "BaseDocumentConsumer",
+    "URLDocumentConsumer",
+    "CSVLinkConsumer",
+    "FileDocumentConsumer",
+    "DocumentManager",
+    "BaseTool",
+    "AgentCard",
+    "AgentExecutor",
+    "AgentOrchestrator",
+    "Assistant",
+    "create_ollama_assistant",
+    "create_openai_assistant",
+    "create_gemini_assistant",
+    "create_google_genai_assistant",
+    "create_nvidia_assistant",
+    "create_deepseek_assistant",
+    "build_mosqlimate_assistant",
+    "docs_pipeline",
+    "assistant_pipeline",
+]
