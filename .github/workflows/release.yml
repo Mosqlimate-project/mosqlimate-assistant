@@ -6,9 +6,9 @@ permissions:
 on:
   workflow_dispatch:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build:
@@ -33,6 +33,15 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 22.14.0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build Python package
+        run: |
+          pip install build
+          python -m build
 
       - name: Validate PR commits with commitlint
         if: github.event_name == 'pull_request'
