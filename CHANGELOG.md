@@ -1,6 +1,55 @@
 Release Notes
 ---
 
+# [1.8.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.7.2...1.8.0) (2026-03-12)
+
+
+### Bug Fixes
+
+* **assistant:** improve error management and correct type hints ([2cbba2d](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/2cbba2dae62d5b5b0c788f96396d9ce8a07a2a55))
+* **document_consumer:** enhance content processing and error handling ([0920ee6](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/0920ee62aa9b2e113df2759e5914734bd21791fb))
+* **examples:** remove decrepated example notebooks ([f4be735](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/f4be735957ff974694a52d6d0146302396bedede))
+* **modules:** update dependencies and package structure for v2.0.0 release ([04c567e](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/04c567eccffe30793cbec96a76d931265b017b1d))
+* **prompts:** update coder agent prompt to improve usability ([e235d20](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/e235d206108939a8f0ca123c90cd209e4059b18a))
+* **release:** adjust formatting and add Python package build step ([34536d7](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/34536d760f9517c52896b1073a6cacab4aeddaa1))
+* **semantic_release:** fixing problens ([ba442ee](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/ba442eeb0c46af6680316c4d04cb86725c16b6be))
+* **semantic_release:** fixing problens ([0b86b90](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/0b86b90b77a955d680debde6e6ee40880aca1617))
+* **settings:** streamline settings and remove unused variables ([6675081](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/66750814f726177d2e11ea041ea9aad86e43facf))
+* **tests:** reorganize imports and linting in test files ([314cb80](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/314cb806c96a7e7488af5569174d3dc136b99edf))
+* **vector_store:** remove obsolete vector store file ([f03fc0c](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/f03fc0cb8a51edf9c15ad323311ab01a2eb802b7))
+* **workflow:** update Node.js version to 22.14.0 ([ed4e088](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/ed4e08880fd064ac20acdda0abf7991da1edc903))
+
+
+### Features
+
+* **.gitignore:** add http_cache and ruff_cache to ignore list ([533ca5c](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/533ca5c499b9a86874e1487bcbea8e0daaa947d1))
+* **agent_cards:** add agent cards to future code refactor ([e10d1be](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/e10d1be3c4475490072028732ef670cbb14116fe))
+* **agent_cards:** refactor AgentCard class to improve prompt handling ([cad20bc](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/cad20bc34639e5a41abb2787310bbd751280a498))
+* **agent:** add fallback mechanism and improve schema methods ([2c62ac7](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/2c62ac79fe258d69f9da3bf4a571e38a98a3e059))
+* **agent:** add support for custom named groups search ([eb60d52](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/eb60d52e8298bfbc99506c139541c9ea1f175c54))
+* **agents:** implement classes for agent management and execution ([2ca3541](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/2ca35412f6c19e9335d25b8511fecd4a11f32d52))
+* **assistant:** refactor Assistant and add support for multiple assistant ([3ccaf2f](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/3ccaf2f41ea608d7445c7675fb4e3df6816c27a8))
+* **cache:** implement shared cache session for HTTP requests ([8400d9e](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/8400d9e30fc96ecbcc580084e595983b475f0c72))
+* **code_refs:** add csv with code references ([a532f9b](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/a532f9b60ee0b070a53b5b2ebba3763f13ef6514))
+* **coder:** add funcs for mosqlient code docs ([a6c578a](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/a6c578a1b0409dfb2116fd7b96627bb03979c1d2))
+* **coder:** add functions to build coder agent prompts ([b671fb8](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/b671fb83b841a05431ee81f0f1731b732a40b47f))
+* **coder:** integrate coder agent functionality to assistant ([fa42530](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/fa4253036adbefe1171d95f46cad1bb38d254987))
+* **consumer:** implement document fetching consumers ([2b664d5](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/2b664d53a749aa6b46f7408fda057c55f1d4844c))
+* **data:** add new CSV files for code, docs, and IMDC ([4fc5d20](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/4fc5d200cae5411fe503f32a1a5585b421f40f5a))
+* **embeddings:** implement base and provider classes for embedding queries ([efc8024](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/efc80249e6e82bf3ae6050c88e69684667d7537e))
+* **models:** add data models for providers and document ([3c823a4](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/3c823a4320dcbe280ce3230bf983b26533d5c47e))
+* **prompts:** add new prompts for docs, coder, and IMDC agent ([55d050e](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/55d050ef2b8464dbb660dff574b2387e89587206))
+* **providers:** implement multiple provider classes for llm ([82b9040](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/82b9040c55d46763da690c0b4f54be8d6fe422db))
+* **providers:** update provider types and refactor provider classes ([18855ae](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/18855aed3aef417c8d1788a5b2df32dd25b7696d))
+* **tests:** add tests for models.py ([5fbb255](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/5fbb255a35cc553b544453447ec9ba1aafb9c824))
+* **tests:** add tests for prompt generation functions ([13a2478](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/13a24784c3887a505647d7c7149b453df5e125b4))
+* **tests:** add tests for vector store ([406ce1f](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/406ce1f154771c589bd00d2f433f78813a8d5f3f))
+* **tests:** add unit tests for agent cards and tools ([29fdb8f](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/29fdb8f73e3cc3a90d0917b9d5a3c20267095dff))
+* **tests:** add unit tests for embeddings ([1f87ed7](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/1f87ed7232dfc1ea755c5e9d08e1ad024415d924))
+* **tests:** add unit tests for settings ([002d9c7](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/002d9c78152bb98dfb7a16d8c8cdd65d0f855677))
+* **vector_store:** implement group search for custom groups ([bf370e0](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/bf370e084b8468639c6bbcd0002dac3b6c78ce77))
+* **vector_store:** simplify embedding logic and clean up comments ([67b2ee2](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/67b2ee263d9700f451bfa1b1c4f2d4782d6503f1))
+
 ## [1.7.2](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.7.1...1.7.2) (2025-09-24)
 
 
