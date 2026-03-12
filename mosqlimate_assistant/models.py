@@ -9,9 +9,9 @@ class ProviderType(str, Enum):
     GEMINI = "gemini"
     OLLAMA = "ollama"
     GOOGLE_GENAI = "google_genai"
-    GROQ = "groq"
+    NVIDIA = "nvidia"
     DEEPSEEK = "deepseek"
-    GITHUB_COPILOT = "github_copilot"
+    OLLAMA_CLOUD = "ollama_cloud"
 
 
 class ChatMessage(BaseModel):

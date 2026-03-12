@@ -48,13 +48,10 @@ class BaseProvider(ABC):
         return False
 
 
-class OpenAIProvider(BaseProvider):
+class _OpenAICompatibleMixin(BaseProvider):
 
-    def __init__(self, api_key: str, base_url: str, model: str):
-        from openai import OpenAI
-
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
-        self.model = model
+    client: Any
+    model: str
 
     def chat_completion(
         self,
@@ -86,7 +83,7 @@ class OpenAIProvider(BaseProvider):
         return True
 
 
-class GeminiProvider(BaseProvider):
+class OpenAIProvider(_OpenAICompatibleMixin):
 
     def __init__(self, api_key: str, base_url: str, model: str):
         from openai import OpenAI
@@ -94,44 +91,25 @@ class GeminiProvider(BaseProvider):
         self.client = OpenAI(api_key=api_key, base_url=base_url)
         self.model = model
 
-    def chat_completion(
+
+class GeminiProvider(_OpenAICompatibleMixin):
+
+    def __init__(
         self,
-        messages: List[ChatMessage],
-        tools: Optional[List[Dict[str, Any]]] = None,
-        **kwargs: Any,
-    ) -> ProviderResponse:
-        args: Dict[str, Any] = {
-            "model": self.model,
-            "messages": _messages_to_dicts(messages),
-            **kwargs,
-        }
+        api_key: str,
+        model: str,
+        base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/",
+    ):
+        from openai import OpenAI
 
-        wrapped = _wrap_tools_openai(tools)
-        if wrapped:
-            args["tools"] = wrapped
-
-        response = self.client.chat.completions.create(**args)
-        msg = response.choices[0].message
-
-        return ProviderResponse(
-            content=msg.content or "",
-            raw_response=response,
-            tool_calls=_extract_tool_calls_openai(msg),
-        )
-
-    def supports_tools(self) -> bool:
-        return True
-
-
-class OllamaProvider(BaseProvider):
-
-    def __init__(self, model: str, base_url: Optional[str] = None):
-        import ollama
-
+        self.client = OpenAI(api_key=api_key, base_url=base_url)
         self.model = model
-        self.client = (
-            ollama.Client(host=base_url) if base_url else ollama.Client()
-        )
+
+
+class _OllamaCompatibleMixin(BaseProvider):
+
+    client: Any
+    model: str
 
     def chat_completion(
         self,
@@ -148,6 +126,31 @@ class OllamaProvider(BaseProvider):
             content=response["message"]["content"],
             raw_response=response,
             tool_calls=None,
+        )
+
+
+class OllamaProvider(_OllamaCompatibleMixin):
+
+    def __init__(self, model: str, base_url: Optional[str] = None):
+        import ollama
+
+        self.model = model
+        self.client = (
+            ollama.Client(host=base_url) if base_url else ollama.Client()
+        )
+
+
+class OllamaCloudProvider(_OllamaCompatibleMixin):
+
+    def __init__(
+        self, api_key: str, model: str, host: str = "https://ollama.com"
+    ):
+        import ollama
+
+        self.model = model
+        self.client = ollama.Client(
+            host=host,
+            headers={"Authorization": f"Bearer {api_key}"},
         )
 
 
@@ -168,7 +171,7 @@ class GoogleGenAIProvider(BaseProvider):
         from google.genai import types
 
         system_instruction: Optional[str] = None
-        contents: list[types.Content] = []
+        contents: List[types.Content] = []
 
         for msg in messages:
             if msg.role == "system":
@@ -182,7 +185,7 @@ class GoogleGenAIProvider(BaseProvider):
                     )
                 )
 
-        genai_tools: Optional[list[types.Tool]] = None
+        genai_tools: Optional[List[types.Tool]] = None
         if tools:
             declarations = [types.FunctionDeclaration(**t) for t in tools]
             genai_tools = [types.Tool(function_declarations=declarations)]
@@ -235,45 +238,23 @@ class GoogleGenAIProvider(BaseProvider):
         return True
 
 
-class GroqProvider(BaseProvider):
+class NvidiaProvider(_OpenAICompatibleMixin):
 
-    def __init__(self, api_key: str, model: str):
-        from groq import Groq
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "deepseek-ai/deepseek-v3.2",
+    ):
+        from openai import OpenAI
 
-        self.client = Groq(api_key=api_key)
+        self.client = OpenAI(
+            api_key=api_key,
+            base_url="https://integrate.api.nvidia.com/v1",
+        )
         self.model = model
 
-    def chat_completion(
-        self,
-        messages: List[ChatMessage],
-        tools: Optional[List[Dict[str, Any]]] = None,
-        **kwargs: Any,
-    ) -> ProviderResponse:
-        args: Dict[str, Any] = {
-            "model": self.model,
-            "messages": _messages_to_dicts(messages),
-            **kwargs,
-        }
 
-        wrapped = _wrap_tools_openai(tools)
-        if wrapped:
-            args["tools"] = wrapped
-            args["tool_choice"] = "auto"
-
-        response = self.client.chat.completions.create(**args)
-        msg = response.choices[0].message
-
-        return ProviderResponse(
-            content=msg.content or "",
-            raw_response=response,
-            tool_calls=_extract_tool_calls_openai(msg),
-        )
-
-    def supports_tools(self) -> bool:
-        return True
-
-
-class DeepSeekProvider(BaseProvider):
+class DeepSeekProvider(_OpenAICompatibleMixin):
 
     def __init__(
         self,
@@ -288,80 +269,6 @@ class DeepSeekProvider(BaseProvider):
         )
         self.model = model
 
-    def chat_completion(
-        self,
-        messages: List[ChatMessage],
-        tools: Optional[List[Dict[str, Any]]] = None,
-        **kwargs: Any,
-    ) -> ProviderResponse:
-        args: Dict[str, Any] = {
-            "model": self.model,
-            "messages": _messages_to_dicts(messages),
-            **kwargs,
-        }
-
-        wrapped = _wrap_tools_openai(tools)
-        if wrapped:
-            args["tools"] = wrapped
-            args["tool_choice"] = "auto"
-
-        response = self.client.chat.completions.create(**args)
-        msg = response.choices[0].message
-
-        return ProviderResponse(
-            content=msg.content or "",
-            raw_response=response,
-            tool_calls=_extract_tool_calls_openai(msg),
-        )
-
-    def supports_tools(self) -> bool:
-        return True
-
-
-class GitHubCopilotProvider(BaseProvider):
-
-    def __init__(
-        self,
-        api_key: str,
-        model: str = "gpt-4o",
-    ):
-        from openai import OpenAI
-
-        self.client = OpenAI(
-            api_key=api_key,
-            base_url="https://models.inference.ai.azure.com",
-        )
-        self.model = model
-
-    def chat_completion(
-        self,
-        messages: List[ChatMessage],
-        tools: Optional[List[Dict[str, Any]]] = None,
-        **kwargs: Any,
-    ) -> ProviderResponse:
-        args: Dict[str, Any] = {
-            "model": self.model,
-            "messages": _messages_to_dicts(messages),
-            **kwargs,
-        }
-
-        wrapped = _wrap_tools_openai(tools)
-        if wrapped:
-            args["tools"] = wrapped
-            args["tool_choice"] = "auto"
-
-        response = self.client.chat.completions.create(**args)
-        msg = response.choices[0].message
-
-        return ProviderResponse(
-            content=msg.content or "",
-            raw_response=response,
-            tool_calls=_extract_tool_calls_openai(msg),
-        )
-
-    def supports_tools(self) -> bool:
-        return True
-
 
 class ProviderFactory:
 
@@ -374,9 +281,9 @@ class ProviderFactory:
             ProviderType.GEMINI: GeminiProvider,
             ProviderType.OLLAMA: OllamaProvider,
             ProviderType.GOOGLE_GENAI: GoogleGenAIProvider,
-            ProviderType.GROQ: GroqProvider,
+            ProviderType.NVIDIA: NvidiaProvider,
             ProviderType.DEEPSEEK: DeepSeekProvider,
-            ProviderType.GITHUB_COPILOT: GitHubCopilotProvider,
+            ProviderType.OLLAMA_CLOUD: OllamaCloudProvider,
         }
 
         cls = providers.get(provider_type)
