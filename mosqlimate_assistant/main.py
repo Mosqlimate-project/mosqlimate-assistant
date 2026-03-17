@@ -18,6 +18,7 @@ from mosqlimate_assistant.vector_store import InMemoryVectorStore
 
 _DATA_DIR = Path(__file__).parent / "data"
 DOCS_CSV = str(_DATA_DIR / "docs_references.csv")
+DOCS_EN_CSV = str(_DATA_DIR / "docs_en_references.csv")
 CODE_CSV = str(_DATA_DIR / "code_references.csv")
 IMDC_CSV = str(_DATA_DIR / "imdc_references.csv")
 
@@ -109,6 +110,7 @@ def build_mosqlimate_assistant(
     imdc_named_groups: Optional[List[List[str]]] = None,
     group_key: str = "id",
     id_key: str = "name",
+    lang: Literal["en", "pt"] = "pt",
     **kwargs,
 ) -> Tuple[
     Assistant, InMemoryVectorStore, InMemoryVectorStore, InMemoryVectorStore
@@ -116,6 +118,8 @@ def build_mosqlimate_assistant(
     _docs_groups = docs_named_groups or DOCS_GROUPS
     _code_groups = code_named_groups or CODE_GROUPS
     _imdc_groups = imdc_named_groups or IMDC_GROUPS
+
+    docs_csv = DOCS_EN_CSV if lang == "en" else DOCS_CSV
 
     embedding_provider = OllamaEmbeddingProvider(
         model=embedding_model,
@@ -127,7 +131,7 @@ def build_mosqlimate_assistant(
     imdc_store = InMemoryVectorStore(embedding_provider)
 
     docs_manager = DocumentManager(docs_store)
-    docs_manager.add_consumer(CSVLinkConsumer(DOCS_CSV, "markdown_link"))
+    docs_manager.add_consumer(CSVLinkConsumer(docs_csv, "markdown_link"))
     docs_manager.fetch_and_index_all(collections=["docs"], id_key=id_key)
 
     code_manager = DocumentManager(code_store)
@@ -148,9 +152,14 @@ def build_mosqlimate_assistant(
         embedding_provider=embedding_provider,
     )
 
+    code_desc = (
+        "Specialist in generating mosqlient code examples"
+        if lang == "en"
+        else "Especialista em gerar exemplos de código do mosqlient"
+    )
     code_card = AgentCard(
         name="code_agent",
-        description="Especialista em gerar exemplos de código do mosqlient",
+        description=code_desc,
         search_mode=code_search_mode if _code_groups else "unitary",
         named_groups=_code_groups,
         group_key=group_key,
@@ -158,12 +167,17 @@ def build_mosqlimate_assistant(
         fallback_docs="code",
         fallback_threshold=CODE_FALLBACK_THRESHOLD,
     )
-    code_card.set_prompt_function(get_coder_agent_prompt)
+    code_card.set_prompt_function(lambda: get_coder_agent_prompt(lang=lang))
     asst.register_agent("code_agent", code_card, vector_store=code_store)
 
+    imdc_desc = (
+        "Specialist in the Infodengue-Mosqlimate Dengue Challenge (IMDC/Dengue Sprint)"
+        if lang == "en"
+        else "Especialista no Infodengue-Mosqlimate Dengue Challenge (IMDC/Sprint de Dengue)"
+    )
     imdc_card = AgentCard(
         name="imdc_agent",
-        description="Especialista no Infodengue-Mosqlimate Dengue Challenge (IMDC/Sprint de Dengue)",
+        description=imdc_desc,
         search_mode=imdc_search_mode if _imdc_groups else "unitary",
         named_groups=_imdc_groups,
         group_key=group_key,
@@ -171,12 +185,17 @@ def build_mosqlimate_assistant(
         fallback_docs="imdc",
         fallback_threshold=IMDC_FALLBACK_THRESHOLD,
     )
-    imdc_card.set_prompt_function(get_imdc_agent_prompt)
+    imdc_card.set_prompt_function(lambda: get_imdc_agent_prompt(lang=lang))
     asst.register_agent("imdc_agent", imdc_card, vector_store=imdc_store)
 
+    docs_desc = (
+        "Specialist in Mosqlimate platform documentation"
+        if lang == "en"
+        else "Especialista em documentação da plataforma Mosqlimate"
+    )
     docs_card = AgentCard(
         name="docs_agent",
-        description="Especialista em documentação da plataforma Mosqlimate",
+        description=docs_desc,
         search_mode=docs_search_mode,
         named_groups=_docs_groups if docs_search_mode == "group" else [],
         group_key=group_key,
@@ -185,7 +204,7 @@ def build_mosqlimate_assistant(
         fallback_threshold=DOCS_FALLBACK_THRESHOLD,
         tools=[code_card.agent_to_tool, imdc_card.agent_to_tool],
     )
-    docs_card.set_prompt_function(get_base_docs_prompt)
+    docs_card.set_prompt_function(lambda: get_base_docs_prompt(lang=lang))
     asst.register_agent(
         "docs_agent", docs_card, vector_store=docs_store, is_default=True
     )
@@ -206,6 +225,7 @@ def docs_pipeline(
     embedding_model: str = DEFAULT_EMBEDDING_MODEL,
     ollama_base_url: Optional[str] = None,
     message_history: Optional[List[ChatMessage]] = None,
+    lang: Literal["en", "pt"] = "pt",
     **kwargs,
 ) -> str:
     asst, _, _, _ = build_mosqlimate_assistant(
@@ -219,6 +239,7 @@ def docs_pipeline(
         imdc_named_groups=imdc_named_groups,
         group_key=group_key,
         id_key=id_key,
+        lang=lang,
         **kwargs,
     )
     result = asst.query(
@@ -231,11 +252,13 @@ def assistant_pipeline(
     question: str,
     google_api_key: str,
     message_history: Optional[List[ChatMessage]] = None,
+    lang: Literal["en", "pt"] = "pt",
     **kwargs,
 ) -> str:
     return docs_pipeline(
         question=question,
         google_api_key=google_api_key,
         message_history=message_history,
+        lang=lang,
         **kwargs,
     )
