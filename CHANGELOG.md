@@ -1,6 +1,22 @@
 Release Notes
 ---
 
+# [1.9.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.8.0...1.9.0) (2026-03-17)
+
+
+### Bug Fixes
+
+* **dependencies:** update uv lock file ([595de6d](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/595de6d4521d19e7b5b04570617c73c99233eb98))
+
+
+### Features
+
+* **agents:** add support for English language in AgentExecutor ([22bde2c](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/22bde2c9a2490c98e38dd0e80c556284607b4c9c))
+* **assistant:** add language support for English in Assistant ([75e8061](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/75e8061345823210700a4187e6d4ab9469e4d61f))
+* **docs:** add CSV file with english docs references ([0ac27dd](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/0ac27dd5a213cc4c6ed5a8edcecc16b1c839beaf))
+* **main:** add English language support for pipelines and assistant ([d891422](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/d891422c6cb0303abe5a05ef747bdf13cc2c9729))
+* **prompts:** add English prompts for docs, code and IMDC agents ([3f9e03d](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/3f9e03d01fb837fe02c26b08072e8204cbe0d159))
+
 # [1.8.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.7.2...1.8.0) (2026-03-12)
 
 
