@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Literal, Optional
 
 from mosqlimate_assistant.agent_cards import AgentCard
 from mosqlimate_assistant.agents import AgentExecutor, AgentOrchestrator
@@ -25,6 +25,7 @@ class Assistant:
         provider_config: Dict[str, Any],
         embedding_provider: Optional[BaseEmbeddingProvider] = None,
         vector_store: Optional[BaseVectorStore] = None,
+        lang: Literal["en", "pt"] = "pt",
     ):
         self.provider: BaseProvider = ProviderFactory.create(
             provider_type, provider_config
@@ -32,6 +33,7 @@ class Assistant:
 
         self.embedding_provider = embedding_provider
         self.vector_store = vector_store
+        self.lang = lang
 
         if embedding_provider and not vector_store:
             self.vector_store = InMemoryVectorStore(embedding_provider)
@@ -42,16 +44,24 @@ class Assistant:
 
         self.orchestrator = AgentOrchestrator()
 
+        docs_desc = (
+            "Specialist agent in Mosqlimate documentation"
+            if lang == "en"
+            else "Agente especialista em documentação Mosqlimate"
+        )
         docs_agent_card = AgentCard(
             name="docs_agent",
-            description="Agente especialista em documentação Mosqlimate",
+            description=docs_desc,
         )
-        docs_agent_card.set_prompt_function(get_base_docs_prompt)
+        docs_agent_card.set_prompt_function(
+            lambda **kw: get_base_docs_prompt(lang=lang, **kw)
+        )
 
         docs_agent = AgentExecutor(
             agent_card=docs_agent_card,
             provider=self.provider,
             vector_store=self.vector_store,
+            lang=self.lang,
         )
 
         self.orchestrator.register_agent("docs", docs_agent, is_default=True)
@@ -68,6 +78,7 @@ class Assistant:
             agent_card=agent_card,
             provider=provider or self.provider,
             vector_store=vector_store or self.vector_store,
+            lang=self.lang,
         )
         self.orchestrator.register_agent(name, agent, is_default=is_default)
 
@@ -133,11 +144,13 @@ def create_ollama_assistant(
     model: str = "llama3.2:latest",
     embedding_model: str = "mxbai-embed-large:latest",
     base_url: Optional[str] = None,
+    lang: Literal["en", "pt"] = "pt",
 ) -> Assistant:
     return Assistant(
         provider_type=ProviderType.OLLAMA,
         provider_config={"model": model, "base_url": base_url},
         embedding_provider=OllamaEmbeddingProvider(embedding_model, base_url),
+        lang=lang,
     )
 
 
@@ -146,6 +159,7 @@ def create_openai_assistant(
     model: str = "gpt-4o-mini",
     embedding_model: str = "mxbai-embed-large:latest",
     base_url: str = "https://api.openai.com/v1",
+    lang: Literal["en", "pt"] = "pt",
 ) -> Assistant:
     return Assistant(
         provider_type=ProviderType.OPENAI,
@@ -155,6 +169,7 @@ def create_openai_assistant(
             "base_url": base_url,
         },
         embedding_provider=OpenAIEmbeddingProvider(api_key, embedding_model),
+        lang=lang,
     )
 
 
@@ -163,6 +178,7 @@ def create_gemini_assistant(
     model: str = "gemini-2.5-flash",
     embedding_model: str = "mxbai-embed-large:latest",
     base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/",
+    lang: Literal["en", "pt"] = "pt",
 ) -> Assistant:
     return Assistant(
         provider_type=ProviderType.GEMINI,
@@ -172,6 +188,7 @@ def create_gemini_assistant(
             "base_url": base_url,
         },
         embedding_provider=OpenAIEmbeddingProvider(api_key, embedding_model),
+        lang=lang,
     )
 
 
@@ -179,11 +196,13 @@ def create_google_genai_assistant(
     api_key: str,
     model: str = "gemini-2.5-flash",
     embedding_model: str = "mxbai-embed-large:latest",
+    lang: Literal["en", "pt"] = "pt",
 ) -> Assistant:
     return Assistant(
         provider_type=ProviderType.GOOGLE_GENAI,
         provider_config={"api_key": api_key, "model": model},
         embedding_provider=OpenAIEmbeddingProvider(api_key, embedding_model),
+        lang=lang,
     )
 
 
@@ -191,11 +210,13 @@ def create_nvidia_assistant(
     api_key: str,
     model: str = "deepseek-ai/deepseek-v3.2",
     embedding_provider: Optional[BaseEmbeddingProvider] = None,
+    lang: Literal["en", "pt"] = "pt",
 ) -> Assistant:
     return Assistant(
         provider_type=ProviderType.NVIDIA,
         provider_config={"api_key": api_key, "model": model},
         embedding_provider=embedding_provider,
+        lang=lang,
     )
 
 
@@ -203,9 +224,11 @@ def create_deepseek_assistant(
     api_key: str,
     model: str = "deepseek-chat",
     embedding_provider: Optional[BaseEmbeddingProvider] = None,
+    lang: Literal["en", "pt"] = "pt",
 ) -> Assistant:
     return Assistant(
         provider_type=ProviderType.DEEPSEEK,
         provider_config={"api_key": api_key, "model": model},
         embedding_provider=embedding_provider,
+        lang=lang,
     )
