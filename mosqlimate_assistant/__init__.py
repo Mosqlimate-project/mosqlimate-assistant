@@ -1,3 +1,5 @@
+__version__ = "1.9.0"  # changed by semantic-release
+
 """mosqlimate-assistant — AI-powered RAG assistant for the Mosqlimate platform.
 
 This package provides a multi-agent, retrieval-augmented generation (RAG)
@@ -18,8 +20,6 @@ Quick start::
         google_api_key="YOUR_KEY",
     )
 """
-
-__version__ = "1.8.0"  # changed by semantic-release
 
 from mosqlimate_assistant.agent_cards import AgentCard, BaseTool
 from mosqlimate_assistant.agents import AgentExecutor, AgentOrchestrator
