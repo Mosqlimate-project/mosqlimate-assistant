@@ -1,3 +1,24 @@
+"""mosqlimate-assistant — AI-powered RAG assistant for the Mosqlimate platform.
+
+This package provides a multi-agent, retrieval-augmented generation (RAG)
+system to help users interact with the Mosqlimate platform. It supports
+multiple LLM providers (Gemini, OpenAI, Ollama, DeepSeek, NVIDIA),
+bilingual prompts (pt/en), and three specialized agents:
+
+- **docs_agent**: expert on Mosqlimate platform documentation.
+- **code_agent**: generates ``mosqlient`` code examples.
+- **imdc_agent**: specialist on the Infodengue-Mosqlimate Dengue Challenge.
+
+Quick start::
+
+    from mosqlimate_assistant.main import assistant_pipeline
+
+    answer = assistant_pipeline(
+        question="O que é o Mosqlimate?",
+        google_api_key="YOUR_KEY",
+    )
+"""
+
 __version__ = "1.8.0"  # changed by semantic-release
 
 from mosqlimate_assistant.agent_cards import AgentCard, BaseTool
