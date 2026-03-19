@@ -1,3 +1,23 @@
+"""Document ingestion and content processing pipeline.
+
+Handles fetching documents from external sources (URLs, CSV link lists,
+and local files), processing their content (Jupyter notebooks, mkdocs
+includes/mkdocstrings references), and indexing them into a vector store
+via the ``DocumentManager``.
+
+Consumer hierarchy:
+    BaseDocumentConsumer → URLDocumentConsumer
+                         → CSVLinkConsumer
+                         → FileDocumentConsumer
+
+The ``DocumentManager`` orchestrates consumers, generates deterministic
+document IDs, enriches content with metadata, and delegates storage to
+the configured ``BaseVectorStore``.
+
+HTTP responses are cached using ``requests-cache`` (SQLite backend)
+with settings from ``mosqlimate_assistant.settings``.
+"""
+
 import hashlib
 import json
 import logging
@@ -28,6 +48,12 @@ _cached_session: Optional[
 def get_cached_session() -> (
     Union[requests.Session, requests_cache.CachedSession]
 ):
+    """Retrieve or configure a cached HTTP session.
+
+    Returns:
+        Union[requests.Session, requests_cache.CachedSession]: Configured HTTP session.
+
+    """
     global _cached_session
 
     if _cached_session is None:
@@ -76,7 +102,17 @@ def _resolve_includes(
     base_url: str,
     session: Union[requests.Session, requests_cache.CachedSession],
 ) -> str:
-    """Resolve referências --8<-- 'file' do mkdocs."""
+    """Resolve mkdocs --8<-- 'file' inclusions.
+
+    Args:
+        content (str): Raw document content.
+        base_url (str): Base URL to fetch the included files from.
+        session (Union[requests.Session, requests_cache.CachedSession]): HTTP session to use.
+
+    Returns:
+        str: Content with inclusions resolved.
+
+    """
     for match in re.finditer(r'--8<-- "([^"]+)"', content):
         include_path = match.group(1)
         try:
@@ -93,7 +129,17 @@ def _resolve_mkdocstrings(
     base_url: str,
     session: Union[requests.Session, requests_cache.CachedSession],
 ) -> str:
-    """Resolve referências ::: module.path do mkdocstrings."""
+    """Resolve mkdocstrings ::: module.path references.
+
+    Args:
+        content (str): Raw document content.
+        base_url (str): Base URL to fetch the module files from.
+        session (Union[requests.Session, requests_cache.CachedSession]): HTTP session to use.
+
+    Returns:
+        str: Content with module references resolved.
+
+    """
     pattern = r"::: ([\w._]+)(?:\n[ \t]+.*)*"
     for match in re.finditer(pattern, content):
         module_path = match.group(1)
@@ -112,7 +158,15 @@ def _resolve_mkdocstrings(
 
 
 def _get_base_url(url: str) -> str:
-    """Extrai base URL do repo GitHub a partir da URL completa."""
+    """Extract the base URL of a GitHub repository from its full URL.
+
+    Args:
+        url (str): Full GitHub raw content URL.
+
+    Returns:
+        str: The base URL pointing to the repository root.
+
+    """
     parts = url.split("/")
     # https://raw.githubusercontent.com/ORG/REPO/BRANCH/...
     if len(parts) >= 7 and "githubusercontent.com" in parts[2]:
@@ -125,7 +179,17 @@ def _process_content(
     url: str,
     session: Union[requests.Session, requests_cache.CachedSession],
 ) -> str:
-    """Processa conteúdo bruto de acordo com o tipo de arquivo."""
+    """Process raw content according to its file type.
+
+    Args:
+        raw_content (str): Raw file content fetched from the source.
+        url (str): URL of the original file.
+        session (Union[requests.Session, requests_cache.CachedSession]): HTTP session to use for further resolving.
+
+    Returns:
+        str: Processed text content.
+
+    """
     if url.endswith(".ipynb"):
         return _process_notebook(raw_content)
 
@@ -169,21 +233,48 @@ def _fetch_url(
 
 
 class BaseDocumentConsumer(ABC):
+    """Abstract base class for document consumers."""
 
     @abstractmethod
     def fetch_documents(self) -> List[SourceDocument]:
+        """Fetch and return a list of SourceDocuments from the underlying source.
+
+        Returns:
+            List[SourceDocument]: A list of fetched documents.
+
+        """
         pass
 
 
 class URLDocumentConsumer(BaseDocumentConsumer):
+    """Fetches documents from a predefined list of HTTP URLs.
+
+    Attributes:
+        urls (List[str]): List of target URLs.
+        session (Optional[requests.Session]): Optional HTTP session.
+
+    """
 
     def __init__(
         self, urls: List[str], cache_session: Optional[requests.Session] = None
     ):
+        """Initialize the URLDocumentConsumer.
+
+        Args:
+            urls (List[str]): URLs to fetch documents from.
+            cache_session (Optional[requests.Session], optional): Optional HTTP session. Defaults to None.
+
+        """
         self.urls = urls
         self.session = cache_session or get_cached_session()
 
     def fetch_documents(self) -> List[SourceDocument]:
+        """Fetch content from all configured URLs concurrently.
+
+        Returns:
+            List[SourceDocument]: Documents successfully retrieved and processed.
+
+        """
         docs: List[SourceDocument] = []
 
         with ThreadPoolExecutor(
@@ -202,6 +293,14 @@ class URLDocumentConsumer(BaseDocumentConsumer):
 
 
 class CSVLinkConsumer(BaseDocumentConsumer):
+    """Fetches documents using URLs provided in a CSV file.
+
+    Attributes:
+        csv_path (str): File path to the source CSV.
+        link_column (str): Name of the column containing the URLs to fetch.
+        session (Optional[requests.Session]): Optional HTTP session.
+
+    """
 
     def __init__(
         self,
@@ -209,11 +308,25 @@ class CSVLinkConsumer(BaseDocumentConsumer):
         link_column: str = "markdown_link",
         cache_session: Optional[requests.Session] = None,
     ):
+        """Initialize the CSVLinkConsumer.
+
+        Args:
+            csv_path (str): File path to the source CSV.
+            link_column (str, optional): Name of the column containing the URLs to fetch. Defaults to "markdown_link".
+            cache_session (Optional[requests.Session], optional): Optional HTTP session. Defaults to None.
+
+        """
         self.csv_path = csv_path
         self.link_column = link_column
         self.session = cache_session or get_cached_session()
 
     def fetch_documents(self) -> List[SourceDocument]:
+        """Read the CSV, extract metadata, and fetch documents concurrently.
+
+        Returns:
+            List[SourceDocument]: Documents successfully retrieved and processed.
+
+        """
         docs: List[SourceDocument] = []
         try:
             df = pd.read_csv(self.csv_path)
@@ -257,11 +370,29 @@ class CSVLinkConsumer(BaseDocumentConsumer):
 
 
 class FileDocumentConsumer(BaseDocumentConsumer):
+    """Reads documents directly from local filesystem paths.
+
+    Attributes:
+        file_paths (List[str]): List of absolute or relative local file paths.
+
+    """
 
     def __init__(self, file_paths: List[str]):
+        """Initialize the FileDocumentConsumer.
+
+        Args:
+            file_paths (List[str]): List of absolute or relative local file paths.
+
+        """
         self.file_paths = file_paths
 
     def fetch_documents(self) -> List[SourceDocument]:
+        """Read all local files and wrap their contents into SourceDocument instances.
+
+        Returns:
+            List[SourceDocument]: Documents read from the provided paths.
+
+        """
         docs = []
         for file_path in self.file_paths:
             try:
@@ -295,12 +426,31 @@ def _enrich_content(metadata: dict, content: str) -> str:
 
 
 class DocumentManager:
+    """Orchestrates document scraping, processing, and indexing.
+
+    Attributes:
+        vector_store (BaseVectorStore): The underlying vector database to populate.
+        consumers (List[BaseDocumentConsumer]): Subscribed document sources.
+
+    """
 
     def __init__(self, vector_store: BaseVectorStore):
+        """Initialize the DocumentManager.
+
+        Args:
+            vector_store (BaseVectorStore): The underlying vector database to populate.
+
+        """
         self.vector_store = vector_store
         self.consumers: List[BaseDocumentConsumer] = []
 
     def add_consumer(self, consumer: BaseDocumentConsumer) -> None:
+        """Register a new document consumer to the manager.
+
+        Args:
+            consumer (BaseDocumentConsumer): Consumer instance to attach.
+
+        """
         self.consumers.append(consumer)
 
     def fetch_and_index_all(
@@ -308,6 +458,13 @@ class DocumentManager:
         collections: Optional[List[str]] = None,
         id_key: Optional[str] = None,
     ) -> None:
+        """Fetch documents from all registered consumers and index them into the vector store.
+
+        Args:
+            collections (Optional[List[str]], optional): Collections to assign to the new documents. Defaults to None.
+            id_key (Optional[str], optional): Metadata key to use as the document ID. Defaults to None.
+
+        """
         all_docs: List[VectorDocument] = []
 
         with ThreadPoolExecutor(
@@ -353,6 +510,17 @@ class DocumentManager:
         k: int = 3,
         collections: Optional[List[str]] = None,
     ):
+        """Proxy a semantic similarity search to the underlying vector store.
+
+        Args:
+            query (str): The search query text.
+            k (int, optional): Number of top results to return. Defaults to 3.
+            collections (Optional[List[str]], optional): Collections to restrict the search to. Defaults to None.
+
+        Returns:
+            List[VectorSearchResult]: Documents matching the query.
+
+        """
         return self.vector_store.similarity_search(
             query, k=k, collections=collections
         )

@@ -1,3 +1,21 @@
+"""Agent execution and orchestration layer.
+
+Contains the runtime components that bring agent cards to life:
+
+- ``AgentExecutor`` binds an ``AgentCard`` to an LLM provider and an
+  optional vector store. It handles RAG document retrieval, prompt
+  construction, tool execution loops, and response generation.
+
+- ``AgentOrchestrator`` manages a registry of named agents and routes
+  user queries to the appropriate executor.
+
+The execution flow is:
+    1. Search relevant documents from the vector store (RAG).
+    2. Build a message list (system prompt → docs context → history → query).
+    3. Call the LLM provider, optionally iterating on tool calls.
+    4. Return the final response with metadata.
+"""
+
 import json
 from typing import Any, Dict, List, Literal, Optional
 
@@ -11,6 +29,20 @@ _INFO_METADATA_KEYS = ["name", "description", "title", "file_path"]
 
 
 class AgentExecutor:
+    """Binds an agent definition to execution resources.
+
+    This class handles the core logic of running an agent: retrieving documents,
+    building conversational prompts, querying the LLM provider, and handling
+    tool loop integrations.
+
+    Attributes:
+        agent_card (AgentCard): The data structure defining agent rules and tools.
+        provider (BaseProvider): The configured LLM provider wrapper class.
+        vector_store (Optional[BaseVectorStore]): The database to query context from.
+        tools (Dict[str, BaseTool]): A mapping of tool names to their instances.
+        lang (Literal["en", "pt"]): Language code for localized messages.
+
+    """
 
     def __init__(
         self,
@@ -20,6 +52,16 @@ class AgentExecutor:
         tools: Optional[List[BaseTool]] = None,
         lang: Literal["en", "pt"] = "pt",
     ):
+        """Initialize the agent executor.
+
+        Args:
+            agent_card (AgentCard): The agent's definition and strategy settings.
+            provider (BaseProvider): The LLM engine.
+            vector_store (Optional[BaseVectorStore], optional): Where to retrieve context. Defaults to None.
+            tools (Optional[List[BaseTool]], optional): Active tools assigned to this agent execution. Defaults to None.
+            lang (Literal["en", "pt"], optional): Agent response language default. Defaults to "pt".
+
+        """
         self.agent_card = agent_card
         self.provider = provider
         self.vector_store = vector_store
@@ -31,6 +73,16 @@ class AgentExecutor:
         results: List[VectorSearchResult],
         fallback_collection: Optional[str],
     ) -> List[VectorSearchResult]:
+        """Apply fallback retrieval if initial search fails to cross thresholds.
+
+        Args:
+            results (List[VectorSearchResult]): The original retrieved matches.
+            fallback_collection (Optional[str]): Target group or collection to pull as fallback.
+
+        Returns:
+            List[VectorSearchResult]: Original results, or an array of fallback hits with standardized low scores.
+
+        """
         if not self.vector_store or not fallback_collection:
             return results
         fallback_docs = self.vector_store.get_documents_by_collection(
@@ -44,6 +96,16 @@ class AgentExecutor:
         return results
 
     def search_relevant_docs(self, query: str, k: int = 3):
+        """Perform semantic search dynamically matching the agent's mode layout.
+
+        Args:
+            query (str): The search phrase.
+            k (int, optional): Max documents to retrieve. Defaults to 3.
+
+        Returns:
+            Optional[List[VectorSearchResult]]: Ordered hits or None.
+
+        """
         if not self.vector_store:
             return None
 
@@ -76,6 +138,15 @@ class AgentExecutor:
         return results
 
     def _format_docs_context(self, retrieved_docs: List[Any]) -> str:
+        """Stringify vector database entries.
+
+        Args:
+            retrieved_docs (List[Any]): Document match objects to parse.
+
+        Returns:
+            str: Pretty printed representation for prompt inclusion.
+
+        """
         en = self.lang == "en"
         doc_label = "Document" if en else "Documento"
         content_label = "Content" if en else "Conteúdo"
@@ -120,6 +191,18 @@ class AgentExecutor:
         message_history: Optional[List[ChatMessage]] = None,
         retrieved_docs: Optional[List[Any]] = None,
     ) -> List[ChatMessage]:
+        """Construct the full message stack to be forwarded into the active LLM context.
+
+        Args:
+            user_query (str): The initial prompt submitted by user targeting the tool.
+            system_prompt (Optional[str], optional): The overriding contextual role assignment strings. Defaults to None.
+            message_history (Optional[List[ChatMessage]], optional): Preceding back-and-forth turns list. Defaults to None.
+            retrieved_docs (Optional[List[Any]], optional): Knowledge base fragments text hits list. Defaults to None.
+
+        Returns:
+            List[ChatMessage]: Complimented messages payload properly ranked.
+
+        """
         messages = []
 
         # 1) System prompt: instruções do agente (prioridade máxima)
@@ -159,6 +242,19 @@ class AgentExecutor:
         return messages
 
     def execute_tool(self, tool_name: str, arguments: Dict[str, Any]) -> str:
+        """Call a local instance-bound capability.
+
+        Args:
+            tool_name (str): The unique string ID marking which function to apply.
+            arguments (Dict[str, Any]): The mapped parameter bindings structure array.
+
+        Returns:
+            str: The execution parsed results.
+
+        Raises:
+            ValueError: Under unknown tools target.
+
+        """
         if tool_name not in self.tools:
             raise ValueError(f"Ferramenta não encontrada: {tool_name}")
 
@@ -173,6 +269,19 @@ class AgentExecutor:
         use_rag: bool = True,
         max_tool_iterations: int = 5,
     ) -> Dict[str, Any]:
+        """Trigger an execution cycle taking over full turn progression parsing steps internally.
+
+        Args:
+            user_query (str): The main command from end human wrapper script.
+            system_prompt (Optional[str], optional): Override behavior string. Defaults to None.
+            message_history (Optional[List[ChatMessage]], optional): Passed history of the thread. Defaults to None.
+            use_rag (bool, optional): Allows activating index lookups search functions. Defaults to True.
+            max_tool_iterations (int, optional): Failsafe looping depth boundary. Defaults to 5.
+
+        Returns:
+            Dict[str, Any]: Packaged response content paired together alongside logging trace properties maps.
+
+        """
         if system_prompt is None:
             system_prompt = self.agent_card.get_prompt()
 
@@ -246,14 +355,30 @@ class AgentExecutor:
 
 
 class AgentOrchestrator:
+    """Handles the unified routing over varying AgentExecutors across pipeline systems.
+
+    Attributes:
+        agents (Dict[str, AgentExecutor]): Directory store mapping string names against configured nodes.
+        default_agent (Optional[str]): Standard fallback name token ID identifier.
+
+    """
 
     def __init__(self):
+        """Initialize empty routing registry structures inside the orchestrator frame."""
         self.agents: Dict[str, AgentExecutor] = {}
         self.default_agent: Optional[str] = None
 
     def register_agent(
         self, name: str, agent: AgentExecutor, is_default: bool = False
     ):
+        """Attach a configured execution handler node onto the operational map graph.
+
+        Args:
+            name (str): Path variable token tracking naming tag.
+            agent (AgentExecutor): Setup structure carrying dependencies layout map object.
+            is_default (bool, optional): Overwrites top-level default if chosen explicitly. Defaults to False.
+
+        """
         self.agents[name] = agent
         agent.agent_card.set_executor_callback(
             lambda q, ctx, _a=agent: _a.run(q, system_prompt=ctx)
@@ -264,6 +389,20 @@ class AgentOrchestrator:
     def route(
         self, user_query: str, agent_name: Optional[str] = None, **kwargs
     ) -> Dict[str, Any]:
+        """Dispatch query inputs down through the correctly pinpointed agent wrapper implementation node.
+
+        Args:
+            user_query (str): Direct string query from client frontend request.
+            agent_name (Optional[str], optional): The forced explicit route choice identifier. Defaults to None.
+            **kwargs: Extra parameters payload passed onward dynamically.
+
+        Returns:
+            Dict[str, Any]: Response maps containing content texts and traces.
+
+        Raises:
+            ValueError: If a route tag identifier does not natively land accurately into existing definitions registry arrays set mapped list map.
+
+        """
         target_agent = agent_name or self.default_agent
 
         if not target_agent or target_agent not in self.agents:

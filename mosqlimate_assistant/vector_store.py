@@ -1,3 +1,21 @@
+"""In-memory vector database for document storage and retrieval.
+
+Provides an abstract interface (``BaseVectorStore``) and a concrete
+``InMemoryVectorStore`` implementation that supports multiple search
+strategies:
+
+- **unitary**: standard cosine-similarity search over individual documents.
+- **group**: searches by pre-computed collection-level embeddings.
+- **named_group**: selects the best-matching named group of documents.
+
+Documents can be organized into collections, persisted to disk via
+pickle, and filtered by metadata.
+
+Classes:
+    BaseVectorStore: Abstract interface for vector stores.
+    InMemoryVectorStore: NumPy-backed in-memory implementation.
+"""
+
 import pickle
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -10,9 +28,16 @@ from mosqlimate_assistant.models import VectorDocument, VectorSearchResult
 
 
 class BaseVectorStore(ABC):
+    """Abstract interface defining the contract for vector stores."""
 
     @abstractmethod
     def add_documents(self, documents: List[VectorDocument]) -> None:
+        """Add a list of documents to the vector store.
+
+        Args:
+            documents (List[VectorDocument]): Documents to be added.
+
+        """
         pass
 
     @abstractmethod
@@ -23,6 +48,18 @@ class BaseVectorStore(ABC):
         metadata_filters: Optional[Dict] = None,
         collections: Optional[List[str]] = None,
     ) -> List[VectorSearchResult]:
+        """Perform a similarity search for a given query over individual documents.
+
+        Args:
+            query (str): The search query text.
+            k (int, optional): Number of top results to return. Defaults to 3.
+            metadata_filters (Optional[Dict], optional): Filters to apply based on metadata. Defaults to None.
+            collections (Optional[List[str]], optional): Collections to restrict the search to. Defaults to None.
+
+        Returns:
+            List[VectorSearchResult]: List of search results with similarity scores.
+
+        """
         pass
 
     @abstractmethod
@@ -31,6 +68,16 @@ class BaseVectorStore(ABC):
         query: str,
         k: int = 3,
     ) -> List[VectorSearchResult]:
+        """Perform a similarity search across pre-computed collection-level embeddings.
+
+        Args:
+            query (str): The search query text.
+            k (int, optional): Number of top group results to consider. Defaults to 3.
+
+        Returns:
+            List[VectorSearchResult]: Documents belonging to the top matching groups.
+
+        """
         pass
 
     @abstractmethod
@@ -40,35 +87,87 @@ class BaseVectorStore(ABC):
         groups: List[List[str]],
         group_key: str = "id",
     ) -> List[VectorSearchResult]:
+        """Select the best-matching named group of documents.
+
+        Args:
+            query (str): The search query text.
+            groups (List[List[str]]): List of grouped metadata values.
+            group_key (str, optional): Metadata key defining the groups. Defaults to "id".
+
+        Returns:
+            List[VectorSearchResult]: Documents belonging to the single best matching group.
+
+        """
         pass
 
     @abstractmethod
     def get_all_documents(self) -> List[VectorSearchResult]:
+        """Retrieve all documents from the vector store.
+
+        Returns:
+            List[VectorSearchResult]: All stored documents with a default score.
+
+        """
         pass
 
     @abstractmethod
     def save(self, path: str) -> None:
+        """Persist the vector store to disk.
+
+        Args:
+            path (str): File path to save the vector store.
+
+        """
         pass
 
     @abstractmethod
     def load(self, path: str) -> None:
+        """Load the vector store from disk.
+
+        Args:
+            path (str): File path to load the vector store from.
+
+        """
         pass
 
     @abstractmethod
     def get_documents_by_collection(
         self, collection_name: str
     ) -> List[VectorDocument]:
+        """Retrieve all documents belonging to a specified collection.
+
+        Args:
+            collection_name (str): The name of the collection.
+
+        Returns:
+            List[VectorDocument]: List of documents in the collection.
+
+        """
         pass
 
 
 class InMemoryVectorStore(BaseVectorStore):
+    """Concrete implementation of a vector store using numpy arrays in memory."""
+
     def __init__(self, embedding_provider: BaseEmbeddingProvider):
+        """Initialize the InMemoryVectorStore.
+
+        Args:
+            embedding_provider (BaseEmbeddingProvider): The provider used to generate vector embeddings.
+
+        """
         self.embedding_provider = embedding_provider
         self.documents: List[VectorDocument] = []
         self.embeddings: Optional[np.ndarray] = None
         self.group_embeddings: Dict[str, np.ndarray] = {}
 
     def add_documents(self, documents: List[VectorDocument]) -> None:
+        """Add a list of documents to the in-memory vector store and update embeddings.
+
+        Args:
+            documents (List[VectorDocument]): List of VectorDocument objects to add.
+
+        """
         if not documents:
             return
 
@@ -102,6 +201,13 @@ class InMemoryVectorStore(BaseVectorStore):
         new_docs: List[VectorDocument],
         new_embeddings: np.ndarray,
     ) -> None:
+        """Merge new documents into existing storage or update them if they already exist.
+
+        Args:
+            new_docs (List[VectorDocument]): List of newly added documents.
+            new_embeddings (np.ndarray): Embeddings array corresponding to the new documents.
+
+        """
         assert self.embeddings is not None
         existing_ids = {doc.id: i for i, doc in enumerate(self.documents)}
         docs_to_add = []
@@ -130,6 +236,12 @@ class InMemoryVectorStore(BaseVectorStore):
             )
 
     def _update_group_embeddings(self, groups: Set[str]):
+        """Recalculate and update the embeddings for modified document groups.
+
+        Args:
+            groups (Set[str]): Set of group names that need embedding updates.
+
+        """
         for group in groups:
             group_docs = [
                 doc for doc in self.documents if group in doc.collections
@@ -151,6 +263,18 @@ class InMemoryVectorStore(BaseVectorStore):
         metadata_filters: Optional[Dict] = None,
         collections: Optional[List[str]] = None,
     ) -> List[VectorSearchResult]:
+        """Perform a standard cosine-similarity search over individual documents.
+
+        Args:
+            query (str): The search query text.
+            k (int, optional): Number of top results to return. Defaults to 3.
+            metadata_filters (Optional[Dict], optional): Filters to apply based on metadata. Defaults to None.
+            collections (Optional[List[str]], optional): Collections to restrict the search to. Defaults to None.
+
+        Returns:
+            List[VectorSearchResult]: Ordered list of search results.
+
+        """
         if self.embeddings is None or not self.documents:
             return []
 
@@ -195,6 +319,16 @@ class InMemoryVectorStore(BaseVectorStore):
         query: str,
         k: int = 3,
     ) -> List[VectorSearchResult]:
+        """Search by finding the most similar pre-computed group collection embeddings.
+
+        Args:
+            query (str): The search query text.
+            k (int, optional): Number of top groups to retrieve. Defaults to 3.
+
+        Returns:
+            List[VectorSearchResult]: Documents belonging to the best-matching groups.
+
+        """
         if not self.group_embeddings:
             return []
 
@@ -224,6 +358,17 @@ class InMemoryVectorStore(BaseVectorStore):
         groups: List[List[str]],
         group_key: str = "id",
     ) -> List[VectorSearchResult]:
+        """Determine and return documents from the single best-matching named group.
+
+        Args:
+            query (str): The search query text.
+            groups (List[List[str]]): Nested list specifying custom groups.
+            group_key (str, optional): Metadata key defining the groups. Defaults to "id".
+
+        Returns:
+            List[VectorSearchResult]: Documents representing the single best group match.
+
+        """
         if not self.documents or not groups:
             return []
 
@@ -268,12 +413,24 @@ class InMemoryVectorStore(BaseVectorStore):
         ]
 
     def get_all_documents(self) -> List[VectorSearchResult]:
+        """Retrieve all currently stored documents with a maximum similarity score.
+
+        Returns:
+            List[VectorSearchResult]: All contents of the vector store.
+
+        """
         return [
             VectorSearchResult(document=doc, score=1.0)
             for doc in self.documents
         ]
 
     def save(self, path: str) -> None:
+        """Save the in-memory vector store state to a local file using pickle.
+
+        Args:
+            path (str): Destination file path for serialization.
+
+        """
         Path(path).parent.mkdir(parents=True, exist_ok=True)
 
         data = {
@@ -286,6 +443,15 @@ class InMemoryVectorStore(BaseVectorStore):
             pickle.dump(data, f)
 
     def load(self, path: str) -> None:
+        """Load the vector store state from a pickled file.
+
+        Args:
+            path (str): Source file path to load from.
+
+        Raises:
+            FileNotFoundError: If the specified path does not exist.
+
+        """
         if not Path(path).exists():
             raise FileNotFoundError(f"Vector store não encontrado: {path}")
 
@@ -299,6 +465,15 @@ class InMemoryVectorStore(BaseVectorStore):
     def get_documents_by_collection(
         self, collection_name: str
     ) -> List[VectorDocument]:
+        """Filter and retrieve stored documents for a specific collection.
+
+        Args:
+            collection_name (str): Name of the target collection.
+
+        Returns:
+            List[VectorDocument]: Sub-list of documents matching the collection name.
+
+        """
         return [
             doc for doc in self.documents if collection_name in doc.collections
         ]
