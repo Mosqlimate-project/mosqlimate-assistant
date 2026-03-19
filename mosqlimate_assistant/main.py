@@ -1,3 +1,21 @@
+"""Pre-configured pipelines for the Mosqlimate AI Assistant.
+
+Provides ready-to-use functions that build a fully wired multi-agent
+assistant with documentation, code, and IMDC agents — each backed by
+its own vector store and reference CSV.
+
+Functions:
+    build_mosqlimate_assistant: Constructs the full ``Assistant`` with
+        three specialized agents and their vector stores.
+    docs_pipeline: One-call convenience — builds the assistant and
+        queries the docs agent.
+    assistant_pipeline: Thin wrapper around ``docs_pipeline`` with
+        sensible defaults.
+
+Module-level constants define the default document groups, fallback
+thresholds, and CSV paths used by the pipelines.
+"""
+
 from pathlib import Path
 from typing import List, Literal, Optional, Tuple
 
@@ -115,6 +133,31 @@ def build_mosqlimate_assistant(
 ) -> Tuple[
     Assistant, InMemoryVectorStore, InMemoryVectorStore, InMemoryVectorStore
 ]:
+    """Construct a full Mosqlimate AI multi-agent assistant instance.
+
+    Reads CSV definitions, initializes separate InMemoryVectorStores for docs,
+    code, and imdc agents natively. Registers each agent onto the central Orchestrator.
+
+    Args:
+        google_api_key (str): Provider execution secrets.
+        gemini_model (str, optional): The Gemini backend host ID. Defaults to DEFAULT_GEMINI_MODEL.
+        embedding_model (str, optional): Used for vector representations. Defaults to DEFAULT_EMBEDDING_MODEL.
+        ollama_base_url (Optional[str], optional): Override URL host for embeddings. Defaults to None.
+        docs_search_mode (SearchMode, optional): Retrieval approach for docs agent. Defaults to "group".
+        code_search_mode (SearchMode, optional): Retrieval approach for code agent. Defaults to "group".
+        imdc_search_mode (SearchMode, optional): Retrieval approach for imdc agent. Defaults to "group".
+        docs_named_groups (Optional[List[List[str]]], optional): Custom query groups for docs search. Defaults to None.
+        code_named_groups (Optional[List[List[str]]], optional): Custom query groups for code search. Defaults to None.
+        imdc_named_groups (Optional[List[List[str]]], optional): Custom query groups for imdc search. Defaults to None.
+        group_key (str, optional): Lookup variable to identify the groups. Defaults to "id".
+        id_key (str, optional): Key identifier used. Defaults to "name".
+        lang (Literal["en", "pt"], optional): System prompts locale mapping. Defaults to "pt".
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        Tuple[Assistant, InMemoryVectorStore, InMemoryVectorStore, InMemoryVectorStore]: Assembled assistant and underlying stores.
+
+    """
     _docs_groups = docs_named_groups or DOCS_GROUPS
     _code_groups = code_named_groups or CODE_GROUPS
     _imdc_groups = imdc_named_groups or IMDC_GROUPS
@@ -228,6 +271,28 @@ def docs_pipeline(
     lang: Literal["en", "pt"] = "pt",
     **kwargs,
 ) -> str:
+    """Route specific prompt questions through the assistant pipeline.
+
+    Args:
+        question (str): Main user phrase instruction.
+        google_api_key (str): Gemini API Key.
+        search_mode (SearchMode, optional): Retrieval approach for docs search. Defaults to "group".
+        docs_named_groups (Optional[List[List[str]]], optional): Custom query groups for docs search. Defaults to None.
+        code_named_groups (Optional[List[List[str]]], optional): Custom query groups for code search. Defaults to None.
+        imdc_named_groups (Optional[List[List[str]]], optional): Custom query groups for imdc search. Defaults to None.
+        group_key (str, optional): Lookup variable to identify the groups. Defaults to "id".
+        id_key (str, optional): Key identifier used. Defaults to "name".
+        gemini_model (str, optional): The Gemini backend host ID. Defaults to DEFAULT_GEMINI_MODEL.
+        embedding_model (str, optional): Used for vector representations. Defaults to DEFAULT_EMBEDDING_MODEL.
+        ollama_base_url (Optional[str], optional): Override URL host for embeddings. Defaults to None.
+        message_history (Optional[List[ChatMessage]], optional): Array of preceding messages. Defaults to None.
+        lang (Literal["en", "pt"], optional): System prompts locale mapping. Defaults to "pt".
+        **kwargs: Additional keyword arguments.
+
+    Returns:
+        str: Assistant text response to the input query.
+
+    """
     asst, _, _, _ = build_mosqlimate_assistant(
         google_api_key=google_api_key,
         gemini_model=gemini_model,
@@ -255,6 +320,19 @@ def assistant_pipeline(
     lang: Literal["en", "pt"] = "pt",
     **kwargs,
 ) -> str:
+    """Expose a simplified wrapper for generating responses via the main pipeline.
+
+    Args:
+        question (str): User instruction or question.
+        google_api_key (str): Provider execution credential token.
+        message_history (Optional[List[ChatMessage]], optional): Array of preceding messages. Defaults to None.
+        lang (Literal["en", "pt"], optional): Preferred fallback execution language mappings standard rule. Defaults to "pt".
+        **kwargs: Additional keyword arguments passed to the underlying pipeline.
+
+    Returns:
+        str: Final text response generated by the pipeline.
+
+    """
     return docs_pipeline(
         question=question,
         google_api_key=google_api_key,
