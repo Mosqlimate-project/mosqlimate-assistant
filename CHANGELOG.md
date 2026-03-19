@@ -1,6 +1,30 @@
 Release Notes
 ---
 
+# [1.10.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.9.0...1.10.0) (2026-03-19)
+
+
+### Bug Fixes
+
+* **docs:** remove module docstring from __init__.py ([8a58d74](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/8a58d743fc988d4c0fd5fb202bb500454a0b88d8))
+
+
+### Features
+
+* **docs:** add docstrings for AgentCard and BaseTool classes ([998840e](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/998840ea83599fe81e21f13e684b5f1dcc2d849f))
+* **docs:** add docstrings for agents and orchestrator classes ([9051978](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/90519787d3f0f7509ba05d07287faa84f9b9c2ec))
+* **docs:** add docstrings for Assistant class and factory functions ([e5851f9](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/e5851f9f45e9d7c9f6421134a5b227d6c4681086))
+* **docs:** add docstrings for document consumer classes ([1c80b0d](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/1c80b0d7721357742ff5abdeffd4de868bcdd06c))
+* **docs:** add docstrings for embedding providers and methods ([f68f032](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/f68f0324cab58994dccd8ca47c3901fcd2c80c97))
+* **docs:** add docstrings for main pipelines and assistant builder ([54de019](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/54de019046af306cd15b7361271698fc4943087d))
+* **docs:** add docstrings for prompt generation functions ([d3a35d1](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/d3a35d107fc5ca9a4c3588c9e265e2e5fccfc19d))
+* **docs:** add docstrings for vector store classes and methods ([608d8d5](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/608d8d560fff3dbbbdb2ad74be3ee8b5e70b3c3d))
+* **docs:** add docstrings to providers.py module ([8ad6721](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/8ad67216428572ec2f90f719e8ff64bc52036681))
+* **docs:** enhance docstrings for data models and attributes ([82ad16f](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/82ad16f652a1ff36bad96050e0d78d703e060625))
+* **docs:** update application settings docstring ([37e77b4](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/37e77b4ce8e7b72a3906fb06fdd0658be7670cdc))
+* **docs:** update package docstring with new version feats ([6786368](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/6786368edab7c27140af4ca77cca5860dbdaad46))
+* **docs:** update README with detailed project overview and key features ([fb434cf](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/fb434cf78f0d96b19000dca72b291c1f8e379887))
+
 # [1.9.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.8.0...1.9.0) (2026-03-17)
 
 
