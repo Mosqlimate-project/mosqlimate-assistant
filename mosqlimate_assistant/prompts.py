@@ -1,8 +1,29 @@
+"""Bilingual system prompt templates for each specialized agent.
+
+Each function returns a detailed system prompt in either Portuguese
+(``pt``) or English (``en``), defining the agent's persona, behavior
+rules, and response format.
+
+Functions:
+    get_base_docs_prompt: Prompt for the documentation agent (``docs_agent``).
+    get_coder_agent_prompt: Prompt for the code generation agent (``code_agent``).
+    get_imdc_agent_prompt: Prompt for the IMDC challenge agent (``imdc_agent``).
+"""
+
 from datetime import datetime
 from typing import Literal
 
 
 def get_base_docs_prompt(lang: Literal["en", "pt"] = "pt") -> str:
+    """Generate the system prompt for the main documentation agent.
+
+    Args:
+        lang (Literal["en", "pt"], optional): The target output language. Defaults to "pt".
+
+    Returns:
+        str: The fully formatted system prompt template strings values strings mapping formatting instructions.
+
+    """
     current_date = datetime.now().strftime("%Y-%m-%d")
 
     if lang == "en":
@@ -66,6 +87,15 @@ Fontes:
 
 
 def get_coder_agent_prompt(lang: Literal["en", "pt"] = "pt") -> str:
+    """Generate the system prompt for the coding specialist agent.
+
+    Args:
+        lang (Literal["en", "pt"], optional): The target output language. Defaults to "pt".
+
+    Returns:
+        str: The structured system prompt defining coding formats limitations.
+
+    """
     current_date = datetime.now().strftime("%Y-%m-%d")
 
     if lang == "en":
@@ -121,6 +151,15 @@ Considere a data de hoje: {current_date}.
 
 
 def get_imdc_agent_prompt(lang: Literal["en", "pt"] = "pt") -> str:
+    """Generate the system prompt for the IMDC challenge expert agent.
+
+    Args:
+        lang (Literal["en", "pt"], optional): The intended conversation locale tracking outputs boundaries. Defaults to "pt".
+
+    Returns:
+        str: Ruleset and contextualization strings handling sprint challenges rules formats values targets.
+
+    """
     current_date = datetime.now().strftime("%Y-%m-%d")
 
     if lang == "en":
