@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.10.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.10.0...1.10.1) (2026-03-20)
+
+
+### Bug Fixes
+
+* **pipeline:** implement persistent file vector store in assistant pipeline ([77fce43](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/77fce43d7bf3b6ba17e16c9a510b65632514ea77))
+
 # [1.10.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.9.0...1.10.0) (2026-03-19)
 
 
