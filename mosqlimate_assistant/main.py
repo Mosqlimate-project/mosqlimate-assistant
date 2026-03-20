@@ -169,21 +169,40 @@ def build_mosqlimate_assistant(
         base_url=ollama_base_url,
     )
 
+    safe_model_name = embedding_model.replace(":", "_").replace("/", "_")
+    store_dir = _DATA_DIR / "vector_stores" / safe_model_name
+    store_dir.mkdir(parents=True, exist_ok=True)
+
+    docs_store_path = store_dir / f"docs_{lang}.pkl"
+    code_store_path = store_dir / "code.pkl"
+    imdc_store_path = store_dir / "imdc.pkl"
+
     docs_store = InMemoryVectorStore(embedding_provider)
+    if docs_store_path.exists():
+        docs_store.load(str(docs_store_path))
+    else:
+        docs_manager = DocumentManager(docs_store)
+        docs_manager.add_consumer(CSVLinkConsumer(docs_csv, "markdown_link"))
+        docs_manager.fetch_and_index_all(collections=["docs"], id_key=id_key)
+        docs_store.save(str(docs_store_path))
+
     code_store = InMemoryVectorStore(embedding_provider)
+    if code_store_path.exists():
+        code_store.load(str(code_store_path))
+    else:
+        code_manager = DocumentManager(code_store)
+        code_manager.add_consumer(CSVLinkConsumer(CODE_CSV, "markdown_link"))
+        code_manager.fetch_and_index_all(collections=["code"], id_key=id_key)
+        code_store.save(str(code_store_path))
+
     imdc_store = InMemoryVectorStore(embedding_provider)
-
-    docs_manager = DocumentManager(docs_store)
-    docs_manager.add_consumer(CSVLinkConsumer(docs_csv, "markdown_link"))
-    docs_manager.fetch_and_index_all(collections=["docs"], id_key=id_key)
-
-    code_manager = DocumentManager(code_store)
-    code_manager.add_consumer(CSVLinkConsumer(CODE_CSV, "markdown_link"))
-    code_manager.fetch_and_index_all(collections=["code"], id_key=id_key)
-
-    imdc_manager = DocumentManager(imdc_store)
-    imdc_manager.add_consumer(CSVLinkConsumer(IMDC_CSV, "markdown_link"))
-    imdc_manager.fetch_and_index_all(collections=["imdc"], id_key=id_key)
+    if imdc_store_path.exists():
+        imdc_store.load(str(imdc_store_path))
+    else:
+        imdc_manager = DocumentManager(imdc_store)
+        imdc_manager.add_consumer(CSVLinkConsumer(IMDC_CSV, "markdown_link"))
+        imdc_manager.fetch_and_index_all(collections=["imdc"], id_key=id_key)
+        imdc_store.save(str(imdc_store_path))
 
     asst = Assistant(
         provider_type=ProviderType.GEMINI,
