@@ -6,7 +6,8 @@ strategy, and fallback behavior. Each card can hold a list of
 as well as a prompt function and an executor callback.
 """
 
-from typing import Any, Callable, Dict, List, Optional, Type
+import inspect
+from typing import Any, Callable, Dict, List, Optional, Type  # noqa: F401
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError
 
@@ -59,8 +60,14 @@ class BaseTool(BaseModel):
     def execute(self, **kwargs) -> Any:
         """Validate arguments and execute the configured tool function.
 
+        ``_message_history`` is a special keyword that is extracted before
+        Pydantic validation and forwarded to the tool function only if that
+        function explicitly declares the parameter.
+
         Args:
             **kwargs: The arbitrary keyword arguments to pass to the tool.
+                A special ``_message_history`` key may be included to thread
+                conversation history into agent-type tools.
 
         Returns:
             Any: The result returned by the internal `tool_function`.
@@ -69,11 +76,21 @@ class BaseTool(BaseModel):
             ValueError: If the provided `kwargs` don't match the `args_schema`.
 
         """
+        _message_history = kwargs.pop("_message_history", None)
         try:
             validated_args = self.args_schema(**kwargs).model_dump()
-            return self.tool_function(**validated_args)
         except ValidationError as e:
             raise ValueError(f"Invalid arguments for tool {self.name}: {e}")
+
+        sig = inspect.signature(self.tool_function)
+        if (
+            _message_history is not None
+            and "_message_history" in sig.parameters
+        ):
+            return self.tool_function(
+                **validated_args, _message_history=_message_history
+            )
+        return self.tool_function(**validated_args)
 
 
 class AgentCard(BaseModel):
@@ -141,6 +158,7 @@ class AgentCard(BaseModel):
     _executor_callback: Optional[Callable[..., Any]] = PrivateAttr(
         default=None
     )
+    _cached_tool: Optional[Any] = PrivateAttr(default=None)
 
     def get_prompt(self, *args, **kwargs) -> Optional[str]:
         """Evaluate the assigned prompt function to get the system message.
@@ -204,12 +222,15 @@ class AgentCard(BaseModel):
     def agent_to_tool(self) -> BaseTool:
         """Expose this agent as a callable tool for multi-agent workflows.
 
-        Allows another agent to dispatch questions to this agent dynamically.
+        The returned ``BaseTool`` is cached on first access so that the same
+        ``AgentToolInputSchema`` class and closure are reused on every call.
 
         Returns:
             BaseTool: A configured tool wrapping the agent invocation.
 
         """
+        if self._cached_tool is not None:
+            return self._cached_tool  # type: ignore[return-value]
 
         class AgentToolInputSchema(ToolInputSchema):
             user_question: str = Field(
@@ -219,22 +240,25 @@ class AgentCard(BaseModel):
                 ..., description="Description of the task context."
             )
 
-        def agent_tool_function(user_question: str, task_context: str) -> str:
+        def agent_tool_function(
+            user_question: str,
+            task_context: str,
+            _message_history: Optional[Any] = None,
+        ) -> str:
             if self._executor_callback:
-                result = self._executor_callback(user_question, task_context)
+                result = self._executor_callback(
+                    user_question, task_context, _message_history
+                )
                 if isinstance(result, dict):
                     return result.get("content", "")
                 return str(result)
-            return (
-                self.get_prompt(
-                    user_question=user_question, task_context=task_context
-                )
-                or ""
-            )
+            return self.get_prompt() or ""
 
-        return BaseTool(
+        tool = BaseTool(
             name=self.name,
             description=self.description,
             args_schema=AgentToolInputSchema,
             tool_function=agent_tool_function,
         )
+        self._cached_tool = tool
+        return tool

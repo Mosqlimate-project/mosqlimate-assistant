@@ -241,12 +241,20 @@ class AgentExecutor:
 
         return messages
 
-    def execute_tool(self, tool_name: str, arguments: Dict[str, Any]) -> str:
+    def execute_tool(
+        self,
+        tool_name: str,
+        arguments: Dict[str, Any],
+        message_history: Optional[List[ChatMessage]] = None,
+    ) -> str:
         """Call a local instance-bound capability.
 
         Args:
             tool_name (str): The unique string ID marking which function to apply.
             arguments (Dict[str, Any]): The mapped parameter bindings structure array.
+            message_history (Optional[List[ChatMessage]], optional): Filtered
+                conversation history to forward to agent-type tools so that
+                sub-agents have conversational context. Defaults to None.
 
         Returns:
             str: The execution parsed results.
@@ -259,6 +267,8 @@ class AgentExecutor:
             raise ValueError(f"Ferramenta não encontrada: {tool_name}")
 
         tool = self.tools[tool_name]
+        if message_history is not None:
+            return tool.execute(_message_history=message_history, **arguments)
         return tool.execute(**arguments)
 
     def run(
@@ -293,6 +303,14 @@ class AgentExecutor:
             user_query, system_prompt, message_history, retrieved_docs
         )
 
+        # Filter history to user↔assistant messages only.
+        # Tool-call internals are not relevant for sub-agents.
+        filtered_history: List[ChatMessage] = [
+            m
+            for m in (message_history or [])
+            if m.role in ("user", "assistant")
+        ]
+
         tool_calls_history: List[Dict[str, Any]] = []
         iterations = 0
 
@@ -309,7 +327,7 @@ class AgentExecutor:
 
             if not response.tool_calls:
                 return {
-                    "content": response.content,
+                    "content": response.content or "",
                     "tool_calls": tool_calls_history,
                     "retrieved_docs": retrieved_docs,
                     "iterations": iterations,
@@ -317,7 +335,11 @@ class AgentExecutor:
 
             for tool_call in response.tool_calls:
                 tool_result = self.execute_tool(
-                    tool_call["name"], json.loads(tool_call["arguments"])
+                    tool_call["name"],
+                    json.loads(tool_call["arguments"]),
+                    message_history=(
+                        filtered_history if filtered_history else None
+                    ),
                 )
                 tool_calls_history.append(
                     {
@@ -380,9 +402,44 @@ class AgentOrchestrator:
 
         """
         self.agents[name] = agent
-        agent.agent_card.set_executor_callback(
-            lambda q, ctx, _a=agent: _a.run(q, system_prompt=ctx)
-        )
+
+        def _make_callback(sub_agent: AgentExecutor) -> Any:
+            """Return a callback that runs the sub-agent with its own system prompt.
+
+            The sub-agent receives:
+            - Its own base system prompt (via ``get_prompt()``).
+            - The question enriched with the task context from the caller.
+            - The filtered conversation history (user/assistant turns only).
+
+            Args:
+                sub_agent (AgentExecutor): The agent executor to wrap.
+
+            Returns:
+                Callable: A three-argument callback ``(user_question, task_context, message_history)``.
+
+            """
+
+            def callback(
+                user_question: str,
+                task_context: str,
+                message_history: Optional[List[ChatMessage]] = None,
+            ) -> Dict[str, Any]:
+                if task_context:
+                    prefix = (
+                        "Context" if sub_agent.lang == "en" else "Contexto"
+                    )
+                    query = f"[{prefix}: {task_context}]\n\n{user_question}"
+                else:
+                    query = user_question
+                return sub_agent.run(
+                    user_query=query,
+                    message_history=message_history,
+                    # system_prompt=None → sub-agent uses its own prompt function
+                )
+
+            return callback
+
+        agent.agent_card.set_executor_callback(_make_callback(agent))
         if is_default or not self.default_agent:
             self.default_agent = name
 

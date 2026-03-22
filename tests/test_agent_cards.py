@@ -45,7 +45,7 @@ def test_agent_card():
 
     # Executor callback testing
     card.set_executor_callback(
-        lambda user_question, task_context: {
+        lambda user_question, task_context, hist=None: {
             "content": f"Res: {user_question}-{task_context}"
         }
     )
