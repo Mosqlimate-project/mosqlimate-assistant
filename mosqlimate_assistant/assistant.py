@@ -125,6 +125,7 @@ class Assistant:
             agent_card=agent_card,
             provider=provider or self.provider,
             vector_store=vector_store or self.vector_store,
+            tools=list(agent_card.tools) if agent_card.tools else None,
             lang=self.lang,
         )
         self.orchestrator.register_agent(name, agent, is_default=is_default)
