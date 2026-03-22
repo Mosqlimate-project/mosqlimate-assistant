@@ -299,7 +299,7 @@ def create_openai_assistant(
 
 def create_gemini_assistant(
     api_key: str,
-    model: str = "gemini-2.5-flash",
+    model: str = "gemini-3.1-flash-lite-preview",
     embedding_model: str = "mxbai-embed-large:latest",
     base_url: str = "https://generativelanguage.googleapis.com/v1beta/openai/",
     lang: Literal["en", "pt"] = "pt",
@@ -308,7 +308,7 @@ def create_gemini_assistant(
 
     Args:
         api_key (str): authentication token for Gemini API.
-        model (str, optional): The Gemini model to use. Defaults to "gemini-2.5-flash".
+        model (str, optional): The Gemini model to use. Defaults to "gemini-3.1-flash-lite-preview".
         embedding_model (str, optional): Embedding model to use. Defaults to "mxbai-embed-large:latest".
         base_url (str, optional): The endpoint URL compatible with OpenAI SDK. Defaults to "https://generativelanguage.googleapis.com/v1beta/openai/".
         lang (Literal["en", "pt"], optional): Agent response language. Defaults to "pt".
@@ -331,7 +331,7 @@ def create_gemini_assistant(
 
 def create_google_genai_assistant(
     api_key: str,
-    model: str = "gemini-2.5-flash",
+    model: str = "gemini-3.1-flash-lite-preview",
     embedding_model: str = "mxbai-embed-large:latest",
     lang: Literal["en", "pt"] = "pt",
 ) -> Assistant:
@@ -339,7 +339,7 @@ def create_google_genai_assistant(
 
     Args:
         api_key (str): The Google GenAI API key.
-        model (str, optional): Text generation model. Defaults to "gemini-2.5-flash".
+        model (str, optional): Text generation model. Defaults to "gemini-3.1-flash-lite-preview".
         embedding_model (str, optional): Embedding model to use. Defaults to "mxbai-embed-large:latest".
         lang (Literal["en", "pt"], optional): Agent response language. Defaults to "pt".
 
