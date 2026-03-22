@@ -1,6 +1,20 @@
 Release Notes
 ---
 
+## [1.10.2](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.10.1...1.10.2) (2026-03-22)
+
+
+### Bug Fixes
+
+* **agents:** add message history support and sub-agent callbacks ([2e99d43](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/2e99d43f27cabfb14d526caa34c7b4ccf67fd13f))
+* **assistant:** add tools parameter to agent registration in Assistant class ([ecc1478](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/ecc14780dcf90994c968c6e5aed27851522726b4))
+* **assistant:** update Gemini base model version to 3.1-flash-lite-preview ([6748291](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/67482914883e1da9c4a3392caa66414b652183ec))
+* **dependencies:** update version to 1.9.0 ([291b243](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/291b2430d56891c3d5b3404b8ada41280ad4b0a0))
+* **pipeline:** update BaseTool execution with message history support ([a4c9b32](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/a4c9b327e2cf552337f797cc8170d699bf02a17b))
+* **tests:** add tests for AgentExecutor and message history handling ([aa59edd](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/aa59edd066d435efcb1f622ab2f82a03007ddd05))
+* **tests:** clean up imports and remove unused variable in AgentExecutor tests ([5c18440](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/5c18440a1b369a156686fa1280865f6e67cf18a5))
+* **tests:** update executor callback to include history parameter ([5939f88](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/5939f88c71392150fb709fff5d7672761c8aa741))
+
 ## [1.10.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.10.0...1.10.1) (2026-03-20)
 
 
