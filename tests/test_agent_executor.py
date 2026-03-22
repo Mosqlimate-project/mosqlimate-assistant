@@ -1,10 +1,8 @@
 """Tests for AgentExecutor tool-call flow, message history propagation,
 and Assistant.register_agent tool wiring."""
 
-from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock
+from typing import Dict, List, Optional
 
-import pytest
 from pydantic import Field
 
 from mosqlimate_assistant.agent_cards import (
@@ -14,7 +12,6 @@ from mosqlimate_assistant.agent_cards import (
 )
 from mosqlimate_assistant.agents import AgentExecutor, AgentOrchestrator
 from mosqlimate_assistant.models import ChatMessage
-
 
 # ---------------------------------------------------------------------------
 # Helpers / Fakes
@@ -152,7 +149,6 @@ def test_run_message_history_is_included_in_provider_call():
     executor.run("Follow-up question", message_history=history)
 
     messages_sent = provider.calls[0]
-    roles = [m.role for m in messages_sent]
     contents = [m.content for m in messages_sent]
 
     assert "Previous question" in contents
