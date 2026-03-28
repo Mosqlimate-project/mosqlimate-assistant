@@ -40,7 +40,7 @@ DOCS_EN_CSV = str(_DATA_DIR / "docs_en_references.csv")
 CODE_CSV = str(_DATA_DIR / "code_references.csv")
 IMDC_CSV = str(_DATA_DIR / "imdc_references.csv")
 
-DEFAULT_GEMINI_MODEL = "gemini-3.1-flash-lite-preview"
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
 DEFAULT_EMBEDDING_MODEL = "mxbai-embed-large:latest"
 
 SearchMode = Literal["unitary", "group", "total"]
@@ -54,8 +54,6 @@ DOCS_GROUPS: List[List[str]] = [
         "project_ovicounter",
     ],
     [
-        "project_main",
-        "datastore_base",
         "datastore_infodengue",
         "datastore_episcanner",
         "datastore_climate",
@@ -63,12 +61,13 @@ DOCS_GROUPS: List[List[str]] = [
         "datastore_mosquito",
     ],
     [
-        "project_main",
         "registry_base",
         "registry_models_get",
         "registry_models_post",
         "registry_predictions_get",
         "registry_predictions_post",
+    ],
+    [
         "vis_dashboard_how_to_use",
         "vis_dashboard_scores",
         "vis_dashboard_details",
@@ -89,13 +88,11 @@ CODE_GROUPS: List[List[str]] = [
         "Reference - Get, post and delete predictions",
     ],
     [
-        "Overview",
-        "Tutorial - Using from R",
         "Tutorial - Model Scoring",
         "Reference - Score",
+        "Tutorial - Using from R",
     ],
     [
-        "Overview",
         "Tutorial - Simple forecast model",
         "Tutorial - Ensemble predictions",
         "Reference - Baseline Arima",
@@ -105,9 +102,9 @@ CODE_GROUPS: List[List[str]] = [
 ]
 
 IMDC_GROUPS: List[List[str]] = [
-    ["home", "about", "organize", "registration"],
+    ["home", "about", "registration"],
     ["home", "sprint-2025", "instructions-2025", "registration"],
-    ["home", "about", "data-2025", "sprint-2025", "results-2025"],
+    ["home", "data-2025", "results-2025"],
 ]
 
 DOCS_FALLBACK_THRESHOLD = 0.75
@@ -120,9 +117,12 @@ def build_mosqlimate_assistant(
     gemini_model: str = DEFAULT_GEMINI_MODEL,
     embedding_model: str = DEFAULT_EMBEDDING_MODEL,
     ollama_base_url: Optional[str] = None,
-    docs_search_mode: SearchMode = "group",
-    code_search_mode: SearchMode = "group",
-    imdc_search_mode: SearchMode = "group",
+    docs_search_mode: SearchMode = "total",
+    code_search_mode: SearchMode = "total",
+    imdc_search_mode: SearchMode = "total",
+    docs_search_scope: Literal["metadata", "content", "both"] = "both",
+    code_search_scope: Literal["metadata", "content", "both"] = "both",
+    imdc_search_scope: Literal["metadata", "content", "both"] = "both",
     docs_named_groups: Optional[List[List[str]]] = None,
     code_named_groups: Optional[List[List[str]]] = None,
     imdc_named_groups: Optional[List[List[str]]] = None,
@@ -143,9 +143,12 @@ def build_mosqlimate_assistant(
         gemini_model (str, optional): The Gemini backend host ID. Defaults to DEFAULT_GEMINI_MODEL.
         embedding_model (str, optional): Used for vector representations. Defaults to DEFAULT_EMBEDDING_MODEL.
         ollama_base_url (Optional[str], optional): Override URL host for embeddings. Defaults to None.
-        docs_search_mode (SearchMode, optional): Retrieval approach for docs agent. Defaults to "group".
-        code_search_mode (SearchMode, optional): Retrieval approach for code agent. Defaults to "group".
-        imdc_search_mode (SearchMode, optional): Retrieval approach for imdc agent. Defaults to "group".
+        docs_search_mode (SearchMode, optional): Retrieval approach for docs agent. Defaults to "total".
+        code_search_mode (SearchMode, optional): Retrieval approach for code agent. Defaults to "total".
+        imdc_search_mode (SearchMode, optional): Retrieval approach for imdc agent. Defaults to "total".
+        docs_search_scope (Literal["metadata", "content", "both"], optional): Scope for docs search. Defaults to "both".
+        code_search_scope (Literal["metadata", "content", "both"], optional): Scope for code search. Defaults to "both".
+        imdc_search_scope (Literal["metadata", "content", "both"], optional): Scope for imdc search. Defaults to "both".
         docs_named_groups (Optional[List[List[str]]], optional): Custom query groups for docs search. Defaults to None.
         code_named_groups (Optional[List[List[str]]], optional): Custom query groups for code search. Defaults to None.
         imdc_named_groups (Optional[List[List[str]]], optional): Custom query groups for imdc search. Defaults to None.
@@ -222,7 +225,8 @@ def build_mosqlimate_assistant(
     code_card = AgentCard(
         name="code_agent",
         description=code_desc,
-        search_mode=code_search_mode if _code_groups else "unitary",
+        search_mode=code_search_mode,
+        search_scope=code_search_scope,
         named_groups=_code_groups,
         group_key=group_key,
         target_groups=["code"],
@@ -240,7 +244,8 @@ def build_mosqlimate_assistant(
     imdc_card = AgentCard(
         name="imdc_agent",
         description=imdc_desc,
-        search_mode=imdc_search_mode if _imdc_groups else "unitary",
+        search_mode=imdc_search_mode,
+        search_scope=imdc_search_scope,
         named_groups=_imdc_groups,
         group_key=group_key,
         target_groups=["imdc"],
@@ -259,6 +264,7 @@ def build_mosqlimate_assistant(
         name="docs_agent",
         description=docs_desc,
         search_mode=docs_search_mode,
+        search_scope=docs_search_scope,
         named_groups=_docs_groups if docs_search_mode == "group" else [],
         group_key=group_key,
         target_groups=["docs"],
@@ -277,7 +283,8 @@ def build_mosqlimate_assistant(
 def docs_pipeline(
     question: str,
     google_api_key: str,
-    search_mode: SearchMode = "group",
+    search_mode: SearchMode = "total",
+    search_scope: Literal["metadata", "content", "both"] = "both",
     docs_named_groups: Optional[List[List[str]]] = None,
     code_named_groups: Optional[List[List[str]]] = None,
     imdc_named_groups: Optional[List[List[str]]] = None,
@@ -295,7 +302,8 @@ def docs_pipeline(
     Args:
         question (str): Main user phrase instruction.
         google_api_key (str): Gemini API Key.
-        search_mode (SearchMode, optional): Retrieval approach for docs search. Defaults to "group".
+        search_mode (SearchMode, optional): Retrieval approach for docs search. Defaults to "total".
+        search_scope (Literal["metadata", "content", "both"], optional): Scope for search. Defaults to "both".
         docs_named_groups (Optional[List[List[str]]], optional): Custom query groups for docs search. Defaults to None.
         code_named_groups (Optional[List[List[str]]], optional): Custom query groups for code search. Defaults to None.
         imdc_named_groups (Optional[List[List[str]]], optional): Custom query groups for imdc search. Defaults to None.
@@ -318,6 +326,7 @@ def docs_pipeline(
         embedding_model=embedding_model,
         ollama_base_url=ollama_base_url,
         docs_search_mode=search_mode,
+        docs_search_scope=search_scope,
         docs_named_groups=docs_named_groups,
         code_named_groups=code_named_groups,
         imdc_named_groups=imdc_named_groups,
@@ -327,7 +336,10 @@ def docs_pipeline(
         **kwargs,
     )
     result = asst.query(
-        question, agent_name="docs_agent", message_history=message_history
+        question,
+        agent_name="docs_agent",
+        message_history=message_history,
+        search_scope=search_scope,
     )
     return result["content"]
 
