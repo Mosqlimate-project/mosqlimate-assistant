@@ -87,6 +87,10 @@ class VectorDocument(BaseModel):
         default_factory=list,
         description="List of collections/groups the document belongs to",
     )
+    chunks: List[str] = Field(
+        default_factory=list,
+        description="Recursive text chunks for granular embedding",
+    )
 
 
 class VectorSearchResult(BaseModel):

@@ -190,6 +190,7 @@ class Assistant:
         agent_name: Optional[str] = None,
         message_history: Optional[List[ChatMessage]] = None,
         use_rag: bool = True,
+        search_scope: Optional[Literal["metadata", "content", "both"]] = None,
     ) -> Dict[str, Any]:
         """Perform a standard end-user interaction round.
 
@@ -198,11 +199,19 @@ class Assistant:
             agent_name (Optional[str], optional): Target agent name to route to. Defaults to None.
             message_history (Optional[List[ChatMessage]], optional): Arrays containing preceding messages. Defaults to None.
             use_rag (bool, optional): Explicit flag controlling datasets RAG logic. Defaults to True.
+            search_scope (Optional[Literal["metadata", "content", "both"]], optional):
+                Temporary override for the agent's default search scope.
 
         Returns:
             Dict[str, Any]: Mapped parsed formats arrays outputs strings responses parameters.
 
         """
+        target_agent = agent_name or self.orchestrator.default_agent
+        if search_scope and target_agent in self.orchestrator.agents:
+            self.orchestrator.agents[target_agent].agent_card.search_scope = (
+                search_scope
+            )
+
         return self.orchestrator.route(
             user_question,
             agent_name=agent_name,

@@ -7,7 +7,15 @@ as well as a prompt function and an executor callback.
 """
 
 import inspect
-from typing import Any, Callable, Dict, List, Optional, Type  # noqa: F401
+from typing import (  # noqa: F401
+    Any,
+    Callable,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Type,
+)
 
 from pydantic import BaseModel, Field, PrivateAttr, ValidationError
 
@@ -119,7 +127,7 @@ class AgentCard(BaseModel):
         default_factory=list,
         description="List of available tools for the agent.",
     )
-    search_mode: str = Field(
+    search_mode: Literal["unitary", "group", "total"] = Field(
         default="total",
         description="Search mode: 'unitary', 'group', or 'total'",
     )
@@ -153,6 +161,10 @@ class AgentCard(BaseModel):
             "Minimum score to consider the results satisfactory. "
             "If the best result falls below, triggers the fallback."
         ),
+    )
+    search_scope: Literal["metadata", "content", "both"] = Field(
+        default="both",
+        description="Scope of search: 'metadata', 'content', or 'both'",
     )
     _prompt_function: Optional[Callable[..., str]] = PrivateAttr(default=None)
     _executor_callback: Optional[Callable[..., Any]] = PrivateAttr(

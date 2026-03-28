@@ -12,7 +12,8 @@ An AI-powered Retrieval-Augmented Generation (RAG) system designed to help users
   - `code_agent`: Generates `mosqlient` Python/R code examples based on platform specs.
   - `imdc_agent`: Specialist on the Infodengue-Mosqlimate Dengue Challenge (rules, datasets, previous results).
 - **Provider Abstraction**: Easily switch between LLM providers. Currently supports Gemini, OpenAI, Ollama (local/cloud), DeepSeek, and NVIDIA NIM.
-- **RAG Capabilities**: Uses an in-memory vector store (with Ollama embeddings by default) to semantically retrieve documentation from URLs, CSV files, and Jupyter notebooks.
+- **RAG Capabilities**: Uses an in-memory vector store with **recursive chunking and max-pooling** — documents are split into small overlapping chunks for precise embedding, and the best chunk score represents each parent document during retrieval.
+- **Indexing Strategies**: Supports `"content"` (default, recursive chunking) and `"keyword"` (metadata-based) indexing for flexible document ingestion.
 - **Bilingual Support**: System prompts natively handle both Portuguese (`pt`) and English (`en`).
 - **Caching**: HTTP responses are cached via `requests-cache` to speed up document ingestion.
 
@@ -57,14 +58,16 @@ For advanced use cases, you can construct the assistant manually with your provi
 
 - `mosqlimate_assistant/`
   - [`assistant.py`](mosqlimate_assistant/assistant.py): Primary entry point for creating configured `Assistant` instances.
-  - [`agents.py`](mosqlimate_assistant/agents.py): Contains `AgentExecutor` and `AgentOrchestrator` for routing queries and iterating on tool calls.
-  - [`agent_cards.py`](mosqlimate_assistant/agent_cards.py): Declarative configuration for each specific AI agent, including available tools and fallback rules.
+  - [`agents.py`](mosqlimate_assistant/agents.py): `AgentExecutor` and `AgentOrchestrator` for RAG retrieval, context-limited fallback, and tool execution loops.
+  - [`agent_cards.py`](mosqlimate_assistant/agent_cards.py): Declarative configuration for each agent, including tools, search strategy, and fallback thresholds.
   - [`main.py`](mosqlimate_assistant/main.py): Pre-configured pipelines mapping the `docs`, `code`, and `imdc` agents together.
   - [`providers.py`](mosqlimate_assistant/providers.py): LLM abstraction wrappers (OpenAI, Gemini, Ollama, DeepSeek, etc.).
-  - [`embeddings.py`](mosqlimate_assistant/embeddings.py): Embedding interfaces.
-  - [`vector_store.py`](mosqlimate_assistant/vector_store.py): In-memory `numpy`-backed semantic database.
-  - [`document_consumer.py`](mosqlimate_assistant/document_consumer.py): Scraping and ingestion scripts for reading markdown, notebooks, and mkdocs context.
-  - [`prompts.py`](mosqlimate_assistant/prompts.py): System templates with strict instructions for models.
+  - [`embeddings.py`](mosqlimate_assistant/embeddings.py): Embedding interfaces with normalization and error handling.
+  - [`vector_store.py`](mosqlimate_assistant/vector_store.py): In-memory `numpy`-backed vector database with chunk-level embeddings and max-pooling retrieval.
+  - [`document_consumer.py`](mosqlimate_assistant/document_consumer.py): Document scraping, ingestion, recursive text chunking, and content enrichment pipeline.
+  - [`prompts.py`](mosqlimate_assistant/prompts.py): Bilingual system prompts with strict anti-hallucination rules, document grounding, and API allowlists.
+  - [`models.py`](mosqlimate_assistant/models.py): Core data structures (`VectorDocument`, `ChatMessage`, `ProviderResponse`, etc.).
+  - [`settings.py`](mosqlimate_assistant/settings.py): Configuration constants for HTTP caching and default parameters.
 
 ## Development and Contribution
 

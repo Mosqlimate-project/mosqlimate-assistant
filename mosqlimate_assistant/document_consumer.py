@@ -1,9 +1,10 @@
-"""Document ingestion and content processing pipeline.
+"""Document ingestion, content processing, and text chunking pipeline.
 
 Handles fetching documents from external sources (URLs, CSV link lists,
 and local files), processing their content (Jupyter notebooks, mkdocs
-includes/mkdocstrings references), and indexing them into a vector store
-via the ``DocumentManager``.
+includes/mkdocstrings references), splitting text into overlapping chunks
+for granular embedding, and indexing them into a vector store via the
+``DocumentManager``.
 
 Consumer hierarchy:
     BaseDocumentConsumer → URLDocumentConsumer
@@ -11,8 +12,8 @@ Consumer hierarchy:
                          → FileDocumentConsumer
 
 The ``DocumentManager`` orchestrates consumers, generates deterministic
-document IDs, enriches content with metadata, and delegates storage to
-the configured ``BaseVectorStore``.
+document IDs, enriches content with metadata, applies recursive text
+chunking, and delegates storage to the configured ``BaseVectorStore``.
 
 HTTP responses are cached using ``requests-cache`` (SQLite backend)
 with settings from ``mosqlimate_assistant.settings``.
@@ -26,7 +27,7 @@ from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import timedelta
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
 
 import pandas as pd
 import requests
@@ -413,6 +414,221 @@ class FileDocumentConsumer(BaseDocumentConsumer):
         return docs
 
 
+def _find_best_separator(text: str, separators: List[str]) -> str:
+    """Find the coarsest separator that exists in the text.
+    Args:
+        text: The text to search for separators.
+        separators: Ordered list from coarsest to finest.
+    Returns:
+        The best separator found, or empty string as last resort.
+    """
+    for sep in separators:
+        if sep and sep in text:
+            return sep
+    return " "
+
+
+def _greedy_merge(
+    segments: List[str],
+    chunk_size: int,
+    separator: str,
+) -> List[str]:
+    """Greedily merge adjacent segments into chunks up to chunk_size.
+    Args:
+        segments: Non-empty text segments to merge.
+        chunk_size: Maximum character length per chunk.
+        separator: Separator to join segments.
+    Returns:
+        List of merged chunks.
+    """
+    if not segments:
+        return []
+    chunks: List[str] = []
+    current = segments[0]
+    for seg in segments[1:]:
+        combined = current + separator + seg
+        if len(combined) <= chunk_size:
+            current = combined
+        else:
+            chunks.append(current.strip())
+            current = seg
+    if current.strip():
+        chunks.append(current.strip())
+    return [c for c in chunks if c]
+
+
+def _balance_chunks(chunks: List[str], chunk_size: int) -> List[str]:
+    """Rebalance chunks by merging undersized ones with their smaller neighbor.
+    A chunk is considered undersized if it is shorter than ``chunk_size // 3``.
+    When merging, the undersized chunk joins whichever neighbor (left or right)
+    is smaller, as long as the result stays within ``chunk_size``.
+    Args:
+        chunks: List of text chunks to balance.
+        chunk_size: Maximum character length per chunk.
+    Returns:
+        Balanced list of chunks with fewer undersized entries.
+    """
+    if len(chunks) <= 1:
+        return chunks
+    min_size = chunk_size // 3
+    changed = True
+    while changed:
+        changed = False
+        i = 0
+        while i < len(chunks):
+            if len(chunks[i]) < min_size and len(chunks) > 1:
+                # Find the best merge candidate
+                left_size = len(chunks[i - 1]) if i > 0 else float("inf")
+                right_size = (
+                    len(chunks[i + 1]) if i < len(chunks) - 1 else float("inf")
+                )
+                if left_size <= right_size and i > 0:
+                    merged = chunks[i - 1] + "\n" + chunks[i]
+                    if len(merged) <= chunk_size:
+                        chunks[i - 1] = merged
+                        chunks.pop(i)
+                        changed = True
+                        continue
+                if i < len(chunks) - 1:
+                    merged = chunks[i] + "\n" + chunks[i + 1]
+                    if len(merged) <= chunk_size:
+                        chunks[i] = merged
+                        chunks.pop(i + 1)
+                        changed = True
+                        continue
+            i += 1
+    return chunks
+
+
+def _apply_overlap(
+    chunks: List[str], overlap: int, min_chunk_size: int = 0
+) -> List[str]:
+    """Add overlap by prepending tail characters from the previous chunk.
+    Args:
+        chunks: Ordered list of text chunks.
+        overlap: Default number of characters to carry over.
+        min_chunk_size: Threshold to trigger recursive overlap increase.
+    Returns:
+        Chunks with overlap applied (first chunk unchanged).
+    """
+    if overlap <= 0 or len(chunks) <= 1:
+        return chunks
+    result = [chunks[0]]
+    for i in range(1, len(chunks)):
+        chunk = chunks[i]
+        prev = chunks[i - 1]
+
+        # Use recursive overlap increase to ensure the chunk reaches min_chunk_size
+        # while keeping the split as clean as possible.
+        current_overlap = overlap
+        while (
+            min_chunk_size > 0
+            and (len(chunk) + current_overlap) < min_chunk_size
+            and current_overlap < len(prev)
+        ):
+            current_overlap += overlap
+
+        # Ensure we don't exceed prev length
+        current_overlap = min(current_overlap, len(prev))
+
+        tail = prev[-current_overlap:]
+        # Find a clean break point (space or newline)
+        # Search from the beginning of the tail to find the FIRST break
+        # that allows a clean overlap start.
+        break_idx = -1
+        for j, ch in enumerate(tail):
+            if ch in (" ", "\n"):
+                break_idx = j + 1
+                break
+
+        # If we found a break, use from there. If not, use the whole tail.
+        clean_tail = tail[break_idx:] if break_idx != -1 else tail
+
+        if clean_tail:
+            result.append(clean_tail.strip() + "\n" + chunk)
+        else:
+            result.append(chunk)
+    return result
+
+
+def balanced_chunk_split(
+    text: str,
+    chunk_size: int = 1200,
+    chunk_overlap: int = 80,
+    separators: Optional[List[str]] = None,
+) -> List[str]:
+    """Split text into balanced, overlapping chunks.
+    Produces fewer, larger chunks compared to naive recursive splitting.
+    The algorithm:
+        1. If text fits in one chunk, return it.
+        2. Split by the coarsest applicable separator.
+        3. Greedily merge adjacent segments up to ``chunk_size``.
+        4. Rebalance: merge undersized chunks (< chunk_size / 3) with neighbors.
+        5. If any chunk is still oversized, recursively split with finer separators.
+        6. Apply overlap between consecutive chunks.
+    Args:
+        text: The input text to split.
+        chunk_size: Maximum number of characters per chunk. Defaults to 1200.
+        chunk_overlap: Number of overlapping characters for context. Defaults to 80.
+        separators: Separator hierarchy from coarsest to finest. Defaults to
+            ``["\\n\\n", "# ", "## ", "### ", "```", "\\n", ". ", ", ", " "]``.
+    Returns:
+        List of balanced text chunks. Empty list for empty input.
+    """
+    if not text or not text.strip():
+        return []
+    text = text.strip()
+    if len(text) <= chunk_size:
+        return [text]
+    if separators is None:
+        separators = [
+            "\n\n",
+            "# ",
+            "## ",
+            "### ",
+            "```",
+            "\n",
+            ". ",
+            ", ",
+            " ",
+        ]
+    sep = _find_best_separator(text, separators)
+    remaining_seps = (
+        separators[separators.index(sep) + 1 :]
+        if sep in separators
+        else separators[1:]
+    )
+    raw_segments = [s for s in text.split(sep) if s.strip()]
+    if not raw_segments:
+        return [text]
+    # Greedy merge → balance
+    chunks = _greedy_merge(raw_segments, chunk_size, sep)
+    chunks = _balance_chunks(chunks, chunk_size)
+    # Recursively split any still-oversized chunks with finer separators
+    final: List[str] = []
+    for chunk in chunks:
+        if len(chunk) > chunk_size and remaining_seps:
+            sub = balanced_chunk_split(
+                chunk,
+                chunk_size=chunk_size,
+                chunk_overlap=0,  # overlap applied at the end
+                separators=remaining_seps,
+            )
+            final.extend(sub)
+        else:
+            final.append(chunk)
+    # Balance again after recursive splits
+    final = _balance_chunks(final, chunk_size)
+    # Apply overlap with minimum size requirement (e.g. 2/3 of chunk_size)
+    min_size = int(chunk_size * 0.66)
+    final = _apply_overlap(final, chunk_overlap, min_chunk_size=min_size)
+    return [c for c in final if c.strip()]
+
+
+# Keep backward-compatible alias
+recursive_character_split = balanced_chunk_split
+
+
 def _enrich_content(metadata: dict, content: str) -> str:
     parts = []
     name = metadata.get("name")
@@ -431,18 +647,33 @@ class DocumentManager:
     Attributes:
         vector_store (BaseVectorStore): The underlying vector database to populate.
         consumers (List[BaseDocumentConsumer]): Subscribed document sources.
-
+        indexing_strategy (Literal["content", "keyword"]): Strategy for chunk generation.
+        chunk_size (int): Maximum characters per chunk (content strategy).
+        chunk_overlap (int): Overlap characters between chunks (content strategy).
     """
 
-    def __init__(self, vector_store: BaseVectorStore):
+    def __init__(
+        self,
+        vector_store: BaseVectorStore,
+        indexing_strategy: Literal["content", "keyword"] = "content",
+        chunk_size: int = 1200,
+        chunk_overlap: int = 80,
+    ):
         """Initialize the DocumentManager.
 
         Args:
             vector_store (BaseVectorStore): The underlying vector database to populate.
-
+            indexing_strategy (Literal["content", "keyword"], optional): Strategy for
+                generating document chunks. "content" recursively splits the enriched
+                text; "keyword" uses metadata keywords as a single chunk. Defaults to "content".
+            chunk_size (int, optional): Max characters per chunk. Defaults to 1300.
+            chunk_overlap (int, optional): Overlap between chunks. Defaults to 80.
         """
         self.vector_store = vector_store
         self.consumers: List[BaseDocumentConsumer] = []
+        self.indexing_strategy = indexing_strategy
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
 
     def add_consumer(self, consumer: BaseDocumentConsumer) -> None:
         """Register a new document consumer to the manager.
@@ -490,17 +721,47 @@ class DocumentManager:
                         if id_key
                         else fallback_id
                     )
+                    enriched = _enrich_content(
+                        source_doc.metadata, source_doc.content
+                    )
+
+                    # New chunking logic:
+                    # chunk[0] = Metadata (Title + Keywords)
+                    # chunks[1:] = Content split
+                    metadata_parts = []
+                    if source_doc.metadata.get("name"):
+                        metadata_parts.append(
+                            f"# {source_doc.metadata.get('name')}"
+                        )
+                    if source_doc.metadata.get("keywords"):
+                        metadata_parts.append(
+                            f"Keywords: {source_doc.metadata.get('keywords')}"
+                        )
+
+                    meta_chunk = (
+                        "\n\n".join(metadata_parts)
+                        if metadata_parts
+                        else "# Document"
+                    )
+
+                    if self.indexing_strategy == "keyword":
+                        chunks = [meta_chunk]
+                    else:
+                        content_chunks = recursive_character_split(
+                            source_doc.content,
+                            chunk_size=self.chunk_size,
+                            chunk_overlap=self.chunk_overlap,
+                        )
+                        chunks = [meta_chunk] + content_chunks
 
                     vector_doc = VectorDocument(
                         id=doc_id,
-                        content=_enrich_content(
-                            source_doc.metadata, source_doc.content
-                        ),
+                        content=enriched,
                         metadata=source_doc.metadata,
                         collections=collections or [],
+                        chunks=chunks,
                     )
                     all_docs.append(vector_doc)
-
         if all_docs:
             self.vector_store.add_documents(all_docs)
 
