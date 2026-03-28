@@ -1,6 +1,29 @@
 Release Notes
 ---
 
+# [1.11.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.10.2...1.11.0) (2026-03-28)
+
+
+### Bug Fixes
+
+* **agent_cards:** update search_mode and add search_scope with type validation ([16e6d7b](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/16e6d7b9101bf88011a580543c16205d7b25a4ee))
+* **docs:** update README to clarify RAG capabilities and enhance agent descriptions ([fe16855](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/fe168555579262646d3711618a504b662fe71272))
+* **prompts:** refine system prompts for docs and code agents with better guidelines ([dff7ecd](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/dff7ecd963e29d7c88621b05d31ffb567a96036a))
+* **references:** update links, descriptions and keywords in documentation references ([fd2bbcb](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/fd2bbcb8059bc81523205caf7b11be8faa2a77c6))
+* **tests:** update assertions in test_get_base_docs_prompt and test_get_coder_agent_prompt ([3a5bca0](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/3a5bca0f20a7705deab15a3dc69bbd8eca3ec198))
+
+
+### Features
+
+* **agent_executor:** improve fallback retrieval and document citation formatting ([25c8ae4](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/25c8ae46a8dd9bfb4fab8b1012032ed10428579f))
+* **assistant:** add search_scope parameter for flexible agent search behavior ([30f17f6](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/30f17f6da677a9182e2d02b69f942f64e876a054))
+* **document_consumer:** implement balanced chunk splitting with overlap for document ingestion ([bc43c2e](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/bc43c2e43b66d4a31b89a4b7e5935b4cda3e3bcf))
+* **main:** update default Gemini model and enhance search parameters with scope options ([054de43](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/054de43198c7d89f434b2eff273bbde203e46b20))
+* **models:** add chunks attribute to VectorDocument for granular embedding ([61110a2](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/61110a2a964b235ad8c43aacc0c01b4307dd6556))
+* **tests:** add comprehensive tests for balanced_chunk_split function ([54a1236](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/54a123629b9c99d0d3726982911b00fa3348bbe7))
+* **tests:** enhance chunk max pooling tests and add document fallback logic ([234465e](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/234465e6a320397aa3862c0710c4e9b9c708489a))
+* **vector_store:** enhance chunk handling in InMemoryVectorStore with search mode options ([f2d2744](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/f2d274428084e18b8abb74ad260d766510817d19))
+
 ## [1.10.2](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.10.1...1.10.2) (2026-03-22)
 
 
