@@ -1,4 +1,4 @@
-__version__ = "1.11.0"  # changed by semantic-release
+__version__ = "1.12.0"  # changed by semantic-release
 
 from mosqlimate_assistant.agent import (
     ChatMessageAdapter,

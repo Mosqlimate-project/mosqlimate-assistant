@@ -1,6 +1,23 @@
 Release Notes
 ---
 
+# [1.12.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.11.0...1.12.0) (2026-05-07)
+
+
+### Bug Fixes
+
+* **build:** clean package metadata and dependencies ([eb7abe3](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/eb7abe3599d099ba1ad17f343072c97a5bbb7542))
+* **docs:** standardize module docs and refresh README ([dd898e9](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/dd898e9a03db0773caee28afa0b34ec2a0378d65))
+* **tests:** enhance reference CSV validation ([8be87e2](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/8be87e25417e8870710e67716cc696665fe1b844))
+* **tests:** fix linting and type issues in test files ([9fa70cd](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/9fa70cd9b2437b5c2805e6896007c47ac5bd1fe5))
+
+
+### Features
+
+* **references:** expand documentation catalogs and block coverage ([3fa3110](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/3fa31105324f3c869e9589b3610d2f2557a19001))
+* **runtime:** replace legacy assistant stack with single-agent runtime ([5805d64](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/5805d64505b2f3874c801980f02f06b77ccb2eef))
+* **tests:** reorganize and streamline single-agent test suite ([d047cf5](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/d047cf58f15ea5ddf78c8c04f5d493c5d35fb284))
+
 # [1.11.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.10.2...1.11.0) (2026-03-28)
 
 
