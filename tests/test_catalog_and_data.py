@@ -1,10 +1,18 @@
 from __future__ import annotations
 
 import csv
+from collections import Counter
 from pathlib import Path
 
 from mosqlimate_assistant.knowledge_base import build_default_blocks
-from scripts import validate_reference_csvs
+
+EXPECTED_CSV_COLUMNS = (
+    "name",
+    "markdown_link",
+    "url_link",
+    "keywords",
+    "group",
+)
 
 EXPECTED_BLOCK_KEYS = {
     "platform_overview",
@@ -143,21 +151,30 @@ def test_english_project_links_use_en_locale() -> None:
 
 
 def test_reference_csv_validator_passes_for_all_catalogs() -> None:
-    reports = [
-        validate_reference_csvs.validate_csv(
-            Path("mosqlimate_assistant/data") / file_name
-        )
-        for file_name in (
-            "docs_references.csv",
-            "docs_en_references.csv",
-            "code_references.csv",
-            "imdc_references.csv",
-        )
-    ]
+    for file_name in (
+        "docs_references.csv",
+        "docs_en_references.csv",
+        "code_references.csv",
+        "imdc_references.csv",
+    ):
+        csv_path = Path("mosqlimate_assistant/data") / file_name
+        with csv_path.open("r", encoding="utf-8") as handle:
+            rows = list(csv.DictReader(handle))
 
-    assert all(report.ok for report in reports)
-    assert all(report.missing_columns == [] for report in reports)
-    assert all(report.extra_columns == [] for report in reports)
+        fieldnames = tuple(rows[0].keys()) if rows else ()
+        duplicate_names = [
+            key
+            for key, count in Counter(row["name"] for row in rows).items()
+            if count > 1
+        ]
+        empty_required_fields = {
+            column: sum(not (row.get(column) or "").strip() for row in rows)
+            for column in EXPECTED_CSV_COLUMNS
+        }
+
+        assert fieldnames == EXPECTED_CSV_COLUMNS
+        assert duplicate_names == []
+        assert all(count == 0 for count in empty_required_fields.values())
 
 
 def test_reference_csv_groups_follow_standardized_names() -> None:
@@ -194,7 +211,11 @@ def test_reference_csv_groups_follow_standardized_names() -> None:
     }
 
     for file_name, expected in expected_groups.items():
-        report = validate_reference_csvs.validate_csv(
-            Path("mosqlimate_assistant/data") / file_name
+        csv_path = Path("mosqlimate_assistant/data") / file_name
+        with csv_path.open("r", encoding="utf-8") as handle:
+            rows = list(csv.DictReader(handle))
+
+        group_counts = Counter(
+            (row.get("group") or "").strip() for row in rows
         )
-        assert set(report.group_counts) == expected
+        assert set(group_counts) == expected
