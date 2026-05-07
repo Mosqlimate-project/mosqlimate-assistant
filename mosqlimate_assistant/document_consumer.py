@@ -1,22 +1,9 @@
-"""Document ingestion, content processing, and text chunking pipeline.
+"""Document ingestion, normalization, and chunking pipeline.
 
-Handles fetching documents from external sources (URLs, CSV link lists,
-and local files), processing their content (Jupyter notebooks, mkdocs
-includes/mkdocstrings references), splitting text into overlapping chunks
-for granular embedding, and indexing them into a vector store via the
-``DocumentManager``.
-
-Consumer hierarchy:
-    BaseDocumentConsumer → URLDocumentConsumer
-                         → CSVLinkConsumer
-                         → FileDocumentConsumer
-
-The ``DocumentManager`` orchestrates consumers, generates deterministic
-document IDs, enriches content with metadata, applies recursive text
-chunking, and delegates storage to the configured ``BaseVectorStore``.
-
-HTTP responses are cached using ``requests-cache`` (SQLite backend)
-with settings from ``mosqlimate_assistant.settings``.
+This module fetches raw documentation from URLs, CSV link catalogs, and
+local files; resolves common documentation patterns such as notebooks and
+mkdocs includes; and transforms the result into chunked documents ready
+for vector indexing through ``DocumentManager``.
 """
 
 import hashlib
@@ -25,25 +12,56 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional, Protocol, Union
 
 import pandas as pd
 import requests
 import requests_cache
 
 from mosqlimate_assistant.models import SourceDocument, VectorDocument
+from mosqlimate_assistant.monitoring import (
+    elapsed_seconds,
+    get_monitor_logger,
+    log_event,
+    now_seconds,
+)
 from mosqlimate_assistant.settings import (
     HTTP_CACHE_DIR,
     HTTP_CACHE_ENABLED,
     HTTP_CACHE_TTL_SECONDS,
 )
-from mosqlimate_assistant.vector_store import BaseVectorStore
 
 _cached_session: Optional[
     Union[requests.Session, requests_cache.CachedSession]
 ] = None
+LOGGER = get_monitor_logger("documents")
+
+
+class DocumentSink(Protocol):
+    """Minimal interface required by DocumentManager."""
+
+    def add_documents(self, documents: List[VectorDocument]) -> None:
+        """Store a batch of processed documents."""
+
+    def similarity_search(
+        self,
+        query: str,
+        k: int = 3,
+        collections: Optional[List[str]] = None,
+    ) -> list:
+        """Optional retrieval hook used by ``DocumentManager.search``."""
+
+
+@dataclass(frozen=True)
+class ChunkingConfig:
+    """Configuration for content chunking."""
+
+    indexing_strategy: Literal["content", "keyword"] = "content"
+    chunk_size: int = 1200
+    chunk_overlap: int = 80
 
 
 def get_cached_session() -> (
@@ -206,6 +224,7 @@ def _fetch_url(
     source_type: str,
     extra_metadata: Optional[dict] = None,
 ) -> Optional[SourceDocument]:
+    start = now_seconds()
     try:
         response = session.get(url)
         response.raise_for_status()
@@ -222,14 +241,33 @@ def _fetch_url(
         if unresolved > 0:
             raise ValueError(f"Failed to fully render {unresolved} templates")
 
-        return SourceDocument(
+        document = SourceDocument(
             content=content,
             source_type=source_type,
             source_identifier=url,
             metadata=metadata,
         )
+        log_event(
+            LOGGER,
+            "document_fetched",
+            source_type=source_type,
+            source_identifier=url,
+            from_cache=metadata.get("from_cache", False),
+            content_length=len(content),
+            elapsed_seconds=elapsed_seconds(start),
+        )
+        return document
     except Exception as e:
         logging.warning("Error fetching %s: %s", url, e)
+        log_event(
+            LOGGER,
+            "document_fetch_failed",
+            level=logging.WARNING,
+            source_type=source_type,
+            source_identifier=url,
+            error=str(e),
+            elapsed_seconds=elapsed_seconds(start),
+        )
         return None
 
 
@@ -244,7 +282,7 @@ class BaseDocumentConsumer(ABC):
             List[SourceDocument]: A list of fetched documents.
 
         """
-        pass
+        raise NotImplementedError
 
 
 class URLDocumentConsumer(BaseDocumentConsumer):
@@ -641,11 +679,69 @@ def _enrich_content(metadata: dict, content: str) -> str:
     return "\n\n".join(parts)
 
 
+class VectorDocumentFactory:
+    """Build ``VectorDocument`` instances from fetched source documents."""
+
+    def __init__(self, config: Optional[ChunkingConfig] = None) -> None:
+        self.config = config or ChunkingConfig()
+
+    def build(
+        self,
+        source_doc: SourceDocument,
+        collections: Optional[List[str]] = None,
+        id_key: Optional[str] = None,
+    ) -> VectorDocument:
+        """Create a single vector-ready document from a source document."""
+        doc_hash = hashlib.md5(
+            (source_doc.content + source_doc.source_identifier).encode()
+        ).hexdigest()[:12]
+
+        fallback_id = f"{source_doc.source_type}_{doc_hash}"
+        doc_id = (
+            source_doc.metadata.get(id_key) or fallback_id
+            if id_key
+            else fallback_id
+        )
+        enriched = _enrich_content(source_doc.metadata, source_doc.content)
+        chunks = self._build_chunks(source_doc)
+
+        return VectorDocument(
+            id=doc_id,
+            content=enriched,
+            metadata=source_doc.metadata,
+            collections=collections or [],
+            chunks=chunks,
+        )
+
+    def _build_chunks(self, source_doc: SourceDocument) -> List[str]:
+        metadata_parts = []
+        if source_doc.metadata.get("name"):
+            metadata_parts.append(f"# {source_doc.metadata.get('name')}")
+        if source_doc.metadata.get("keywords"):
+            metadata_parts.append(
+                f"Keywords: {source_doc.metadata.get('keywords')}"
+            )
+
+        meta_chunk = (
+            "\n\n".join(metadata_parts) if metadata_parts else "# Document"
+        )
+
+        if self.config.indexing_strategy == "keyword":
+            return [meta_chunk]
+
+        content_chunks = recursive_character_split(
+            source_doc.content,
+            chunk_size=self.config.chunk_size,
+            chunk_overlap=self.config.chunk_overlap,
+        )
+        return [meta_chunk] + content_chunks
+
+
 class DocumentManager:
     """Orchestrates document scraping, processing, and indexing.
 
     Attributes:
-        vector_store (BaseVectorStore): The underlying vector database to populate.
+        vector_store (DocumentSink): The underlying document sink to populate.
         consumers (List[BaseDocumentConsumer]): Subscribed document sources.
         indexing_strategy (Literal["content", "keyword"]): Strategy for chunk generation.
         chunk_size (int): Maximum characters per chunk (content strategy).
@@ -654,7 +750,7 @@ class DocumentManager:
 
     def __init__(
         self,
-        vector_store: BaseVectorStore,
+        vector_store: DocumentSink,
         indexing_strategy: Literal["content", "keyword"] = "content",
         chunk_size: int = 1200,
         chunk_overlap: int = 80,
@@ -662,7 +758,7 @@ class DocumentManager:
         """Initialize the DocumentManager.
 
         Args:
-            vector_store (BaseVectorStore): The underlying vector database to populate.
+            vector_store (DocumentSink): The underlying document sink to populate.
             indexing_strategy (Literal["content", "keyword"], optional): Strategy for
                 generating document chunks. "content" recursively splits the enriched
                 text; "keyword" uses metadata keywords as a single chunk. Defaults to "content".
@@ -671,9 +767,12 @@ class DocumentManager:
         """
         self.vector_store = vector_store
         self.consumers: List[BaseDocumentConsumer] = []
-        self.indexing_strategy = indexing_strategy
-        self.chunk_size = chunk_size
-        self.chunk_overlap = chunk_overlap
+        self.config = ChunkingConfig(
+            indexing_strategy=indexing_strategy,
+            chunk_size=chunk_size,
+            chunk_overlap=chunk_overlap,
+        )
+        self.document_factory = VectorDocumentFactory(self.config)
 
     def add_consumer(self, consumer: BaseDocumentConsumer) -> None:
         """Register a new document consumer to the manager.
@@ -683,6 +782,11 @@ class DocumentManager:
 
         """
         self.consumers.append(consumer)
+        log_event(
+            LOGGER,
+            "document_consumer_added",
+            consumer_type=consumer.__class__.__name__,
+        )
 
     def fetch_and_index_all(
         self,
@@ -696,7 +800,29 @@ class DocumentManager:
             id_key (Optional[str], optional): Metadata key to use as the document ID. Defaults to None.
 
         """
-        all_docs: List[VectorDocument] = []
+        start = now_seconds()
+        source_docs = self.fetch_documents()
+        vector_docs = self.build_vector_documents(
+            source_docs,
+            collections=collections,
+            id_key=id_key,
+        )
+        self.index_documents(vector_docs)
+        log_event(
+            LOGGER,
+            "documents_indexed",
+            consumer_count=len(self.consumers),
+            collections=collections or [],
+            source_document_count=len(source_docs),
+            document_count=len(vector_docs),
+            chunk_count=sum(len(doc.chunks) for doc in vector_docs),
+            indexing_strategy=self.config.indexing_strategy,
+            elapsed_seconds=elapsed_seconds(start),
+        )
+
+    def fetch_documents(self) -> List[SourceDocument]:
+        """Fetch source documents from all registered consumers."""
+        source_docs: List[SourceDocument] = []
 
         with ThreadPoolExecutor(
             max_workers=min(4, len(self.consumers) or 1)
@@ -706,64 +832,36 @@ class DocumentManager:
                 for consumer in self.consumers
             }
             for future in as_completed(futures):
-                source_docs = future.result()
+                docs = future.result()
+                log_event(
+                    LOGGER,
+                    "consumer_fetch_completed",
+                    source_document_count=len(docs),
+                )
+                source_docs.extend(docs)
 
-                for source_doc in source_docs:
-                    doc_hash = hashlib.md5(
-                        (
-                            source_doc.content + source_doc.source_identifier
-                        ).encode()
-                    ).hexdigest()[:12]
+        return source_docs
 
-                    fallback_id = f"{source_doc.source_type}_{doc_hash}"
-                    doc_id = (
-                        source_doc.metadata.get(id_key) or fallback_id
-                        if id_key
-                        else fallback_id
-                    )
-                    enriched = _enrich_content(
-                        source_doc.metadata, source_doc.content
-                    )
+    def build_vector_documents(
+        self,
+        source_docs: List[SourceDocument],
+        collections: Optional[List[str]] = None,
+        id_key: Optional[str] = None,
+    ) -> List[VectorDocument]:
+        """Transform fetched source documents into vector-ready documents."""
+        return [
+            self.document_factory.build(
+                source_doc,
+                collections=collections,
+                id_key=id_key,
+            )
+            for source_doc in source_docs
+        ]
 
-                    # New chunking logic:
-                    # chunk[0] = Metadata (Title + Keywords)
-                    # chunks[1:] = Content split
-                    metadata_parts = []
-                    if source_doc.metadata.get("name"):
-                        metadata_parts.append(
-                            f"# {source_doc.metadata.get('name')}"
-                        )
-                    if source_doc.metadata.get("keywords"):
-                        metadata_parts.append(
-                            f"Keywords: {source_doc.metadata.get('keywords')}"
-                        )
-
-                    meta_chunk = (
-                        "\n\n".join(metadata_parts)
-                        if metadata_parts
-                        else "# Document"
-                    )
-
-                    if self.indexing_strategy == "keyword":
-                        chunks = [meta_chunk]
-                    else:
-                        content_chunks = recursive_character_split(
-                            source_doc.content,
-                            chunk_size=self.chunk_size,
-                            chunk_overlap=self.chunk_overlap,
-                        )
-                        chunks = [meta_chunk] + content_chunks
-
-                    vector_doc = VectorDocument(
-                        id=doc_id,
-                        content=enriched,
-                        metadata=source_doc.metadata,
-                        collections=collections or [],
-                        chunks=chunks,
-                    )
-                    all_docs.append(vector_doc)
-        if all_docs:
-            self.vector_store.add_documents(all_docs)
+    def index_documents(self, documents: List[VectorDocument]) -> None:
+        """Push vector-ready documents into the configured sink."""
+        if documents:
+            self.vector_store.add_documents(documents)
 
     def search(
         self,
@@ -778,10 +876,11 @@ class DocumentManager:
             k (int, optional): Number of top results to return. Defaults to 3.
             collections (Optional[List[str]], optional): Collections to restrict the search to. Defaults to None.
 
-        Returns:
-            List[VectorSearchResult]: Documents matching the query.
-
         """
+        if not hasattr(self.vector_store, "similarity_search"):
+            raise NotImplementedError(
+                "This document sink does not support semantic search."
+            )
         return self.vector_store.similarity_search(
             query, k=k, collections=collections
         )

@@ -5,16 +5,17 @@ description = "Mosqlimate AI Assistant"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [
-    "google-genai>=1.0.0",
+    "faiss-cpu>=1.11.0",
+    "langchain>=0.3.27",
+    "langchain-community>=0.3.27",
+    "langchain-openai>=0.3.28",
     "numpy>=2.2.5",
     "ollama>=0.4.8",
     "openai>=1.76.0",
     "pandas>=2.2.3",
     "pydantic>=2.10.6",
-    "pydantic-settings>=2.9.1",
     "requests>=2.32.3",
     "requests-cache>=1.3.0",
-    "types-requests>=2.31.0",
 ]
 
 [tool.setuptools]
@@ -23,8 +24,12 @@ include-package-data = true
 
 [tool.poetry]
 include = [
-    "mosqlimate_assistant/data/docs_reference.csv",
+    "mosqlimate_assistant/data/asks.csv",
     "mosqlimate_assistant/data/code_references.csv",
+    "mosqlimate_assistant/data/docs_en_references.csv",
+    "mosqlimate_assistant/data/docs_references.csv",
+    "mosqlimate_assistant/data/imdc_references.csv",
+    "mosqlimate_assistant/data/municipios.json",
 ]
 
 [dependency-groups]
@@ -33,10 +38,10 @@ dev = [
     "isort>=6.0.1",
     "mypy>=1.15.0",
     "pandas-stubs>=2.2.3.250527",
-    "pip>=25.0.1",
     "pre-commit>=4.2.0",
     "pytest>=8.3.5",
     "ruff>=0.11.6",
+    "types-requests>=2.31.0",
 ]
 
 [tool.isort]

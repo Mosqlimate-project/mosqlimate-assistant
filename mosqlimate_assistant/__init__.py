@@ -1,7 +1,11 @@
 __version__ = "1.11.0"  # changed by semantic-release
 
-from mosqlimate_assistant.agent_cards import AgentCard, BaseTool
-from mosqlimate_assistant.agents import AgentExecutor, AgentOrchestrator
+from mosqlimate_assistant.agent import (
+    ChatMessageAdapter,
+    ChatModelFactory,
+    LangChainToolAgent,
+    ToolCatalog,
+)
 from mosqlimate_assistant.assistant import (
     Assistant,
     create_deepseek_assistant,
@@ -13,15 +17,25 @@ from mosqlimate_assistant.assistant import (
 )
 from mosqlimate_assistant.document_consumer import (
     BaseDocumentConsumer,
+    ChunkingConfig,
     CSVLinkConsumer,
     DocumentManager,
     FileDocumentConsumer,
     URLDocumentConsumer,
+    VectorDocumentFactory,
 )
 from mosqlimate_assistant.embeddings import (
     BaseEmbeddingProvider,
     OllamaEmbeddingProvider,
     OpenAIEmbeddingProvider,
+)
+from mosqlimate_assistant.knowledge_base import (
+    DocumentBlockConfig,
+    DocumentSourceConfig,
+    LangChainDocumentFactory,
+    LangChainEmbeddingAdapter,
+    MosqlimateKnowledgeBase,
+    SourceDocumentPipeline,
 )
 from mosqlimate_assistant.main import (
     assistant_pipeline,
@@ -29,57 +43,45 @@ from mosqlimate_assistant.main import (
     docs_pipeline,
 )
 from mosqlimate_assistant.models import (
+    AgentRunResult,
     ChatMessage,
-    ProviderResponse,
+    ProviderConfig,
     ProviderType,
     SourceDocument,
+    TokenUsage,
+    ToolCallRecord,
     VectorDocument,
-    VectorSearchResult,
-)
-from mosqlimate_assistant.providers import (
-    BaseProvider,
-    DeepSeekProvider,
-    GeminiProvider,
-    GoogleGenAIProvider,
-    NvidiaProvider,
-    OllamaProvider,
-    OpenAIProvider,
-    ProviderFactory,
-)
-from mosqlimate_assistant.vector_store import (
-    BaseVectorStore,
-    InMemoryVectorStore,
 )
 
 __all__ = [
+    "AgentRunResult",
     "ChatMessage",
-    "ProviderResponse",
+    "ProviderConfig",
     "ProviderType",
     "SourceDocument",
+    "TokenUsage",
+    "ToolCallRecord",
     "VectorDocument",
-    "VectorSearchResult",
-    "BaseProvider",
-    "OpenAIProvider",
-    "DeepSeekProvider",
-    "GeminiProvider",
-    "GoogleGenAIProvider",
-    "NvidiaProvider",
-    "OllamaProvider",
-    "ProviderFactory",
     "BaseEmbeddingProvider",
     "OllamaEmbeddingProvider",
     "OpenAIEmbeddingProvider",
-    "BaseVectorStore",
-    "InMemoryVectorStore",
     "BaseDocumentConsumer",
     "URLDocumentConsumer",
     "CSVLinkConsumer",
     "FileDocumentConsumer",
+    "ChunkingConfig",
+    "VectorDocumentFactory",
     "DocumentManager",
-    "BaseTool",
-    "AgentCard",
-    "AgentExecutor",
-    "AgentOrchestrator",
+    "DocumentBlockConfig",
+    "DocumentSourceConfig",
+    "LangChainEmbeddingAdapter",
+    "LangChainDocumentFactory",
+    "SourceDocumentPipeline",
+    "MosqlimateKnowledgeBase",
+    "ChatMessageAdapter",
+    "ChatModelFactory",
+    "ToolCatalog",
+    "LangChainToolAgent",
     "Assistant",
     "create_ollama_assistant",
     "create_openai_assistant",

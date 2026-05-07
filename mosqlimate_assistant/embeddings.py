@@ -1,8 +1,9 @@
-"""Text embedding providers for the vector store.
+"""Embedding backends used by the Mosqlimate retrieval layer.
 
-Provides an abstract interface (``BaseEmbeddingProvider``) and concrete
-implementations for generating vector embeddings from text, which are
-used by the vector store for similarity search.
+This module defines the common embedding-provider interface and the
+concrete implementations used by the package. These providers convert
+text into vectors for FAISS indexing and similarity search across the
+documentation corpus.
 """
 
 from abc import ABC, abstractmethod
@@ -29,7 +30,7 @@ class BaseEmbeddingProvider(ABC):
             List[float]: The generated embedding vector.
 
         """
-        pass
+        raise NotImplementedError
 
     def safe_embed(self, text: str) -> List[float]:
         """Safely generate an embedding, falling back to truncated text if it fails.
