@@ -1,27 +1,8 @@
-from mosqlimate_assistant.prompts import (
-    get_base_docs_prompt,
-    get_coder_agent_prompt,
-    get_imdc_agent_prompt,
-)
+from mosqlimate_assistant.prompts import get_single_agent_prompt
 
 
-def test_get_base_docs_prompt():
-    prompt = get_base_docs_prompt()
+def test_get_single_agent_prompt():
+    prompt = get_single_agent_prompt()
     assert isinstance(prompt, str)
+    assert "ferramentas" in prompt.lower()
     assert "Mosqlimate" in prompt
-    assert "REGRAS ESTRITAS" in prompt
-    assert "NUNCA" in prompt
-
-
-def test_get_coder_agent_prompt():
-    prompt = get_coder_agent_prompt()
-    assert isinstance(prompt, str)
-    assert "get_infodengue" in prompt
-    assert "mosqlient" in prompt.lower()
-
-
-def test_get_imdc_agent_prompt():
-    prompt = get_imdc_agent_prompt()
-    assert isinstance(prompt, str)
-    assert "IMDC" in prompt
-    assert "Infodengue" in prompt
