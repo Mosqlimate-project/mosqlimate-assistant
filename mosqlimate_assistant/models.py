@@ -1,14 +1,15 @@
-"""Pydantic data models used across the mosqlimate-assistant package.
+"""Core Pydantic models shared across the Mosqlimate Assistant.
 
-Defines the core data structures for messages, provider responses,
-vector documents, and search results that flow between the different
-layers of the system.
+This module contains the package's normalized data structures for chat
+messages, provider configuration, usage accounting, tool-call records,
+retrieval block declarations, and source/vector documents.
 """
 
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProviderType(str, Enum):
@@ -16,22 +17,18 @@ class ProviderType(str, Enum):
 
     Attributes:
         OPENAI: OpenAI API provider.
-        GEMINI: Google Gemini provider using the newer google-genai library in python.
+        GEMINI: Google Gemini provider through the OpenAI-compatible endpoint.
         OLLAMA: Local Ollama provider.
-        GOOGLE_GENAI: Google GenAI API provider.
         NVIDIA: NVIDIA NIM API provider.
         DEEPSEEK: DeepSeek API provider.
-        OLLAMA_CLOUD: Ollama Cloud API provider.
 
     """
 
     OPENAI = "openai"
     GEMINI = "gemini"
     OLLAMA = "ollama"
-    GOOGLE_GENAI = "google_genai"
     NVIDIA = "nvidia"
     DEEPSEEK = "deepseek"
-    OLLAMA_CLOUD = "ollama_cloud"
 
 
 class ChatMessage(BaseModel):
@@ -49,22 +46,124 @@ class ChatMessage(BaseModel):
     content: str = Field(..., description="Content of the message")
 
 
-class ProviderResponse(BaseModel):
-    """Structured response from an LLM provider.
+class ProviderConfig(BaseModel):
+    """Configuration for an OpenAI-compatible chat provider."""
 
-    Attributes:
-        content (str): Textual content of the response.
-        raw_response (Any): Raw original response returned by the provider.
-        tool_calls (Optional[List[Dict[str, Any]]]): List of tool calls requested by the model.
-
-    """
-
-    content: str = Field(..., description="Content of the response")
-    raw_response: Any = Field(..., description="Raw provider response")
-    tool_calls: Optional[List[Dict[str, Any]]] = Field(
-        default=None,
-        description="Tool calls requested by the model",
+    api_key: str = Field(..., description="Provider API key")
+    model: str = Field(..., description="Provider model identifier")
+    base_url: str = Field(
+        default="",
+        description="Provider base URL. Can be empty when the provider default should be used.",
     )
+
+
+class TokenUsage(BaseModel):
+    """Normalized token usage counters."""
+
+    input_tokens: int = Field(default=0, ge=0)
+    output_tokens: int = Field(default=0, ge=0)
+    total_tokens: int = Field(default=0, ge=0)
+
+    def merge(self, usage: "TokenUsage | dict[str, int] | None") -> None:
+        """Accumulate token counters in place."""
+        if usage is None:
+            return
+        snapshot = (
+            usage
+            if isinstance(usage, TokenUsage)
+            else TokenUsage.model_validate(usage)
+        )
+        self.input_tokens += snapshot.input_tokens
+        self.output_tokens += snapshot.output_tokens
+        self.total_tokens += snapshot.total_tokens
+
+    def as_optional_dict(self) -> dict[str, int] | None:
+        """Return usage as a dict only when there is any non-zero value."""
+        return self.model_dump() if any(self.model_dump().values()) else None
+
+
+class ToolCallRecord(BaseModel):
+    """One executed tool call with normalized fields."""
+
+    tool: str
+    arguments: dict[str, Any] = Field(default_factory=dict)
+    result: str
+
+
+class AgentRunResult(BaseModel):
+    """Structured result returned by the single-agent flow."""
+
+    content: str
+    tool_calls: list[ToolCallRecord] = Field(default_factory=list)
+    retrieved_blocks: list[str] = Field(default_factory=list)
+    iterations: int = Field(default=0, ge=0)
+    usage: TokenUsage | None = None
+    provider_cost: float | None = None
+    provider_metadata: dict[str, Any] = Field(default_factory=dict)
+    elapsed_seconds: float = Field(default=0.0, ge=0.0)
+
+    def to_payload(self) -> dict[str, Any]:
+        """Return the legacy dict payload expected by current callers."""
+        return {
+            "content": self.content,
+            "tool_calls": [record.model_dump() for record in self.tool_calls],
+            "retrieved_blocks": self.retrieved_blocks,
+            "iterations": self.iterations,
+            "usage": self.usage.as_optional_dict() if self.usage else None,
+            "provider_cost": self.provider_cost,
+            "provider_metadata": self.provider_metadata,
+            "elapsed_seconds": self.elapsed_seconds,
+        }
+
+
+class DocumentSourceConfig(BaseModel):
+    """Describes a CSV-backed documentation source."""
+
+    model_config = ConfigDict(frozen=True)
+
+    domain: str
+    csv_path: Path
+    link_column: str = "markdown_link"
+    id_key: str | None = "name"
+
+
+class DocumentBlockConfig(BaseModel):
+    """Declarative tool block configuration."""
+
+    model_config = ConfigDict(frozen=True)
+
+    key: str
+    description: str
+    domain: str
+    names: frozenset[str] = Field(default_factory=frozenset)
+    url_fragments: frozenset[str] = Field(default_factory=frozenset)
+
+    def matches(self, metadata: dict[str, Any]) -> bool:
+        """Return whether a document metadata entry belongs to this block."""
+        if metadata.get("domain") != self.domain:
+            return False
+
+        name = metadata.get("name")
+        if self.names and name in self.names:
+            return True
+
+        urls = [
+            str(metadata.get(key, ""))
+            for key in (
+                "markdown_link",
+                "url_link",
+                "url",
+                "source_url",
+                "source_id",
+                "name",
+            )
+        ]
+        if self.url_fragments and any(
+            fragment in url for fragment in self.url_fragments for url in urls
+        ):
+            return True
+
+        return not self.names and not self.url_fragments
 
 
 class VectorDocument(BaseModel):
@@ -80,30 +179,17 @@ class VectorDocument(BaseModel):
 
     id: str = Field(..., description="Unique document identifier")
     content: str = Field(..., description="Textual content of the document")
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional document metadata"
     )
-    collections: List[str] = Field(
+    collections: list[str] = Field(
         default_factory=list,
         description="List of collections/groups the document belongs to",
     )
-    chunks: List[str] = Field(
+    chunks: list[str] = Field(
         default_factory=list,
         description="Recursive text chunks for granular embedding",
     )
-
-
-class VectorSearchResult(BaseModel):
-    """A document paired with its similarity score.
-
-    Attributes:
-        document (VectorDocument): The document retrieved from the store.
-        score (float): Similarity score ranging from 0 to 1 (higher is more similar).
-
-    """
-
-    document: VectorDocument = Field(..., description="Found document")
-    score: float = Field(..., description="Similarity score (0-1)")
 
 
 class SourceDocument(BaseModel):
@@ -124,6 +210,6 @@ class SourceDocument(BaseModel):
     source_identifier: str = Field(
         ..., description="Source identifier (URL, path, etc)"
     )
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional source metadata"
     )
