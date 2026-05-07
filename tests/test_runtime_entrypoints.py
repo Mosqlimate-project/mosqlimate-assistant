@@ -1,16 +1,18 @@
 from __future__ import annotations
 
 import tomllib
+from collections.abc import Mapping
 from pathlib import Path
+from typing import cast
 
 import pytest
 from langchain_core.documents import Document
 
+from mosqlimate_assistant.agent import ChatModelFactory
 from mosqlimate_assistant.assistant import (
     Assistant,
     create_ollama_assistant,
 )
-from mosqlimate_assistant.agent import ChatModelFactory
 from mosqlimate_assistant.embeddings import BaseEmbeddingProvider
 from mosqlimate_assistant.knowledge_base import (
     DocumentBlockConfig,
@@ -71,7 +73,10 @@ def test_assistant_requires_configured_tool_agent():
     ("callback", "args"),
     [
         (create_ollama_assistant, ()),
-        (ChatModelFactory.create, (ProviderType.OLLAMA, {"model": "llama3.2:latest"})),
+        (
+            ChatModelFactory.create,
+            (ProviderType.OLLAMA, {"model": "llama3.2:latest"}),
+        ),
     ],
 )
 def test_ollama_chat_entrypoints_fail_fast(callback, args):
@@ -110,7 +115,9 @@ def test_build_mosqlimate_assistant_ignores_compatibility_kwargs(
         captured["load_or_build_kwargs"] = kwargs
         return fake_kb
 
-    def fake_configure(self: Assistant, knowledge_base: object, max_tool_iterations: int) -> None:
+    def fake_configure(
+        self: Assistant, knowledge_base: object, max_tool_iterations: int
+    ) -> None:
         captured["configured_kb"] = knowledge_base
         captured["max_tool_iterations"] = max_tool_iterations
         self.knowledge_base = knowledge_base  # type: ignore[assignment]
@@ -144,10 +151,16 @@ def test_build_mosqlimate_assistant_ignores_compatibility_kwargs(
     assert captured["configured_kb"] is fake_kb
     assert captured["max_tool_iterations"] == 7
 
-    load_kwargs = captured["load_or_build_kwargs"]
+    load_kwargs = cast(
+        Mapping[str, object],
+        captured["load_or_build_kwargs"],
+    )
     assert load_kwargs["lang"] == "en"
+    assert isinstance(load_kwargs["storage_path"], Path)
     assert load_kwargs["storage_path"].name == "en"
+    assert isinstance(load_kwargs["blocks"], list)
     assert len(load_kwargs["blocks"]) > 0
+    assert isinstance(load_kwargs["source_configs"], list)
     assert len(load_kwargs["source_configs"]) == 3
 
 

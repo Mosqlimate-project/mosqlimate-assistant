@@ -21,17 +21,8 @@ from langchain_core.messages import (
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.tools import StructuredTool
 from langchain_openai import ChatOpenAI
-from pydantic import BaseModel, Field
-from pydantic import SecretStr
+from pydantic import BaseModel, Field, SecretStr
 
-from mosqlimate_assistant.monitoring import (
-    elapsed_seconds,
-    extract_langchain_response_metadata,
-    extract_langchain_usage,
-    get_monitor_logger,
-    log_event,
-    preview_text,
-)
 from mosqlimate_assistant.knowledge_base import (
     DocumentBlockConfig,
     MosqlimateKnowledgeBase,
@@ -43,6 +34,14 @@ from mosqlimate_assistant.models import (
     ProviderType,
     TokenUsage,
     ToolCallRecord,
+)
+from mosqlimate_assistant.monitoring import (
+    elapsed_seconds,
+    extract_langchain_response_metadata,
+    extract_langchain_usage,
+    get_monitor_logger,
+    log_event,
+    preview_text,
 )
 from mosqlimate_assistant.prompts import get_single_agent_prompt
 

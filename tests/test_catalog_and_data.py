@@ -132,8 +132,14 @@ def test_english_project_links_use_en_locale() -> None:
         indexed["project_ovicounter"]["url_link"]
         == "https://mosqlimate.org/en/egg-dataset/"
     )
-    assert indexed["project_products"]["url_link"] == "https://mosqlimate.org/en/products/"
-    assert indexed["project_team"]["url_link"] == "https://mosqlimate.org/en/team/"
+    assert (
+        indexed["project_products"]["url_link"]
+        == "https://mosqlimate.org/en/products/"
+    )
+    assert (
+        indexed["project_team"]["url_link"]
+        == "https://mosqlimate.org/en/team/"
+    )
 
 
 def test_reference_csv_validator_passes_for_all_catalogs() -> None:

@@ -10,18 +10,12 @@ from __future__ import annotations
 
 from pathlib import Path
 from time import perf_counter
-from typing import Any, Dict, List, Optional, Sequence
+from typing import List, Optional, Sequence
 
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 
-from mosqlimate_assistant.monitoring import (
-    elapsed_seconds,
-    get_monitor_logger,
-    log_event,
-    preview_text,
-)
 from mosqlimate_assistant.document_consumer import (
     CSVLinkConsumer,
     DocumentManager,
@@ -31,6 +25,12 @@ from mosqlimate_assistant.models import (
     DocumentBlockConfig,
     DocumentSourceConfig,
     VectorDocument,
+)
+from mosqlimate_assistant.monitoring import (
+    elapsed_seconds,
+    get_monitor_logger,
+    log_event,
+    preview_text,
 )
 
 
