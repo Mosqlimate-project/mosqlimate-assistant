@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+## [1.12.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.12.0...1.12.1) (2026-05-08)
+
+
+### Bug Fixes
+
+* **provider:** add support for Google and improve provider configuration ([8d95b7a](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/8d95b7a99b8a3d622d01f866cc6ba98f03c565d5))
+
 # [1.12.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.11.0...1.12.0) (2026-05-07)
 
 
