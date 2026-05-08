@@ -39,8 +39,10 @@ CODE_CSV = _DATA_DIR / "code_references.csv"
 IMDC_CSV = _DATA_DIR / "imdc_references.csv"
 
 DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash"
+DEFAULT_GOOGLE_MODEL = "gemini-2.5-flash"
 DEFAULT_EMBEDDING_MODEL = "mxbai-embed-large:latest"
 DEEPSEEK_BASE_URL = "https://api.deepseek.com"
+GOOGLE_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 LOGGER = get_monitor_logger("main")
 
 
@@ -81,23 +83,44 @@ def _resolve_provider_config(
     google_api_key: str | None,
     gemini_model: str,
     kwargs: dict[str, Any],
-) -> ProviderConfig:
+) -> Tuple[ProviderConfig, ProviderType]:
     """Build the OpenAI-compatible provider configuration."""
     provider_api_key = (
         kwargs.pop("deepseek_api_key", None)
         or google_api_key
         or os.getenv("DEEPSEEK_API_KEY")
+        or os.getenv("GOOGLE_API_KEY")
     )
     if not provider_api_key:
         raise ValueError(
-            "DeepSeek API key not configured. Provide `google_api_key`/`deepseek_api_key` "
-            "or set the `DEEPSEEK_API_KEY` environment variable."
+            "API key not configured. Provide `google_api_key`/`deepseek_api_key` "
+            "or set `DEEPSEEK_API_KEY`/`GOOGLE_API_KEY` environment variables."
         )
-    provider_model = kwargs.pop("deepseek_model", None) or gemini_model
-    return ProviderConfig(
-        api_key=provider_api_key,
-        model=provider_model,
-        base_url=DEEPSEEK_BASE_URL,
+
+    # Detect provider by key prefix
+    if provider_api_key.startswith("sk-"):
+        provider_type = ProviderType.DEEPSEEK
+        base_url = DEEPSEEK_BASE_URL
+        default_model = DEFAULT_DEEPSEEK_MODEL
+    else:
+        provider_type = ProviderType.OPENAI  # Google via OpenAI-compatible API
+        base_url = GOOGLE_BASE_URL
+        default_model = DEFAULT_GOOGLE_MODEL
+
+    # Manual model overrides
+    provider_model = (
+        kwargs.pop("deepseek_model", None)
+        or (gemini_model if gemini_model != DEFAULT_DEEPSEEK_MODEL else None)
+        or default_model
+    )
+
+    return (
+        ProviderConfig(
+            api_key=provider_api_key,
+            model=provider_model,
+            base_url=base_url,
+        ),
+        provider_type,
     )
 
 
@@ -149,7 +172,7 @@ def build_mosqlimate_assistant(
     """
     start = perf_counter()
     _discard_legacy_options(kwargs)
-    provider_config = _resolve_provider_config(
+    provider_config, provider_type = _resolve_provider_config(
         google_api_key=google_api_key,
         gemini_model=gemini_model,
         kwargs=kwargs,
@@ -161,7 +184,7 @@ def build_mosqlimate_assistant(
     )
 
     assistant = Assistant(
-        provider_type=ProviderType.DEEPSEEK,
+        provider_type=provider_type,
         provider_config=provider_config,
         lang=lang,
     )

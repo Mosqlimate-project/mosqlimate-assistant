@@ -231,12 +231,16 @@ class ChatModelFactory:
             or "https://api.deepseek.com",
         }
 
+        extra_body = {}
+        if provider_type == ProviderType.DEEPSEEK:
+            extra_body["thinking"] = {"type": "disabled"}
+
         return ChatOpenAI(
             api_key=SecretStr(provider_config.api_key),
             model=provider_config.model,
             base_url=base_url_by_provider[provider_type],
             temperature=0,
-            extra_body={"thinking": {"type": "disabled"}},
+            extra_body=extra_body,
         )
 
 
