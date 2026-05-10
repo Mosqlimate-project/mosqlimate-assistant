@@ -339,6 +339,38 @@ class LangChainToolAgent:
             return
         retrieved_blocks.append(tool_name)
 
+    @staticmethod
+    def _requested_block_keys(
+        tool_name: str,
+        arguments: Dict[str, Any],
+    ) -> List[str]:
+        """Extract block keys requested by one tool call."""
+        if tool_name == "batch_document_search":
+            return [
+                request["block_key"]
+                for request in arguments.get("requests", [])
+                if request.get("block_key")
+            ]
+        return [tool_name]
+
+    def _build_repeated_block_message(
+        self,
+        repeated_blocks: List[str],
+    ) -> str:
+        """Explain that the current run cannot reuse blocks already queried."""
+        blocks_text = ", ".join(repeated_blocks)
+        if self.lang == "en":
+            return (
+                "These documentation blocks were already consulted in this "
+                f"run: {blocks_text}. Choose different blocks that have not "
+                "been used yet in this question."
+            )
+        return (
+            "Estes blocos de documentação já foram consultados nesta rodada: "
+            f"{blocks_text}. Escolha blocos diferentes que ainda não foram "
+            "usados nesta pergunta."
+        )
+
     def run(
         self,
         user_query: str,
@@ -350,6 +382,7 @@ class LangChainToolAgent:
         tool_enabled_model = self.chat_model.bind_tools(self.tools)
         tool_calls_history: List[ToolCallRecord] = []
         retrieved_blocks: List[str] = []
+        consulted_blocks: set[str] = set()
         total_usage = TokenUsage()
         run_start = perf_counter()
 
@@ -395,8 +428,31 @@ class LangChainToolAgent:
             messages.append(response)
 
             for call in tool_calls:
-                tool = self.tool_map[call["name"]]
-                result = tool.invoke(call["args"])
+                requested_blocks = self._requested_block_keys(
+                    call["name"],
+                    call["args"],
+                )
+                repeated_blocks = [
+                    block_key
+                    for block_key in requested_blocks
+                    if block_key in consulted_blocks
+                ]
+                if repeated_blocks:
+                    result = self._build_repeated_block_message(
+                        repeated_blocks
+                    )
+                    log_event(
+                        self.logger,
+                        "tool_call_blocked_repeated_block",
+                        iteration=iteration,
+                        tool_name=call["name"],
+                        arguments=call["args"],
+                        repeated_blocks=repeated_blocks,
+                    )
+                else:
+                    tool = self.tool_map[call["name"]]
+                    result = tool.invoke(call["args"])
+                    consulted_blocks.update(requested_blocks)
                 tool_calls_history.append(
                     ToolCallRecord(
                         tool=call["name"],
@@ -404,18 +460,19 @@ class LangChainToolAgent:
                         result=result,
                     )
                 )
-                self._extend_retrieved_blocks(
-                    retrieved_blocks=retrieved_blocks,
-                    tool_name=call["name"],
-                    arguments=call["args"],
-                )
-                log_event(
-                    self.logger,
-                    "tool_call_selected",
-                    iteration=iteration,
-                    tool_name=call["name"],
-                    arguments=call["args"],
-                )
+                if not repeated_blocks:
+                    self._extend_retrieved_blocks(
+                        retrieved_blocks=retrieved_blocks,
+                        tool_name=call["name"],
+                        arguments=call["args"],
+                    )
+                    log_event(
+                        self.logger,
+                        "tool_call_selected",
+                        iteration=iteration,
+                        tool_name=call["name"],
+                        arguments=call["args"],
+                    )
                 messages.append(
                     ToolMessage(
                         content=result,
