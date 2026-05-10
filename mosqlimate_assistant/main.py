@@ -9,6 +9,7 @@ single-agent runtime.
 from __future__ import annotations
 
 import os
+from logging import ERROR
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Literal, Optional, Tuple
@@ -31,6 +32,7 @@ from mosqlimate_assistant.monitoring import (
     log_event,
     preview_text,
 )
+from mosqlimate_assistant.settings import VECTORSTORE_CACHE_DIR
 
 _DATA_DIR = Path(__file__).parent / "data"
 DOCS_CSV = _DATA_DIR / "docs_references.csv"
@@ -130,7 +132,7 @@ def _build_store_path(
 ) -> Path:
     """Return the storage path used to persist the FAISS index."""
     safe_model_name = embedding_model.replace(":", "_").replace("/", "_")
-    return _DATA_DIR / "langchain_vectorstores" / safe_model_name / lang
+    return VECTORSTORE_CACHE_DIR / safe_model_name / lang
 
 
 def _build_knowledge_base(
@@ -143,13 +145,30 @@ def _build_knowledge_base(
         model=embedding_model,
         base_url=ollama_base_url,
     )
-    return MosqlimateKnowledgeBase.load_or_build(
-        storage_path=_build_store_path(embedding_model, lang),
-        embedding_provider=embedding_provider,
-        blocks=build_default_blocks(lang=lang),
-        source_configs=_build_source_configs(lang),
-        lang=lang,
-    )
+    storage_path = _build_store_path(embedding_model, lang)
+    try:
+        return MosqlimateKnowledgeBase.load_or_build(
+            storage_path=storage_path,
+            embedding_provider=embedding_provider,
+            blocks=build_default_blocks(lang=lang),
+            source_configs=_build_source_configs(lang),
+            lang=lang,
+        )
+    except Exception as exc:
+        log_event(
+            LOGGER,
+            "knowledge_base_initialization_failed",
+            level=ERROR,
+            lang=lang,
+            embedding_model=embedding_model,
+            storage_path=str(storage_path),
+            error=str(exc),
+        )
+        raise RuntimeError(
+            "Failed to initialize the Mosqlimate knowledge base. "
+            "Check whether the documentation sources are reachable and whether "
+            f"the cache directory is writable: {storage_path}"
+        ) from exc
 
 
 def build_mosqlimate_assistant(
