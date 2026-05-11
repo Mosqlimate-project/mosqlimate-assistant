@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from time import perf_counter
-from typing import List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 
 from langchain_community.vectorstores import FAISS
 from langchain_core.documents import Document
@@ -151,12 +151,19 @@ class MosqlimateKnowledgeBase:
         embeddings: LangChainEmbeddingAdapter,
         blocks: Sequence[DocumentBlockConfig],
         storage_path: Optional[Path] = None,
+        source_configs: Optional[Sequence[DocumentSourceConfig]] = None,
+        prefer_live_block_search: bool = False,
         lang: str = "pt",
     ) -> None:
         self.vector_store = vector_store
         self.embeddings = embeddings
         self.storage_path = storage_path
         self.blocks = {block.key: block for block in blocks}
+        self.source_configs = list(source_configs or [])
+        self.prefer_live_block_search = prefer_live_block_search and bool(
+            self.source_configs
+        )
+        self._live_domain_documents_cache: Dict[str, List[Document]] = {}
         self.lang = lang
         self.logger = get_monitor_logger("knowledge_base")
 
@@ -167,6 +174,8 @@ class MosqlimateKnowledgeBase:
         embedding_provider: BaseEmbeddingProvider,
         blocks: Sequence[DocumentBlockConfig],
         storage_path: Optional[Path] = None,
+        source_configs: Optional[Sequence[DocumentSourceConfig]] = None,
+        prefer_live_block_search: bool = False,
         lang: str = "pt",
     ) -> "MosqlimateKnowledgeBase":
         embeddings = LangChainEmbeddingAdapter(embedding_provider)
@@ -176,6 +185,8 @@ class MosqlimateKnowledgeBase:
             embeddings=embeddings,
             blocks=blocks,
             storage_path=storage_path,
+            source_configs=source_configs,
+            prefer_live_block_search=prefer_live_block_search,
             lang=lang,
         )
         if storage_path is not None:
@@ -189,15 +200,21 @@ class MosqlimateKnowledgeBase:
         embedding_provider: BaseEmbeddingProvider,
         blocks: Sequence[DocumentBlockConfig],
         source_configs: Sequence[DocumentSourceConfig],
+        prefer_live_block_search: bool = True,
         lang: str = "pt",
     ) -> "MosqlimateKnowledgeBase":
         embeddings = LangChainEmbeddingAdapter(embedding_provider)
+        live_block_search_enabled = prefer_live_block_search and bool(
+            source_configs
+        )
 
         if cls._has_persisted_index(storage_path):
             return cls._load_existing(
                 storage_path=storage_path,
                 embeddings=embeddings,
                 blocks=blocks,
+                source_configs=source_configs,
+                prefer_live_block_search=live_block_search_enabled,
                 lang=lang,
             )
 
@@ -215,6 +232,7 @@ class MosqlimateKnowledgeBase:
             embeddings=embeddings,
             blocks=blocks,
             source_configs=source_configs,
+            prefer_live_block_search=live_block_search_enabled,
             lang=lang,
         )
 
@@ -224,6 +242,8 @@ class MosqlimateKnowledgeBase:
         storage_path: Path,
         embeddings: LangChainEmbeddingAdapter,
         blocks: Sequence[DocumentBlockConfig],
+        source_configs: Sequence[DocumentSourceConfig],
+        prefer_live_block_search: bool,
         lang: str,
     ) -> "MosqlimateKnowledgeBase":
         """Load a persisted FAISS index from disk."""
@@ -238,6 +258,8 @@ class MosqlimateKnowledgeBase:
             embeddings=embeddings,
             blocks=blocks,
             storage_path=storage_path,
+            source_configs=source_configs,
+            prefer_live_block_search=prefer_live_block_search,
             lang=lang,
         )
         log_event(
@@ -256,6 +278,7 @@ class MosqlimateKnowledgeBase:
         embeddings: LangChainEmbeddingAdapter,
         blocks: Sequence[DocumentBlockConfig],
         source_configs: Sequence[DocumentSourceConfig],
+        prefer_live_block_search: bool,
         lang: str,
     ) -> "MosqlimateKnowledgeBase":
         """Build a new FAISS index from configured sources."""
@@ -272,6 +295,8 @@ class MosqlimateKnowledgeBase:
             embeddings=embeddings,
             blocks=blocks,
             storage_path=storage_path,
+            source_configs=source_configs,
+            prefer_live_block_search=prefer_live_block_search,
             lang=lang,
         )
         kb.save()
@@ -317,6 +342,88 @@ class MosqlimateKnowledgeBase:
         self.storage_path.mkdir(parents=True, exist_ok=True)
         self.vector_store.save_local(str(self.storage_path))
 
+    def _load_live_domain_documents(self, domain: str) -> List[Document]:
+        """Fetch domain documents directly from source URLs and cache them."""
+        if domain in self._live_domain_documents_cache:
+            return self._live_domain_documents_cache[domain]
+
+        matching_configs = [
+            config for config in self.source_configs if config.domain == domain
+        ]
+        if not matching_configs:
+            return []
+
+        documents: List[Document] = []
+        factory = LangChainDocumentFactory()
+        start = perf_counter()
+        for config in matching_configs:
+            vector_docs = SourceDocumentPipeline(
+                config
+            ).collect_vector_documents()
+            documents.extend(
+                factory.from_vector_documents(vector_docs, config.domain)
+            )
+        self._live_domain_documents_cache[domain] = documents
+        log_event(
+            self.logger,
+            "live_domain_documents_loaded",
+            domain=domain,
+            document_count=len(documents),
+            source_config_count=len(matching_configs),
+            elapsed_seconds=elapsed_seconds(start),
+        )
+        return documents
+
+    def _search_live_block(
+        self,
+        block_key: str,
+        query: str,
+        k: int = 4,
+        fetch_k: int = 16,
+    ) -> List[Document]:
+        """Fetch a block corpus from the source catalog and rank it on demand."""
+        block = self.blocks[block_key]
+        start = perf_counter()
+        domain_documents = self._load_live_domain_documents(block.domain)
+        block_documents = [
+            document
+            for document in domain_documents
+            if block.matches(document.metadata)
+        ]
+        if not block_documents:
+            log_event(
+                self.logger,
+                "live_block_search_completed",
+                block_key=block_key,
+                query_preview=preview_text(query),
+                result_count=0,
+                source_mode="live",
+                elapsed_seconds=elapsed_seconds(start),
+            )
+            return []
+
+        live_store = FAISS.from_documents(block_documents, self.embeddings)
+        docs = live_store.similarity_search(
+            query=query,
+            k=min(k, len(block_documents)),
+            fetch_k=max(fetch_k, k),
+        )
+        log_event(
+            self.logger,
+            "live_block_search_completed",
+            block_key=block_key,
+            query_preview=preview_text(query),
+            candidate_count=len(block_documents),
+            result_count=len(docs),
+            result_names=[
+                doc.metadata.get("name") or doc.metadata.get("source_id")
+                for doc in docs
+            ],
+            source_mode="live",
+            elapsed_seconds=elapsed_seconds(start),
+        )
+        return docs
+
     def search_block(
         self,
         block_key: str,
@@ -357,7 +464,22 @@ class MosqlimateKnowledgeBase:
         k: int = 4,
     ) -> str:
         """Format retrieved block content for the agent tool response."""
-        docs = self.search_block(block_key, query, k=k)
+        docs: List[Document]
+        if self.prefer_live_block_search:
+            try:
+                docs = self._search_live_block(block_key, query, k=k)
+            except Exception as exc:
+                log_event(
+                    self.logger,
+                    "live_block_search_failed",
+                    level=logging.WARNING,
+                    block_key=block_key,
+                    query_preview=preview_text(query),
+                    error=str(exc),
+                )
+                docs = self.search_block(block_key, query, k=k)
+        else:
+            docs = self.search_block(block_key, query, k=k)
         labels = {
             "block": "Block" if self.lang == "en" else "Bloco",
             "snippet": "Snippet" if self.lang == "en" else "Trecho",
