@@ -168,6 +168,158 @@ def test_single_agent_supports_batch_block_search_tool():
     assert result["tool_calls"][0]["tool"] == "batch_document_search"
 
 
+def test_single_agent_blocks_repeated_block_within_same_run():
+    kb = _StubKnowledgeBase()
+    model = _FakeChatModel(
+        [
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "datastore",
+                        "args": {"question": "dados"},
+                        "id": "call-1",
+                    }
+                ],
+            ),
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "datastore",
+                        "args": {"question": "mais detalhes"},
+                        "id": "call-2",
+                    }
+                ],
+            ),
+            AIMessage(content="Resposta final"),
+        ]
+    )
+    agent = LangChainToolAgent(
+        knowledge_base=kb,
+        provider_type=ProviderType.GEMINI,
+        provider_config={"api_key": "test", "model": "gemini"},
+        chat_model=model,
+    )
+
+    result = agent.run("Pergunta com repeticao")
+
+    assert kb.calls == [("datastore", "dados")]
+    assert result["retrieved_blocks"] == ["datastore"]
+    assert (
+        "já foram consultados nesta rodada"
+        in result["tool_calls"][1]["result"]
+    )
+
+
+def test_single_agent_blocks_repeated_blocks_inside_batch():
+    kb = _StubKnowledgeBase()
+    model = _FakeChatModel(
+        [
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "batch_document_search",
+                        "args": {
+                            "requests": [
+                                {
+                                    "block_key": "datastore",
+                                    "question": "dados epidemiologicos",
+                                },
+                                {
+                                    "block_key": "imdc",
+                                    "question": "regras principais",
+                                },
+                            ]
+                        },
+                        "id": "call-batch-1",
+                    }
+                ],
+            ),
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "batch_document_search",
+                        "args": {
+                            "requests": [
+                                {
+                                    "block_key": "imdc",
+                                    "question": "mais regras",
+                                }
+                            ]
+                        },
+                        "id": "call-batch-2",
+                    }
+                ],
+            ),
+            AIMessage(content="Resposta final"),
+        ]
+    )
+    agent = LangChainToolAgent(
+        knowledge_base=kb,
+        provider_type=ProviderType.GEMINI,
+        provider_config={"api_key": "test", "model": "gemini"},
+        chat_model=model,
+    )
+
+    result = agent.run("Pergunta com lote repetido")
+
+    assert kb.calls == [
+        ("datastore", "dados epidemiologicos"),
+        ("imdc", "regras principais"),
+    ]
+    assert result["retrieved_blocks"] == ["datastore", "imdc"]
+    assert "imdc" in result["tool_calls"][1]["result"]
+
+
+def test_single_agent_resets_consulted_blocks_on_next_run():
+    kb = _StubKnowledgeBase()
+    model = _FakeChatModel(
+        [
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "datastore",
+                        "args": {"question": "dados rodada 1"},
+                        "id": "call-1",
+                    }
+                ],
+            ),
+            AIMessage(content="Resposta 1"),
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "datastore",
+                        "args": {"question": "dados rodada 2"},
+                        "id": "call-2",
+                    }
+                ],
+            ),
+            AIMessage(content="Resposta 2"),
+        ]
+    )
+    agent = LangChainToolAgent(
+        knowledge_base=kb,
+        provider_type=ProviderType.GEMINI,
+        provider_config={"api_key": "test", "model": "gemini"},
+        chat_model=model,
+    )
+
+    first = agent.run("Primeira pergunta")
+    second = agent.run("Segunda pergunta")
+
+    assert first["retrieved_blocks"] == ["datastore"]
+    assert second["retrieved_blocks"] == ["datastore"]
+    assert kb.calls == [
+        ("datastore", "dados rodada 1"),
+        ("datastore", "dados rodada 2"),
+    ]
+
+
 def test_single_agent_forces_final_answer_after_tool_limit():
     kb = _StubKnowledgeBase()
     model = _FakeChatModel(

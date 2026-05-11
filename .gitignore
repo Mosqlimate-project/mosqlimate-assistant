@@ -176,3 +176,4 @@ prompt_logs.txt
 .ruff_cache
 .agents
 scripts/
+.mosqlimate-assistant/

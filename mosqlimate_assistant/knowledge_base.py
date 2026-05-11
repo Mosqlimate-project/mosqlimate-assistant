@@ -8,6 +8,7 @@ Mosqlimate documentation.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from time import perf_counter
 from typing import List, Optional, Sequence
@@ -192,12 +193,21 @@ class MosqlimateKnowledgeBase:
     ) -> "MosqlimateKnowledgeBase":
         embeddings = LangChainEmbeddingAdapter(embedding_provider)
 
-        if storage_path.exists():
+        if cls._has_persisted_index(storage_path):
             return cls._load_existing(
                 storage_path=storage_path,
                 embeddings=embeddings,
                 blocks=blocks,
                 lang=lang,
+            )
+
+        if storage_path.exists():
+            logger = get_monitor_logger("knowledge_base")
+            log_event(
+                logger,
+                "knowledge_base_storage_incomplete",
+                level=logging.WARNING,
+                storage_path=str(storage_path),
             )
 
         return cls._build_new(
@@ -251,6 +261,11 @@ class MosqlimateKnowledgeBase:
         """Build a new FAISS index from configured sources."""
         start = perf_counter()
         documents = cls._build_langchain_documents(source_configs)
+        if not documents:
+            raise ValueError(
+                "No documents were collected for the Mosqlimate knowledge "
+                "base. The configured sources may be unavailable or empty."
+            )
         vector_store = FAISS.from_documents(documents, embeddings)
         kb = cls(
             vector_store=vector_store,
@@ -269,6 +284,15 @@ class MosqlimateKnowledgeBase:
             elapsed_seconds=elapsed_seconds(start),
         )
         return kb
+
+    @staticmethod
+    def _has_persisted_index(storage_path: Path) -> bool:
+        """Return whether a FAISS index looks complete on disk."""
+        return (
+            storage_path.is_dir()
+            and (storage_path / "index.faiss").exists()
+            and (storage_path / "index.pkl").exists()
+        )
 
     @staticmethod
     def _build_langchain_documents(

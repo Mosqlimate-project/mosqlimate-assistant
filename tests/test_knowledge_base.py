@@ -86,3 +86,53 @@ def test_faiss_persistence_roundtrip(tmp_path: Path):
     results = loaded.search_block("mosqlient", "doc2", k=1)
     assert len(results) == 1
     assert results[0].metadata["domain"] == "code"
+
+
+def test_load_or_build_rebuilds_when_storage_is_incomplete(tmp_path: Path):
+    provider = DummyEmbeddingProvider()
+    storage_path = tmp_path / "kb"
+    storage_path.mkdir()
+    (storage_path / "index.faiss").write_text("partial", encoding="utf-8")
+    docs = [
+        Document(
+            page_content="doc2 mosqlient content",
+            metadata={"domain": "code", "name": "Overview"},
+        )
+    ]
+    rebuilt = MosqlimateKnowledgeBase.from_langchain_documents(
+        documents=docs,
+        embedding_provider=provider,
+        blocks=_make_blocks(),
+        storage_path=storage_path,
+    )
+
+    loaded = MosqlimateKnowledgeBase.load_or_build(
+        storage_path=storage_path,
+        embedding_provider=provider,
+        blocks=_make_blocks(),
+        source_configs=[],
+    )
+
+    assert rebuilt.storage_path == loaded.storage_path
+    assert (storage_path / "index.faiss").exists()
+    assert (storage_path / "index.pkl").exists()
+
+
+def test_load_or_build_fails_clearly_when_no_documents_are_available(
+    tmp_path: Path,
+):
+    provider = DummyEmbeddingProvider()
+
+    try:
+        MosqlimateKnowledgeBase.load_or_build(
+            storage_path=tmp_path / "kb-empty",
+            embedding_provider=provider,
+            blocks=_make_blocks(),
+            source_configs=[],
+        )
+    except ValueError as exc:
+        assert "No documents were collected" in str(exc)
+    else:
+        raise AssertionError(
+            "Expected a clear failure for an empty knowledge base"
+        )
