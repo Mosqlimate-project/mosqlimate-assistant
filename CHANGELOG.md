@@ -1,6 +1,20 @@
 Release Notes
 ---
 
+# [1.13.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.12.1...1.13.0) (2026-05-11)
+
+
+### Bug Fixes
+
+* **dependencies:** .gitignore to exclude .mosqlimate-assistant directory ([3e2e69d](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/3e2e69d0df271115427e648dc639bcd424b77756))
+* **prompts:** enhance strategic tool usage guidelines for better retrieval ([00962da](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/00962daf194de3c9858af1391b7b7e2daca58f0e))
+* **test:** add comprehensive tests for knowledge base and caching behavior ([c09ef14](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/c09ef1426688d35a7470e38041ca9aa1dd4e4e30))
+
+
+### Features
+
+* **agent:** add repeated block handling ([c93df33](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/c93df33d9727c2d1af08131d223543f738a186b6))
+
 ## [1.12.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.12.0...1.12.1) (2026-05-08)
 
 
