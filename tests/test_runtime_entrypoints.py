@@ -157,11 +157,41 @@ def test_build_mosqlimate_assistant_ignores_compatibility_kwargs(
     )
     assert load_kwargs["lang"] == "en"
     assert isinstance(load_kwargs["storage_path"], Path)
-    assert load_kwargs["storage_path"].name == "en"
+    assert load_kwargs["storage_path"].parts[-2:] == (
+        "mxbai-embed-large_latest",
+        "en",
+    )
     assert isinstance(load_kwargs["blocks"], list)
     assert len(load_kwargs["blocks"]) > 0
     assert isinstance(load_kwargs["source_configs"], list)
     assert len(load_kwargs["source_configs"]) == 3
+
+
+def test_build_mosqlimate_assistant_wraps_kb_initialization_errors(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    class FakeEmbeddingProvider:
+        def __init__(self, model: str, base_url: str | None = None) -> None:
+            del model, base_url
+
+    def fake_load_or_build(**kwargs: object):
+        del kwargs
+        raise ValueError("network unavailable")
+
+    monkeypatch.setattr(
+        "mosqlimate_assistant.main.OllamaEmbeddingProvider",
+        FakeEmbeddingProvider,
+    )
+    monkeypatch.setattr(
+        "mosqlimate_assistant.main.MosqlimateKnowledgeBase.load_or_build",
+        fake_load_or_build,
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="Failed to initialize the Mosqlimate knowledge base",
+    ):
+        build_mosqlimate_assistant(google_api_key="test")
 
 
 def test_pyproject_exposes_single_runtime_package():
