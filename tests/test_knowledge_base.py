@@ -5,8 +5,11 @@ from langchain_core.documents import Document
 from mosqlimate_assistant.embeddings import BaseEmbeddingProvider
 from mosqlimate_assistant.knowledge_base import (
     DocumentBlockConfig,
+    DocumentSourceConfig,
     MosqlimateKnowledgeBase,
+    SourceDocumentPipeline,
 )
+from mosqlimate_assistant.models import VectorDocument
 
 
 class DummyEmbeddingProvider(BaseEmbeddingProvider):
@@ -136,3 +139,72 @@ def test_load_or_build_fails_clearly_when_no_documents_are_available(
         raise AssertionError(
             "Expected a clear failure for an empty knowledge base"
         )
+
+
+def test_format_block_context_prefers_live_source_documents(
+    tmp_path: Path,
+    monkeypatch,
+):
+    provider = DummyEmbeddingProvider()
+    csv_path = tmp_path / "imdc.csv"
+    csv_path.write_text("name,markdown_link\n", encoding="utf-8")
+    block = DocumentBlockConfig(
+        key="imdc_overview",
+        description="IMDC overview docs",
+        domain="imdc",
+        url_fragments=frozenset({"/content/sprint/2025/index.md"}),
+    )
+    stale_docs = [
+        Document(
+            page_content="stale cached content",
+            metadata={
+                "domain": "imdc",
+                "name": "stale-imdc",
+                "markdown_link": "https://example.org/stale.md",
+            },
+        )
+    ]
+    kb = MosqlimateKnowledgeBase.from_langchain_documents(
+        documents=stale_docs,
+        embedding_provider=provider,
+        blocks=[block],
+        storage_path=tmp_path / "kb-live",
+        source_configs=[
+            DocumentSourceConfig(domain="imdc", csv_path=csv_path)
+        ],
+        prefer_live_block_search=True,
+    )
+
+    calls = {"count": 0}
+
+    def fake_collect(self: SourceDocumentPipeline):
+        calls["count"] += 1
+        assert self.source_config.domain == "imdc"
+        return [
+            VectorDocument(
+                id="sprint-2025",
+                content="Current IMDC sprint overview",
+                metadata={
+                    "name": "sprint-2025",
+                    "markdown_link": "https://raw.example/content/sprint/2025/index.md",
+                    "url_link": "https://sprint.mosqlimate.org/sprint/2025/",
+                },
+                collections=["imdc"],
+                chunks=[
+                    "# sprint-2025",
+                    "Current IMDC sprint overview",
+                ],
+            )
+        ]
+
+    monkeypatch.setattr(
+        SourceDocumentPipeline,
+        "collect_vector_documents",
+        fake_collect,
+    )
+
+    context = kb.format_block_context("imdc_overview", "current sprint")
+
+    assert "Current IMDC sprint overview" in context
+    assert "stale cached content" not in context
+    assert calls["count"] == 1
