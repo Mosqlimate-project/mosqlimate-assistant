@@ -1,6 +1,13 @@
 Release Notes
 ---
 
+# [1.14.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.13.0...1.14.0) (2026-05-11)
+
+
+### Features
+
+* **knowledge:** support for live document fetching and searching ([a030b41](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/a030b4135ec23b3f61b56d639dd4a4b1a5f48788))
+
 # [1.13.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.12.1...1.13.0) (2026-05-11)
 
 
