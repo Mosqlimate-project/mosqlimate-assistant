@@ -1,6 +1,17 @@
 Release Notes
 ---
 
+## [1.14.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.14.0...1.14.1) (2026-05-14)
+
+
+### Bug Fixes
+
+* **assistant:** validate vector store initialization ([911f6e8](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/911f6e87c538ca02a4ed8af2dd9ebd922da72327))
+* **knowledge:** add option to build knowledge base with or without vector store ([05333fd](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/05333fdb0bfb676a9882993feb148666b47968b1))
+* **knowledge:** improve retrieval helpers and add live document search support ([6bb8ef9](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/6bb8ef9f58e280edbab4376ef8346793ad00b069))
+* **prompts:** update grounding and citation rules with Markdown hyperlink format ([822d301](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/822d301c2057c846b84144947f4a2e7e23de005e))
+* **tests:** add reference assertions in knowledge base tests ([c169637](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/c169637e8eb3ce81ede66d07ce53a0702ce894d2))
+
 # [1.14.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.13.0...1.14.0) (2026-05-11)
 
 
