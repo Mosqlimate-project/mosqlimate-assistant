@@ -1,14 +1,15 @@
-"""Knowledge-base assembly and FAISS-backed retrieval helpers.
+"""Knowledge-base assembly and retrieval helpers.
 
 This module connects the document-ingestion pipeline to LangChain
-documents and a persisted FAISS index. It also defines the document
-block catalog used by the agent to search targeted slices of the
-Mosqlimate documentation.
+documents and an optional persisted FAISS index. It also defines the
+document block catalog used by the agent to search targeted slices of
+the Mosqlimate documentation.
 """
 
 from __future__ import annotations
 
 import logging
+import re
 from pathlib import Path
 from time import perf_counter
 from typing import Dict, List, Optional, Sequence
@@ -143,12 +144,12 @@ class LangChainDocumentFactory:
 
 
 class MosqlimateKnowledgeBase:
-    """Shared FAISS index plus block-aware retrieval helpers."""
+    """Shared retrieval state plus block-aware retrieval helpers."""
 
     def __init__(
         self,
-        vector_store: FAISS,
-        embeddings: LangChainEmbeddingAdapter,
+        vector_store: Optional[FAISS],
+        embeddings: Optional[LangChainEmbeddingAdapter],
         blocks: Sequence[DocumentBlockConfig],
         storage_path: Optional[Path] = None,
         source_configs: Optional[Sequence[DocumentSourceConfig]] = None,
@@ -166,6 +167,31 @@ class MosqlimateKnowledgeBase:
         self._live_domain_documents_cache: Dict[str, List[Document]] = {}
         self.lang = lang
         self.logger = get_monitor_logger("knowledge_base")
+
+    @classmethod
+    def from_source_configs(
+        cls,
+        blocks: Sequence[DocumentBlockConfig],
+        source_configs: Sequence[DocumentSourceConfig],
+        lang: str = "pt",
+    ) -> "MosqlimateKnowledgeBase":
+        """Build a lightweight KB that searches live docs without FAISS."""
+        kb = cls(
+            vector_store=None,
+            embeddings=None,
+            blocks=blocks,
+            storage_path=None,
+            source_configs=source_configs,
+            prefer_live_block_search=True,
+            lang=lang,
+        )
+        log_event(
+            kb.logger,
+            "knowledge_base_live_only_initialized",
+            block_count=len(blocks),
+            source_config_count=len(source_configs),
+        )
+        return kb
 
     @classmethod
     def from_langchain_documents(
@@ -337,7 +363,7 @@ class MosqlimateKnowledgeBase:
 
     def save(self) -> None:
         """Persist the FAISS index to disk."""
-        if self.storage_path is None:
+        if self.storage_path is None or self.vector_store is None:
             return
         self.storage_path.mkdir(parents=True, exist_ok=True)
         self.vector_store.save_local(str(self.storage_path))
@@ -374,12 +400,59 @@ class MosqlimateKnowledgeBase:
         )
         return documents
 
+    @staticmethod
+    def _tokenize(text: str) -> set[str]:
+        return set(re.findall(r"\w+", text.lower()))
+
+    def _score_document(
+        self,
+        query_terms: set[str],
+        document: Document,
+    ) -> tuple[int, int, int]:
+        content = document.page_content.lower()
+        metadata = document.metadata
+        title = str(metadata.get("name") or metadata.get("source_id") or "")
+        reference_url = str(
+            metadata.get("url_link")
+            or metadata.get("markdown_link")
+            or metadata.get("url")
+            or ""
+        )
+        doc_terms = self._tokenize(
+            f"{title}\n{reference_url}\n{document.page_content}"
+        )
+        overlap = len(query_terms & doc_terms)
+        title_hits = sum(term in title.lower() for term in query_terms)
+        content_hits = sum(content.count(term) for term in query_terms)
+        return (overlap, title_hits, content_hits)
+
+    def _lexical_rank_documents(
+        self,
+        documents: Sequence[Document],
+        query: str,
+        k: int,
+    ) -> List[Document]:
+        query_terms = self._tokenize(query)
+        if not query_terms:
+            return list(documents[:k])
+
+        ranked = sorted(
+            documents,
+            key=lambda document: self._score_document(query_terms, document),
+            reverse=True,
+        )
+        relevant = [
+            document
+            for document in ranked
+            if self._score_document(query_terms, document)[0] > 0
+        ]
+        return relevant[:k] if relevant else ranked[:k]
+
     def _search_live_block(
         self,
         block_key: str,
         query: str,
         k: int = 4,
-        fetch_k: int = 16,
     ) -> List[Document]:
         """Fetch a block corpus from the source catalog and rank it on demand."""
         block = self.blocks[block_key]
@@ -402,11 +475,10 @@ class MosqlimateKnowledgeBase:
             )
             return []
 
-        live_store = FAISS.from_documents(block_documents, self.embeddings)
-        docs = live_store.similarity_search(
+        docs = self._lexical_rank_documents(
+            block_documents,
             query=query,
             k=min(k, len(block_documents)),
-            fetch_k=max(fetch_k, k),
         )
         log_event(
             self.logger,
@@ -434,6 +506,8 @@ class MosqlimateKnowledgeBase:
         """Search documents constrained to a single configured block."""
         if block_key not in self.blocks:
             raise ValueError(f"Unknown document block: {block_key}")
+        if self.vector_store is None:
+            return self._search_live_block(block_key, query, k=k)
 
         block = self.blocks[block_key]
         start = perf_counter()
@@ -514,6 +588,7 @@ class MosqlimateKnowledgeBase:
                 or metadata.get("url")
                 or ""
             )
+            reference = f"[{title}]({url})" if url else title
             word_count = len(doc.page_content.split())
             parts.append(
                 "\n".join(
@@ -521,6 +596,7 @@ class MosqlimateKnowledgeBase:
                         f"[{labels['snippet']} {idx} | Words: {word_count}]",
                         f"{labels['title']}: {title}",
                         f"{labels['url']}: {url}",
+                        f"Reference: {reference}",
                         doc.page_content.strip(),
                     ]
                 ).strip()
