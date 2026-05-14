@@ -108,12 +108,18 @@ class Assistant:
         """Persist the FAISS index to a directory path."""
         if self.knowledge_base is None:
             raise ValueError("Knowledge base not initialized")
+        if self.knowledge_base.vector_store is None:
+            raise ValueError(
+                "Vector store is disabled for this knowledge base"
+            )
         self.knowledge_base.vector_store.save_local(path)
 
     def load_vector_store(self, path: str) -> None:
         """Load the FAISS index from a directory path."""
         if self.knowledge_base is None:
             raise ValueError("Knowledge base not initialized")
+        if self.knowledge_base.embeddings is None:
+            raise ValueError("Vector store embeddings are not configured")
         self.knowledge_base.vector_store = FAISS.load_local(
             folder_path=path,
             embeddings=self.knowledge_base.embeddings,
