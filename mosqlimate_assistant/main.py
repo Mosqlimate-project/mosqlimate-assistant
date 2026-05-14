@@ -139,19 +139,29 @@ def _build_knowledge_base(
     embedding_model: str,
     ollama_base_url: Optional[str],
     lang: Literal["en", "pt"],
+    use_vector_store: bool,
 ) -> MosqlimateKnowledgeBase:
-    """Build or load the shared knowledge base."""
-    embedding_provider = OllamaEmbeddingProvider(
-        model=embedding_model,
-        base_url=ollama_base_url,
-    )
-    storage_path = _build_store_path(embedding_model, lang)
+    """Build the shared knowledge base used by the assistant."""
+    source_configs = _build_source_configs(lang)
+    storage_path: Path | None = None
     try:
+        if not use_vector_store:
+            return MosqlimateKnowledgeBase.from_source_configs(
+                blocks=build_default_blocks(lang=lang),
+                source_configs=source_configs,
+                lang=lang,
+            )
+
+        embedding_provider = OllamaEmbeddingProvider(
+            model=embedding_model,
+            base_url=ollama_base_url,
+        )
+        storage_path = _build_store_path(embedding_model, lang)
         return MosqlimateKnowledgeBase.load_or_build(
             storage_path=storage_path,
             embedding_provider=embedding_provider,
             blocks=build_default_blocks(lang=lang),
-            source_configs=_build_source_configs(lang),
+            source_configs=source_configs,
             lang=lang,
         )
     except Exception as exc:
@@ -178,6 +188,7 @@ def build_mosqlimate_assistant(
     ollama_base_url: Optional[str] = None,
     lang: Literal["en", "pt"] = "pt",
     max_tool_iterations: int = 5,
+    use_vector_store: bool = False,
     **kwargs: Any,
 ) -> Tuple[
     Assistant,
@@ -200,6 +211,7 @@ def build_mosqlimate_assistant(
         embedding_model=embedding_model,
         ollama_base_url=ollama_base_url,
         lang=lang,
+        use_vector_store=use_vector_store,
     )
 
     assistant = Assistant(
@@ -216,7 +228,8 @@ def build_mosqlimate_assistant(
         "assistant_pipeline_built",
         lang=lang,
         provider_model=provider_config.model,
-        embedding_model=embedding_model,
+        embedding_model=embedding_model if use_vector_store else None,
+        use_vector_store=use_vector_store,
         block_count=(
             len(knowledge_base.available_blocks())
             if hasattr(knowledge_base, "available_blocks")
