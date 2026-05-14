@@ -207,4 +207,8 @@ def test_format_block_context_prefers_live_source_documents(
 
     assert "Current IMDC sprint overview" in context
     assert "stale cached content" not in context
+    assert (
+        "Reference: [sprint-2025](https://sprint.mosqlimate.org/sprint/2025/)"
+        in context
+    )
     assert calls["count"] == 1

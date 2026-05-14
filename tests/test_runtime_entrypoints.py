@@ -16,6 +16,7 @@ from mosqlimate_assistant.assistant import (
 from mosqlimate_assistant.embeddings import BaseEmbeddingProvider
 from mosqlimate_assistant.knowledge_base import (
     DocumentBlockConfig,
+    DocumentSourceConfig,
     MosqlimateKnowledgeBase,
 )
 from mosqlimate_assistant.main import build_mosqlimate_assistant
@@ -94,13 +95,98 @@ def test_format_block_context_localizes_output(tmp_path: Path):
     assert "Bloco: visualize" in pt_result
     assert "[Trecho 1 | Words:" in pt_result
     assert "Título:" in pt_result
+    assert "Reference: [vis_dashboard_scores](https://example.org/vis)" in (
+        pt_result
+    )
 
     assert "Block: visualize" in en_result
     assert "[Snippet 1 | Words:" in en_result
     assert "Title:" in en_result
+    assert "Reference: [vis_dashboard_scores](https://example.org/vis)" in (
+        en_result
+    )
 
 
 def test_build_mosqlimate_assistant_ignores_compatibility_kwargs(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    captured: dict[str, object] = {}
+    fake_kb = object()
+    source_configs = object()
+
+    def fake_build_source_configs(lang: str):
+        captured["source_lang"] = lang
+        return source_configs
+
+    def fake_from_source_configs(**kwargs: object):
+        captured["from_source_configs_kwargs"] = kwargs
+        return fake_kb
+
+    def fake_configure(
+        self: Assistant, knowledge_base: object, max_tool_iterations: int
+    ) -> None:
+        captured["configured_kb"] = knowledge_base
+        captured["max_tool_iterations"] = max_tool_iterations
+        self.knowledge_base = knowledge_base  # type: ignore[assignment]
+        self.tool_agent = object()  # type: ignore[assignment]
+
+    monkeypatch.setattr(
+        "mosqlimate_assistant.main._build_source_configs",
+        fake_build_source_configs,
+    )
+    monkeypatch.setattr(
+        "mosqlimate_assistant.main.MosqlimateKnowledgeBase.from_source_configs",
+        fake_from_source_configs,
+    )
+    monkeypatch.setattr(
+        "mosqlimate_assistant.main.Assistant.configure_tool_agent",
+        fake_configure,
+    )
+
+    assistant, kb1, kb2, kb3 = build_mosqlimate_assistant(
+        google_api_key="test",
+        docs_search_mode="group",
+        code_search_scope="metadata",
+        max_tool_iterations=7,
+        lang="en",
+    )
+
+    assert assistant.knowledge_base is fake_kb
+    assert kb1 is fake_kb and kb2 is fake_kb and kb3 is fake_kb
+    assert captured["configured_kb"] is fake_kb
+    assert captured["max_tool_iterations"] == 7
+    assert captured["source_lang"] == "en"
+
+    load_kwargs = cast(
+        Mapping[str, object],
+        captured["from_source_configs_kwargs"],
+    )
+    assert load_kwargs["lang"] == "en"
+    assert isinstance(load_kwargs["blocks"], list)
+    assert len(load_kwargs["blocks"]) > 0
+    assert load_kwargs["source_configs"] is source_configs
+
+
+def test_build_mosqlimate_assistant_wraps_kb_initialization_errors(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    def fake_from_source_configs(**kwargs: object):
+        del kwargs
+        raise ValueError("network unavailable")
+
+    monkeypatch.setattr(
+        "mosqlimate_assistant.main.MosqlimateKnowledgeBase.from_source_configs",
+        fake_from_source_configs,
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="Failed to initialize the Mosqlimate knowledge base",
+    ):
+        build_mosqlimate_assistant(google_api_key="test")
+
+
+def test_build_mosqlimate_assistant_can_still_enable_vector_store(
     monkeypatch: pytest.MonkeyPatch,
 ):
     captured: dict[str, object] = {}
@@ -138,10 +224,7 @@ def test_build_mosqlimate_assistant_ignores_compatibility_kwargs(
 
     assistant, kb1, kb2, kb3 = build_mosqlimate_assistant(
         google_api_key="test",
-        docs_search_mode="group",
-        code_search_scope="metadata",
-        max_tool_iterations=7,
-        lang="en",
+        use_vector_store=True,
     )
 
     assert assistant.knowledge_base is fake_kb
@@ -149,49 +232,57 @@ def test_build_mosqlimate_assistant_ignores_compatibility_kwargs(
     assert captured["embedding_model"] == "mxbai-embed-large:latest"
     assert captured["embedding_base_url"] is None
     assert captured["configured_kb"] is fake_kb
-    assert captured["max_tool_iterations"] == 7
 
     load_kwargs = cast(
         Mapping[str, object],
         captured["load_or_build_kwargs"],
     )
-    assert load_kwargs["lang"] == "en"
     assert isinstance(load_kwargs["storage_path"], Path)
     assert load_kwargs["storage_path"].parts[-2:] == (
         "mxbai-embed-large_latest",
-        "en",
+        "pt",
     )
-    assert isinstance(load_kwargs["blocks"], list)
-    assert len(load_kwargs["blocks"]) > 0
-    assert isinstance(load_kwargs["source_configs"], list)
-    assert len(load_kwargs["source_configs"]) == 3
 
 
-def test_build_mosqlimate_assistant_wraps_kb_initialization_errors(
-    monkeypatch: pytest.MonkeyPatch,
-):
-    class FakeEmbeddingProvider:
-        def __init__(self, model: str, base_url: str | None = None) -> None:
-            del model, base_url
-
-    def fake_load_or_build(**kwargs: object):
-        del kwargs
-        raise ValueError("network unavailable")
-
-    monkeypatch.setattr(
-        "mosqlimate_assistant.main.OllamaEmbeddingProvider",
-        FakeEmbeddingProvider,
+def test_assistant_rejects_vector_store_save_when_disabled(tmp_path: Path):
+    assistant = Assistant(
+        provider_type=ProviderType.GEMINI,
+        provider_config={"api_key": "test", "model": "gemini"},
     )
-    monkeypatch.setattr(
-        "mosqlimate_assistant.main.MosqlimateKnowledgeBase.load_or_build",
-        fake_load_or_build,
+    csv_path = tmp_path / "sources.csv"
+    csv_path.write_text("name,markdown_link\n", encoding="utf-8")
+    assistant.knowledge_base = MosqlimateKnowledgeBase.from_source_configs(
+        blocks=[
+            DocumentBlockConfig(
+                key="visualize",
+                description="Dashboard docs",
+                domain="docs",
+            )
+        ],
+        source_configs=[
+            DocumentSourceConfig(domain="docs", csv_path=csv_path)
+        ],
     )
 
     with pytest.raises(
-        RuntimeError,
-        match="Failed to initialize the Mosqlimate knowledge base",
+        ValueError,
+        match="Vector store is disabled for this knowledge base",
     ):
-        build_mosqlimate_assistant(google_api_key="test")
+        assistant.save_vector_store(str(tmp_path / "vector-store"))
+
+
+def test_assistant_saves_vector_store_when_enabled(tmp_path: Path):
+    assistant = Assistant(
+        provider_type=ProviderType.GEMINI,
+        provider_config={"api_key": "test", "model": "gemini"},
+    )
+    assistant.knowledge_base = _make_kb(tmp_path)
+
+    output_path = tmp_path / "saved-store"
+    assistant.save_vector_store(str(output_path))
+
+    assert (output_path / "index.faiss").exists()
+    assert (output_path / "index.pkl").exists()
 
 
 def test_pyproject_exposes_single_runtime_package():
