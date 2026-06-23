@@ -291,3 +291,45 @@ def test_pyproject_exposes_single_runtime_package():
 
     packages = data["tool"]["setuptools"]["packages"]
     assert packages == ["mosqlimate_assistant"]
+
+
+def test_resolve_provider_config_detection():
+    from mosqlimate_assistant.main import (
+        DEEPSEEK_BASE_URL,
+        GOOGLE_BASE_URL,
+        _resolve_provider_config,
+    )
+    from mosqlimate_assistant.models import ProviderType
+
+    # Case 1: Google key starting with AIza
+    config, provider_type = _resolve_provider_config(
+        google_api_key="AIzaSyDummyKey",
+        gemini_model="deepseek-v4-flash",
+        kwargs={},
+    )
+    assert provider_type == ProviderType.OPENAI
+    assert config.base_url == GOOGLE_BASE_URL
+    assert config.api_key == "AIzaSyDummyKey"
+    assert config.model == "gemini-2.5-flash"
+
+    # Case 2: DeepSeek key starting with sk-
+    config, provider_type = _resolve_provider_config(
+        google_api_key="sk-dummy-deepseek-key",
+        gemini_model="deepseek-v4-flash",
+        kwargs={},
+    )
+    assert provider_type == ProviderType.DEEPSEEK
+    assert config.base_url == DEEPSEEK_BASE_URL
+    assert config.api_key == "sk-dummy-deepseek-key"
+    assert config.model == "deepseek-v4-flash"
+
+    # Case 3: Other keys fall back to DeepSeek by default
+    config, provider_type = _resolve_provider_config(
+        google_api_key="random-or-proxy-key",
+        gemini_model="deepseek-v4-flash",
+        kwargs={},
+    )
+    assert provider_type == ProviderType.DEEPSEEK
+    assert config.base_url == DEEPSEEK_BASE_URL
+    assert config.api_key == "random-or-proxy-key"
+    assert config.model == "deepseek-v4-flash"
