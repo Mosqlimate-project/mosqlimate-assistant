@@ -100,14 +100,14 @@ def _resolve_provider_config(
         )
 
     # Detect provider by key prefix
-    if provider_api_key.startswith("sk-"):
-        provider_type = ProviderType.DEEPSEEK
-        base_url = DEEPSEEK_BASE_URL
-        default_model = DEFAULT_DEEPSEEK_MODEL
-    else:
+    if provider_api_key.startswith("AIza"):
         provider_type = ProviderType.OPENAI  # Google via OpenAI-compatible API
         base_url = GOOGLE_BASE_URL
         default_model = DEFAULT_GOOGLE_MODEL
+    else:
+        provider_type = ProviderType.DEEPSEEK
+        base_url = DEEPSEEK_BASE_URL
+        default_model = DEFAULT_DEEPSEEK_MODEL
 
     # Manual model overrides
     provider_model = (
