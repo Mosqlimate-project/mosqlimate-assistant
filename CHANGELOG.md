@@ -1,6 +1,14 @@
 Release Notes
 ---
 
+## [1.14.2](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.14.1...1.14.2) (2026-06-23)
+
+
+### Bug Fixes
+
+* **provider:** correct provider detection logic for API keys ([1390648](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/13906484336cca90de9fc3fe1931a294f0cd3a5d))
+* **tests:** add unit test for provider configuration detection logic ([b4e47a8](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/b4e47a82b40d7939402b89cef92451bd81cadec6))
+
 ## [1.14.1](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.14.0...1.14.1) (2026-05-14)
 
 
