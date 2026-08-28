@@ -186,6 +186,87 @@ def test_build_mosqlimate_assistant_wraps_kb_initialization_errors(
         build_mosqlimate_assistant(google_api_key="test")
 
 
+def test_build_mosqlimate_assistant_configures_epidbot(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    captured: dict[str, object] = {}
+    fake_kb = object()
+    fake_client = object()
+
+    monkeypatch.setattr(
+        "mosqlimate_assistant.main.MosqlimateKnowledgeBase.from_source_configs",
+        lambda **kwargs: fake_kb,
+    )
+    monkeypatch.setattr(
+        "mosqlimate_assistant.main.epidbot.EpidBotClient",
+        lambda *args, **kwargs: fake_client,
+    )
+
+    def fake_configure(
+        self: Assistant,
+        knowledge_base: object,
+        max_tool_iterations: int,
+        epidbot_client: object = None,
+    ) -> None:
+        captured["knowledge_base"] = knowledge_base
+        captured["max_tool_iterations"] = max_tool_iterations
+        captured["epidbot_client"] = epidbot_client
+        self.knowledge_base = knowledge_base  # type: ignore[assignment]
+        self.tool_agent = object()  # type: ignore[assignment]
+
+    monkeypatch.setattr(
+        "mosqlimate_assistant.main.Assistant.configure_tool_agent",
+        fake_configure,
+    )
+
+    build_mosqlimate_assistant(
+        google_api_key="test",
+        epidbot_api_key="epidbot-test",
+        epidbot_base_url="https://epidbot.test",
+        epidbot_timeout_seconds=45,
+    )
+
+    assert captured["knowledge_base"] is fake_kb
+    assert captured["epidbot_client"] is fake_client
+
+
+def test_build_mosqlimate_assistant_keeps_epidbot_disabled_without_key(
+    monkeypatch: pytest.MonkeyPatch,
+):
+    captured: dict[str, object] = {}
+
+    monkeypatch.setattr(
+        "mosqlimate_assistant.main.MosqlimateKnowledgeBase.from_source_configs",
+        lambda **kwargs: object(),
+    )
+
+    def fail_if_constructed(*args: object, **kwargs: object):
+        raise AssertionError("EpidBot client must be opt-in")
+
+    monkeypatch.setattr(
+        "mosqlimate_assistant.main.epidbot.EpidBotClient", fail_if_constructed
+    )
+
+    def fake_configure(
+        self: Assistant,
+        knowledge_base: object,
+        max_tool_iterations: int,
+        epidbot_client: object = None,
+    ) -> None:
+        captured["epidbot_client"] = epidbot_client
+        self.knowledge_base = knowledge_base  # type: ignore[assignment]
+        self.tool_agent = object()  # type: ignore[assignment]
+
+    monkeypatch.setattr(
+        "mosqlimate_assistant.main.Assistant.configure_tool_agent",
+        fake_configure,
+    )
+
+    build_mosqlimate_assistant(google_api_key="test")
+
+    assert captured["epidbot_client"] is None
+
+
 def test_build_mosqlimate_assistant_can_still_enable_vector_store(
     monkeypatch: pytest.MonkeyPatch,
 ):
