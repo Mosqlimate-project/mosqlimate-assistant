@@ -177,3 +177,4 @@ prompt_logs.txt
 .agents
 scripts/
 .mosqlimate-assistant/
+graphify-out/
