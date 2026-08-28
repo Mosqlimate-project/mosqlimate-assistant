@@ -29,6 +29,11 @@ from mosqlimate_assistant.embeddings import (
     OllamaEmbeddingProvider,
     OpenAIEmbeddingProvider,
 )
+from mosqlimate_assistant.epidbot import (
+    EpidBotClient,
+    EpidBotError,
+    EpidBotResult,
+)
 from mosqlimate_assistant.knowledge_base import (
     DocumentBlockConfig,
     DocumentSourceConfig,
@@ -82,6 +87,9 @@ __all__ = [
     "ChatModelFactory",
     "ToolCatalog",
     "LangChainToolAgent",
+    "EpidBotClient",
+    "EpidBotError",
+    "EpidBotResult",
     "Assistant",
     "create_ollama_assistant",
     "create_openai_assistant",

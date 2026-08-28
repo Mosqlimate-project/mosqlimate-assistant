@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Literal, Optional
 from langchain_community.vectorstores import FAISS
 
 from mosqlimate_assistant.agent import LangChainToolAgent
+from mosqlimate_assistant.epidbot import EpidBotClient
 from mosqlimate_assistant.knowledge_base import MosqlimateKnowledgeBase
 from mosqlimate_assistant.models import (
     ChatMessage,
@@ -54,6 +55,7 @@ class Assistant:
         self,
         knowledge_base: MosqlimateKnowledgeBase,
         max_tool_iterations: int = 5,
+        epidbot_client: EpidBotClient | None = None,
     ) -> None:
         """Attach the block-based knowledge base and build the agent."""
         self.knowledge_base = knowledge_base
@@ -63,6 +65,7 @@ class Assistant:
             provider_config=self.provider_config,
             lang=self.lang,
             max_tool_iterations=max_tool_iterations,
+            epidbot_client=epidbot_client,
         )
         log_event(
             self.logger,

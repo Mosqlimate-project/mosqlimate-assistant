@@ -14,6 +14,7 @@ from pathlib import Path
 from time import perf_counter
 from typing import Any, Literal, Optional, Tuple
 
+import mosqlimate_assistant.epidbot as epidbot
 from mosqlimate_assistant.assistant import Assistant
 from mosqlimate_assistant.embeddings import OllamaEmbeddingProvider
 from mosqlimate_assistant.knowledge_base import (
@@ -189,6 +190,9 @@ def build_mosqlimate_assistant(
     lang: Literal["en", "pt"] = "pt",
     max_tool_iterations: int = 5,
     use_vector_store: bool = False,
+    epidbot_api_key: str | None = None,
+    epidbot_base_url: str = epidbot.DEFAULT_BASE_URL,
+    epidbot_timeout_seconds: float = 60.0,
     **kwargs: Any,
 ) -> Tuple[
     Assistant,
@@ -219,10 +223,21 @@ def build_mosqlimate_assistant(
         provider_config=provider_config,
         lang=lang,
     )
-    assistant.configure_tool_agent(
-        knowledge_base=knowledge_base,
-        max_tool_iterations=max_tool_iterations,
-    )
+    if epidbot_api_key:
+        assistant.configure_tool_agent(
+            knowledge_base=knowledge_base,
+            max_tool_iterations=max_tool_iterations,
+            epidbot_client=epidbot.EpidBotClient(
+                epidbot_api_key,
+                base_url=epidbot_base_url,
+                max_wait_seconds=epidbot_timeout_seconds,
+            ),
+        )
+    else:
+        assistant.configure_tool_agent(
+            knowledge_base=knowledge_base,
+            max_tool_iterations=max_tool_iterations,
+        )
     log_event(
         LOGGER,
         "assistant_pipeline_built",
@@ -249,6 +264,9 @@ def docs_pipeline(
     ollama_base_url: Optional[str] = None,
     message_history: Optional[list[ChatMessage]] = None,
     lang: Literal["en", "pt"] = "pt",
+    epidbot_api_key: str | None = None,
+    epidbot_base_url: str = epidbot.DEFAULT_BASE_URL,
+    epidbot_timeout_seconds: float = 60.0,
     **kwargs: Any,
 ) -> str:
     """Return the assistant response using the default single-agent flow."""
@@ -259,6 +277,9 @@ def docs_pipeline(
         embedding_model=embedding_model,
         ollama_base_url=ollama_base_url,
         lang=lang,
+        epidbot_api_key=epidbot_api_key,
+        epidbot_base_url=epidbot_base_url,
+        epidbot_timeout_seconds=epidbot_timeout_seconds,
         **kwargs,
     )
     result = assistant.query(
@@ -282,6 +303,9 @@ def assistant_pipeline(
     google_api_key: str | None = None,
     message_history: Optional[list[ChatMessage]] = None,
     lang: Literal["en", "pt"] = "pt",
+    epidbot_api_key: str | None = None,
+    epidbot_base_url: str = epidbot.DEFAULT_BASE_URL,
+    epidbot_timeout_seconds: float = 60.0,
     **kwargs: Any,
 ) -> str:
     """Expose the default compatibility wrapper around the assistant pipeline."""
@@ -290,5 +314,8 @@ def assistant_pipeline(
         google_api_key=google_api_key,
         message_history=message_history,
         lang=lang,
+        epidbot_api_key=epidbot_api_key,
+        epidbot_base_url=epidbot_base_url,
+        epidbot_timeout_seconds=epidbot_timeout_seconds,
         **kwargs,
     )
