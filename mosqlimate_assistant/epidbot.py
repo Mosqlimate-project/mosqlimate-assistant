@@ -8,7 +8,6 @@ from typing import Any, Callable
 
 import requests
 
-
 DEFAULT_BASE_URL = "https://api.epidbot.kwar-ai.com.br"
 
 
@@ -64,7 +63,11 @@ class EpidBotClient:
         try:
             response = self.session.post(
                 f"{self.base_url}/api/v1/chat",
-                json={"message": question, "session_id": None, "locale": locale},
+                json={
+                    "message": question,
+                    "session_id": None,
+                    "locale": locale,
+                },
                 headers=self._headers,
                 timeout=self._request_timeout(deadline),
             )
@@ -94,8 +97,15 @@ class EpidBotClient:
                 error = result.get("error") or "unknown EpidBot failure"
                 raise EpidBotError(f"EpidBot job failed: {error}")
             if status not in {"processing", "pending"}:
-                raise EpidBotError(f"EpidBot returned unknown job status: {status}")
-            self.sleep(min(self.poll_interval_seconds, max(0, deadline - time.monotonic())))
+                raise EpidBotError(
+                    f"EpidBot returned unknown job status: {status}"
+                )
+            self.sleep(
+                min(
+                    self.poll_interval_seconds,
+                    max(0, deadline - time.monotonic()),
+                )
+            )
 
     @staticmethod
     def _request_timeout(deadline: float) -> tuple[float, float]:
@@ -109,15 +119,21 @@ class EpidBotClient:
         try:
             payload = response.json()
         except (ValueError, TypeError) as exc:
-            raise EpidBotError(f"EpidBot {operation} returned invalid JSON") from exc
+            raise EpidBotError(
+                f"EpidBot {operation} returned invalid JSON"
+            ) from exc
         if response.status_code >= 400:
-            detail = payload.get("detail") if isinstance(payload, dict) else None
+            detail = (
+                payload.get("detail") if isinstance(payload, dict) else None
+            )
             raise EpidBotError(
                 f"EpidBot {operation} failed with HTTP {response.status_code}"
                 + (f": {detail}" if detail else "")
             )
         if not isinstance(payload, dict):
-            raise EpidBotError(f"EpidBot {operation} returned an invalid payload")
+            raise EpidBotError(
+                f"EpidBot {operation} returned an invalid payload"
+            )
         return payload
 
     @staticmethod

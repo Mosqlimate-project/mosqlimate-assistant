@@ -77,9 +77,13 @@ def test_each_question_starts_without_a_previous_session():
     session = _Session(
         [
             _Response(200, {"job_id": "job-1", "session_id": 10}),
-            _Response(200, {"job_id": "job-1", "status": "completed", "content": "A"}),
+            _Response(
+                200, {"job_id": "job-1", "status": "completed", "content": "A"}
+            ),
             _Response(200, {"job_id": "job-2", "session_id": 11}),
-            _Response(200, {"job_id": "job-2", "status": "completed", "content": "B"}),
+            _Response(
+                200, {"job_id": "job-2", "status": "completed", "content": "B"}
+            ),
         ]
     )
     client = EpidBotClient(
@@ -124,7 +128,9 @@ def test_ask_times_out_when_job_never_finishes():
 
 
 def test_ask_timeout_includes_submission_time(monkeypatch):
-    session = _Session([_Response(200, {"job_id": "job-1", "status": "processing"})])
+    session = _Session(
+        [_Response(200, {"job_id": "job-1", "status": "processing"})]
+    )
     clock = iter((0.0, 0.1, 1.0))
     monkeypatch.setattr(epidbot_module.time, "monotonic", lambda: next(clock))
     client = EpidBotClient("secret", max_wait_seconds=0.5, session=session)
