@@ -1,6 +1,21 @@
 Release Notes
 ---
 
+# [1.15.0](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.14.2...1.15.0) (2026-08-28)
+
+
+### Bug Fixes
+
+* format EpidBot client for CI ([3cb9da5](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/3cb9da5a66a1b3ed4fc37e290fbbc07508051295))
+
+
+### Features
+
+* add EpidBot REST client ([ce73c75](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/ce73c755a95fdf530373ba3af55e62b3fdd8d51f))
+* add EpidBot search tool to Mosqia ([2d8a72d](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/2d8a72dcbbd90e3799bb17545520dbc4dce00aad))
+* expose optional EpidBot configuration ([0bf8de1](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/0bf8de1d99b34046f272be095eb64efb931d7fb0))
+* teach Mosqia when to delegate to EpidBot ([53925de](https://github.com/Mosqlimate-project/mosqlimate-assistant/commit/53925de8ce3ca679a1e3b6c0224a307fdbb4c763))
+
 ## [1.14.2](https://github.com/Mosqlimate-project/mosqlimate-assistant/compare/1.14.1...1.14.2) (2026-06-23)
 
 
