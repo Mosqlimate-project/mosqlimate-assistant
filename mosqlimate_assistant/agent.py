@@ -23,6 +23,7 @@ from langchain_core.tools import StructuredTool
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field, SecretStr
 
+from mosqlimate_assistant.epidbot import EpidBotClient, EpidBotError
 from mosqlimate_assistant.knowledge_base import (
     DocumentBlockConfig,
     MosqlimateKnowledgeBase,
@@ -55,6 +56,13 @@ class BlockSearchInput(BaseModel):
             "Pergunta ou subconsulta a ser buscada neste bloco documental."
         ),
     )
+
+
+EPIDBOT_TEXT_RESPONSE_INSTRUCTION = (
+    "Responda somente em texto. Para valores agregados, variáveis ou "
+    "comparações, use tabelas Markdown. Inclua código reproduzível quando "
+    "for útil. Não gere nem solicite imagens, gráficos ou arquivos."
+)
 
 
 class BatchBlockSearchItem(BaseModel):
@@ -126,6 +134,8 @@ class ToolCatalog:
     def build_tools(
         self,
         blocks: List[DocumentBlockConfig],
+        epidbot_client: EpidBotClient | None = None,
+        lang: Literal["en", "pt"] = "pt",
     ) -> List[StructuredTool]:
         tools: List[StructuredTool] = []
         for block in blocks:
@@ -198,6 +208,37 @@ class ToolCatalog:
                 args_schema=BatchBlockSearchInput,
             )
         )
+
+        if epidbot_client is not None:
+
+            def _run_epidbot(question: str) -> str:
+                try:
+                    result = epidbot_client.ask(
+                        f"{question}\n\n{EPIDBOT_TEXT_RESPONSE_INSTRUCTION}",
+                        locale=lang,
+                    )
+                except (EpidBotError, ValueError) as exc:
+                    return (
+                        "EpidBot não pôde responder a esta consulta. "
+                        f"Motivo: {exc}"
+                    )
+                return result.content
+
+            tools.append(
+                StructuredTool.from_function(
+                    func=_run_epidbot,
+                    name="epidbot_search",
+                    description=(
+                        "Consulta o EpidBot para perguntas epidemiológicas, "
+                        "de saúde pública, DATASUS ou análises fora do escopo "
+                        "da plataforma Mosqlimate. Envie uma pergunta curta "
+                        "e específica, sem o histórico completo. Solicite "
+                        "respostas textuais, tabelas Markdown e código quando "
+                        "útil; não solicite imagens."
+                    ),
+                    args_schema=BlockSearchInput,
+                )
+            )
         return tools
 
 
@@ -255,15 +296,19 @@ class LangChainToolAgent:
         lang: Literal["en", "pt"] = "pt",
         max_tool_iterations: int = 5,
         chat_model: Optional[Any] = None,
+        epidbot_client: EpidBotClient | None = None,
     ) -> None:
         self.knowledge_base = knowledge_base
         self.provider_type = provider_type
         self.provider_config = ProviderConfig.model_validate(provider_config)
         self.lang = lang
         self.max_tool_iterations = max_tool_iterations
+        self.epidbot_enabled = epidbot_client is not None
         self.message_adapter = ChatMessageAdapter()
         self.tools = ToolCatalog(knowledge_base).build_tools(
-            knowledge_base.available_blocks()
+            knowledge_base.available_blocks(),
+            epidbot_client=epidbot_client,
+            lang=lang,
         )
         self.tool_map = {tool.name: tool for tool in self.tools}
         self.chat_model = chat_model or ChatModelFactory.create(
@@ -280,7 +325,13 @@ class LangChainToolAgent:
         """Build the initial prompt messages for one run."""
         prompt = ChatPromptTemplate.from_messages(
             [
-                ("system", get_single_agent_prompt(self.lang)),
+                (
+                    "system",
+                    get_single_agent_prompt(
+                        self.lang,
+                        epidbot_enabled=self.epidbot_enabled,
+                    ),
+                ),
                 MessagesPlaceholder("history"),
                 ("human", "{question}"),
             ]
