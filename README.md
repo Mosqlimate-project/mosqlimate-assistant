@@ -56,6 +56,22 @@ answer = assistant_pipeline(
 print(answer)
 ```
 
+Para habilitar consultas opcionais ao EpidBot em perguntas fora do escopo do
+Mosqlimate, passe `epidbot_api_key` ao pipeline. O recurso fica desabilitado
+quando a chave não é fornecida:
+
+Na integração atual, apenas respostas textuais são incorporadas ao Mosqia.
+
+```python
+answer = assistant_pipeline(
+    question="Quais fontes de dados do SINAN estão disponíveis?",
+    google_api_key="<MOSQLIMATE_PROVIDER_KEY>",
+    epidbot_api_key="<EPIDBOT_API_KEY>",
+    epidbot_timeout_seconds=60,
+    lang="pt",
+)
+```
+
 Também é possível omitir o parâmetro e configurar a credencial via variável de ambiente:
 
 ```bash
