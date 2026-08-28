@@ -4,6 +4,7 @@ import pytest
 from langchain_core.messages import AIMessage
 
 from mosqlimate_assistant.agent import LangChainToolAgent
+from mosqlimate_assistant.epidbot import EpidBotError, EpidBotResult
 from mosqlimate_assistant.knowledge_base import DocumentBlockConfig
 from mosqlimate_assistant.main import assistant_pipeline
 from mosqlimate_assistant.models import ChatMessage, ProviderType
@@ -361,3 +362,124 @@ def test_assistant_pipeline_signature_is_stable():
         "message_history",
         "lang",
     ]
+    assert "epidbot_api_key" in signature.parameters
+    assert "epidbot_timeout_seconds" in signature.parameters
+
+
+def test_single_agent_can_delegate_out_of_scope_question_to_epidbot():
+    class _FakeEpidBot:
+        def __init__(self):
+            self.questions = []
+
+        def ask(self, question, *, locale):
+            self.questions.append((question, locale))
+            return EpidBotResult(
+                content="Resposta epidemiológica",
+            )
+
+    epidbot = _FakeEpidBot()
+    model = _FakeChatModel(
+        [
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "epidbot_search",
+                        "args": {"question": "Casos de dengue no Brasil"},
+                        "id": "call-epidbot",
+                    }
+                ],
+            ),
+            AIMessage(content="Resposta epidemiológica"),
+        ]
+    )
+
+    agent = LangChainToolAgent(
+        knowledge_base=_StubKnowledgeBase(),
+        provider_type=ProviderType.GEMINI,
+        provider_config={"api_key": "test", "model": "gemini"},
+        chat_model=model,
+        epidbot_client=epidbot,
+    )
+
+    result = agent.run("Casos de dengue no Brasil")
+
+    assert len(epidbot.questions) == 1
+    assert epidbot.questions[0][0].startswith("Casos de dengue no Brasil\n\n")
+    assert "tabelas Markdown" in epidbot.questions[0][0]
+    assert "Não gere nem solicite imagens" in epidbot.questions[0][0]
+    assert epidbot.questions[0][1] == "pt"
+    assert result["retrieved_blocks"] == ["epidbot_search"]
+    assert "Resposta epidemiológica" in result["tool_calls"][0]["result"]
+
+
+def test_single_agent_keeps_running_when_epidbot_is_unavailable():
+    class _UnavailableEpidBot:
+        def ask(self, question, *, locale):
+            del question, locale
+            raise EpidBotError("network down")
+
+    model = _FakeChatModel(
+        [
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "epidbot_search",
+                        "args": {"question": "pergunta externa"},
+                        "id": "call-epidbot",
+                    }
+                ],
+            ),
+            AIMessage(content="Não foi possível consultar a fonte externa."),
+        ]
+    )
+
+    agent = LangChainToolAgent(
+        knowledge_base=_StubKnowledgeBase(),
+        provider_type=ProviderType.GEMINI,
+        provider_config={"api_key": "test", "model": "gemini"},
+        chat_model=model,
+        epidbot_client=_UnavailableEpidBot(),
+    )
+
+    result = agent.run("pergunta externa")
+
+    assert result["content"] == "Não foi possível consultar a fonte externa."
+    assert "EpidBot não pôde responder" in result["tool_calls"][0]["result"]
+
+
+def test_single_agent_handles_invalid_epidbot_question():
+    class _InvalidEpidBot:
+        def ask(self, question, *, locale):
+            del question, locale
+            raise ValueError("empty question")
+
+    model = _FakeChatModel(
+        [
+            AIMessage(
+                content="",
+                tool_calls=[
+                    {
+                        "name": "epidbot_search",
+                        "args": {"question": ""},
+                        "id": "call-epidbot",
+                    }
+                ],
+            ),
+            AIMessage(content="Não foi possível consultar a fonte externa."),
+        ]
+    )
+
+    agent = LangChainToolAgent(
+        knowledge_base=_StubKnowledgeBase(),
+        provider_type=ProviderType.GEMINI,
+        provider_config={"api_key": "test", "model": "gemini"},
+        chat_model=model,
+        epidbot_client=_InvalidEpidBot(),
+    )
+
+    result = agent.run("pergunta externa")
+
+    assert result["content"] == "Não foi possível consultar a fonte externa."
+    assert "EpidBot não pôde responder" in result["tool_calls"][0]["result"]
