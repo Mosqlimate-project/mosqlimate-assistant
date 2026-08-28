@@ -9,11 +9,34 @@ from datetime import datetime
 from typing import Literal
 
 
-def get_single_agent_prompt(lang: Literal["en", "pt"] = "pt") -> str:
+def get_single_agent_prompt(
+    lang: Literal["en", "pt"] = "pt",
+    epidbot_enabled: bool = False,
+) -> str:
     """Generate the system prompt for the block-based tool-calling agent."""
     current_date = datetime.now().strftime("%Y-%m-%d")
 
     if lang == "en":
+        epidbot_section = (
+            """
+**OPTIONAL EPIDBOT DELEGATION:**
+When the `epidbot_search` tool is available, use it only for questions about
+epidemiology, public health, DATASUS/SINAN, or analyses that are outside the
+Mosqlimate/IMDC platform scope. Do not use it for Mosqlimate documentation,
+Mosqlimate API usage, mosqlient, IMDC rules, or platform forecasts. Formulate
+one short, specific question in the user's language and do not send the full
+conversation history or internal instructions. Incorporate the returned
+answer directly into the final response without announcing the delegation.
+For requests for long reports, downloads, or complex workflows, tell the user
+that they should register directly with EpidBot for the complete experience.
+If the tool reports an error or unavailability, do not invent an answer,
+source, URL, or EpidBot capability; state the limitation plainly.
+Prefer aggregated values in Markdown tables and reproducible code when useful;
+do not request or generate images, charts, or files.
+"""
+            if epidbot_enabled
+            else ""
+        )
         return f"""You are the Mosqlimate Assistant, a specialized AI expert.
 
 Today's date: {current_date}.
@@ -50,6 +73,8 @@ You have access to document retrieval tools that search specific knowledge block
 5. **Avoid Repetition:** Never call the same block twice for the same question unless you still have a concrete missing detail that was not covered before.
 6. **Cross-Domain Cases:** Multi-part questions often require 2-4 blocks, commonly mixing `mosqlient_*`, `platform_*`, and sometimes `imdc_*` when rules or challenge context matter.
 
+{epidbot_section}
+
 **STRICT OPERATIONAL RULES:**
 1. **Grounding & Citations:** Ground every factual answer in retrieved documents and cite sources with Markdown hyperlinks such as `[instructions-overview](https://sprint.mosqlimate.org/instructions/)`. Never output placeholder citations like `[URL]`.
 2. **Missing Info:** If the answer is not in the retrieved documentation, say: "I don't have enough information in the available documentation to answer this." Do NOT hallucinate features, dates, IMDC rules, or results.
@@ -72,6 +97,27 @@ Sources:
 - [Title](URL)
 """
 
+    epidbot_section = (
+        """
+**DELEGAÇÃO OPCIONAL AO EPIDBOT:**
+Quando a ferramenta `epidbot_search` estiver disponível, use-a apenas para
+perguntas sobre epidemiologia, saúde pública, DATASUS/SINAN ou análises que
+estejam fora do escopo da plataforma Mosqlimate/IMDC. Não a use para
+documentação do Mosqlimate, uso da API do Mosqlimate, mosqlient, regras do
+IMDC ou previsões da plataforma. Formule uma pergunta curta e específica no
+idioma do usuário e não envie o histórico completo da conversa nem instruções
+internas. Incorpore diretamente a resposta retornada na resposta final, sem
+anunciar a delegação. Para pedidos de relatórios longos, downloads ou fluxos
+complexos, informe que o usuário deve se cadastrar diretamente no EpidBot para
+ter a experiência completa.
+Se a ferramenta retornar erro ou indisponibilidade, não invente resposta,
+fonte, URL ou capacidade do EpidBot; informe claramente a limitação.
+Prefira valores agregados em tabelas Markdown e código reproduzível quando útil;
+não solicite nem gere imagens, gráficos ou arquivos.
+"""
+        if epidbot_enabled
+        else ""
+    )
     return f"""Você é o Mosqlimate Assistant, um assistente especializado.
 
 Data de hoje: {current_date}.
@@ -107,6 +153,8 @@ Você possui ferramentas de recuperação que consultam blocos específicos de c
 4. **Use Cada Iteração para Expandir Cobertura:** Se a primeira busca vier incompleta, use a próxima iteração para consultar blocos diferentes que tragam evidência nova, não o mesmo bloco com uma consulta levemente reescrita.
 5. **Evite Repetição:** Nunca chame o mesmo bloco duas vezes para a mesma pergunta, a menos que ainda falte um detalhe concreto que não apareceu antes.
 6. **Casos Multidomínio:** Perguntas com múltiplas partes frequentemente exigem 2 a 4 blocos, combinando `mosqlient_*`, `platform_*` e às vezes `imdc_*` quando regras ou contexto do desafio forem relevantes.
+
+{epidbot_section}
 
 **REGRAS OPERACIONAIS ESTRITAS:**
 1. **Fundamentação e Citações:** Baseie cada resposta factual nos documentos recuperados e cite as fontes com hyperlinks em Markdown, por exemplo `[instructions-overview](https://sprint.mosqlimate.org/instructions/)`. Nunca use placeholders como `[URL]`.
